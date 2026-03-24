@@ -978,7 +978,7 @@ function showOfflineForm() {
         </div>
         <div class="off-row">
           <div class="form-group"><label class="form-label">KKS</label><input type="text" name="kks" placeholder="KKS" class="form-input"></div>
-          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" required placeholder="NIK" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" required placeholder="16 digit NIK" class="form-input" pattern="[0-9]{16}" minlength="16" maxlength="16" inputmode="numeric" title="NIK harus 16 digit angka"></div>
         </div>
         <div class="off-row">
           <div class="form-group"><label class="form-label">Nama Lengkap *</label><input type="text" name="nama" required placeholder="Nama Lengkap" class="form-input"></div>
@@ -1008,8 +1008,8 @@ function showOfflineForm() {
           <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" required placeholder="Email" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" required placeholder="08xxxxxxxxxx" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" placeholder="Telepon 2 (Optional)" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" required placeholder="08xxxxxxxxxx" class="form-input" maxlength="12" pattern="[0-9]{10,12}" title="Nomor telepon 10-12 digit"></div>
+          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" placeholder="Telepon 2 (Optional)" class="form-input" maxlength="12"></div>
         </div>
       </div>
 

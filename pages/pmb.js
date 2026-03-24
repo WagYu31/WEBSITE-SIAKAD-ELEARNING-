@@ -83,11 +83,12 @@ function renderPMBNav(activePage) {
 }
 
 // ---- Form Fields ----
-function formField(label, name, type = 'text', required = false, options = null) {
+function formField(label, name, type = 'text', required = false, options = null, attrs = {}) {
+  const extra = Object.entries(attrs).map(([k,v]) => `${k}="${v}"`).join(' ');
   if (options) {
     return `
       <div class="pmb-field">
-        <select name="${name}" id="pmb-${name}" ${required ? 'required' : ''}>
+        <select name="${name}" id="pmb-${name}" ${required ? 'required' : ''} ${extra}>
           <option value="">${label}</option>
           ${options.map(o => `<option value="${o}">${o}</option>`).join('')}
         </select>
@@ -96,13 +97,13 @@ function formField(label, name, type = 'text', required = false, options = null)
   if (type === 'textarea') {
     return `
       <div class="pmb-field full">
-        <textarea name="${name}" id="pmb-${name}" placeholder="${label}" rows="3" ${required ? 'required' : ''}></textarea>
+        <textarea name="${name}" id="pmb-${name}" placeholder="${attrs.placeholder || label}" rows="3" ${required ? 'required' : ''} ${extra}></textarea>
       </div>`;
   }
   if (type === 'radio') return '';
   return `
     <div class="pmb-field">
-      <input type="${type}" name="${name}" id="pmb-${name}" placeholder="${label}" ${required ? 'required' : ''}>
+      <input type="${type}" name="${name}" id="pmb-${name}" placeholder="${attrs.placeholder || label}" ${required ? 'required' : ''} ${extra}>
     </div>`;
 }
 
@@ -131,7 +132,7 @@ function renderDaftarPage() {
           </div>
           <div class="pmb-row">
             ${formField('KKS', 'kks')}
-            ${formField('NIK *', 'nik', 'text', true)}
+            ${formField('NIK *', 'nik', 'text', true, null, {pattern:'[0-9]{16}', minlength:16, maxlength:16, inputmode:'numeric', title:'NIK harus 16 digit angka', placeholder:'16 digit NIK'})}
           </div>
           <div class="pmb-row">
             ${formField('Nama Lengkap *', 'nama', 'text', true)}
@@ -155,8 +156,8 @@ function renderDaftarPage() {
             ${formField('Email *', 'email', 'email', true)}
           </div>
           <div class="pmb-row">
-            ${formField('Telepon 1 *', 'telepon_1', 'tel', true)}
-            ${formField('Telepon 2 (Optional)', 'telepon_2', 'tel')}
+            ${formField('Telepon 1 *', 'telepon_1', 'tel', true, null, {maxlength:12, pattern:'[0-9]{10,12}', title:'Nomor telepon 10-12 digit'})}
+            ${formField('Telepon 2 (Optional)', 'telepon_2', 'tel', false, null, {maxlength:12})}
           </div>
         </div>
 
