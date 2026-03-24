@@ -343,7 +343,7 @@
   color: var(--primary-500);
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive: Tablet ---- */
 @media (max-width: 1024px) {
   .login-container {
     grid-template-columns: 1fr;
@@ -360,6 +360,31 @@
   }
 }
 
+/* ---- Responsive: Mobile ---- */
+@media (max-width: 768px) {
+  .login-form-side {
+    padding: var(--space-6);
+  }
+
+  .login-form-wrapper {
+    max-width: 380px;
+  }
+
+  .login-form-header h2 {
+    font-size: var(--text-2xl);
+  }
+
+  .role-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .login-demo-hint {
+    font-size: 0.68rem;
+  }
+}
+
+/* ---- Responsive: Small Mobile ---- */
 @media (max-width: 480px) {
   .login-form-side {
     padding: var(--space-5);
@@ -371,5 +396,38 @@
 
   .login-form-header h2 {
     font-size: var(--text-2xl);
+  }
+
+  .login-options {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+}
+
+/* ---- Responsive: Tiny ---- */
+@media (max-width: 375px) {
+  .login-form-side {
+    padding: var(--space-4);
+  }
+
+  .login-form-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .login-form-header p {
+    font-size: 0.78rem;
+  }
+
+  .role-option {
+    padding: var(--space-2);
+  }
+
+  .role-option-icon {
+    font-size: 20px;
+  }
+
+  .role-option-label {
+    font-size: 0.65rem;
   }
 }

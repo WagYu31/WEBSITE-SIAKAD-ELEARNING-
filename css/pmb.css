@@ -508,7 +508,31 @@
   text-align: center;
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive: Tablet (≤ 1024px) ---- */
+@media (max-width: 1024px) {
+  .pmb-header-inner h1 { font-size: 1.3rem; }
+  .pmb-stats { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pmb-content { grid-template-columns: 1fr 200px; gap: 20px; }
+  .pmb-form-container { padding: 28px; }
+  .pmb-stat-value { font-size: 1.6rem; }
+}
+
+/* ---- Responsive: Small Tablet (≤ 900px) ---- */
+@media (max-width: 900px) {
+  .pmb-stats { grid-template-columns: repeat(2, 1fr); margin-top: -16px; gap: 10px; padding: 0 20px; }
+  .pmb-content { grid-template-columns: 1fr; padding: 0 20px 32px; }
+  .pmb-nav {
+    order: -1; position: static;
+    display: flex; gap: 0; padding: 12px;
+    overflow-x: auto; flex-wrap: nowrap;
+  }
+  .pmb-nav h3 { display: none; }
+  .pmb-nav-link { white-space: nowrap; font-size: 0.82rem; padding: 8px 14px; }
+  .pmb-form-container { padding: 24px; }
+  .pmb-info-cards { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---- Responsive: Mobile (≤ 768px) ---- */
 @media (max-width: 768px) {
   .pmb-header { padding: 16px 20px; }
   .pmb-header-inner h1 { font-size: 1.1rem; }
@@ -540,4 +564,46 @@
   .pmb-pay-options { grid-template-columns: 1fr; }
   .pmb-search-box { flex-direction: column; }
   .pmb-success-actions { flex-direction: column; }
+}
+
+/* ---- Responsive: Small Mobile (≤ 640px) ---- */
+@media (max-width: 640px) {
+  .pmb-header { padding: 14px 14px; }
+  .pmb-header-inner h1 { font-size: 1rem; }
+  .pmb-stats { gap: 8px; padding: 0 12px; }
+  .pmb-stat-value { font-size: 1.5rem; }
+  .pmb-content { padding: 0 12px 28px; }
+  .pmb-form-container { padding: 16px; }
+  .pmb-form-container h2 { font-size: 1.15rem; }
+  .pmb-submit-btn { font-size: 0.9rem; padding: 12px; }
+  .pmb-account-card { padding: 18px; }
+}
+
+/* ---- Responsive: Extra Small (≤ 480px) ---- */
+@media (max-width: 480px) {
+  .pmb-header { padding: 12px; }
+  .pmb-header-inner h1 { font-size: 0.95rem; }
+  .pmb-header-logo { height: 32px; }
+  .pmb-stats { grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px; }
+  .pmb-stat-card { padding: 14px; border-radius: 10px; }
+  .pmb-stat-value { font-size: 1.4rem; }
+  .pmb-stat-label { font-size: 0.7rem; }
+  .pmb-content { padding: 0 10px 24px; }
+  .pmb-form-container { padding: 14px; border-radius: 10px; }
+  .pmb-form-container h2 { font-size: 1.05rem; }
+  .pmb-field input,
+  .pmb-field select,
+  .pmb-field textarea { padding: 10px 12px; font-size: 0.82rem; }
+  .pmb-no-reg { font-size: 1.1rem; padding: 10px 20px; }
+  .pmb-account-card { padding: 16px; max-width: 100%; }
+  .pmb-account-value { font-size: 0.95rem; }
+}
+
+/* ---- Responsive: Tiny (≤ 375px) ---- */
+@media (max-width: 375px) {
+  .pmb-stats { grid-template-columns: 1fr; gap: 6px; }
+  .pmb-stat-card { padding: 12px; }
+  .pmb-stat-value { font-size: 1.3rem; }
+  .pmb-nav-link { font-size: 0.75rem; padding: 6px 10px; }
+  .pmb-footer { flex-direction: column; align-items: center; gap: 8px; }
 }
