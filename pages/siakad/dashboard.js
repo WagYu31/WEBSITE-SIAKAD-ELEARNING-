@@ -67,6 +67,7 @@ const MENUS = {
     { label: 'SIAKAD', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
       { icon: I.userPlus, text: 'Manajemen PMB', id: 'pmb' },
+      { icon: I.graduationCap, text: 'Data Mahasiswa', id: 'mahasiswa' },
       { icon: I.barChart, text: 'Statistik Akademik', id: 'statistik' },
       { icon: I.clipboard, text: 'Transkrip', id: 'transkrip' },
     ]},
@@ -1115,6 +1116,242 @@ function showOfflineForm() {
   });
 }
 
+// ============================================
+// DATA MAHASISWA — Student Management
+// ============================================
+const MHS_API = 'http://localhost:8080/api/pmb';
+let _mahasiswaList = [];
+
+function bapMahasiswaContent() {
+  return `
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h2 class="dash-card-title">${I.graduationCap} Data Mahasiswa</h2>
+      </div>
+      <div class="dash-card-body">
+        <!-- Stat Cards -->
+        <div class="stat-grid" id="mhsStatCards">
+          <div class="stat-card">
+            <div class="stat-icon blue">${I.users}</div>
+            <div class="stat-num" id="mhsTotal">-</div>
+            <div class="stat-label">Total Mahasiswa</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">${I.checkCircle}</div>
+            <div class="stat-num" id="mhsAktif">-</div>
+            <div class="stat-label">Aktif</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon gold">${I.clock}</div>
+            <div class="stat-num" id="mhsCuti">-</div>
+            <div class="stat-label">Cuti</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">${I.award}</div>
+            <div class="stat-num" id="mhsLulus">-</div>
+            <div class="stat-label">Lulus</div>
+          </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div style="display:flex;gap:10px;margin:20px 0 16px;flex-wrap:wrap;align-items:center;">
+          <div style="flex:1;min-width:220px;position:relative;">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">${I.search}</span>
+            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:38px;">
+          </div>
+          <select id="mhsFilterProdi" class="form-select" style="min-width:160px;">
+            <option value="">Semua Prodi</option>
+            <option value="S1 Administrasi Publik">S1 Adm. Publik</option>
+            <option value="S1 Administrasi Bisnis">S1 Adm. Bisnis</option>
+            <option value="S2 Administrasi Publik">S2 Adm. Publik</option>
+            <option value="D3 Ilmu Administrasi">D3 Ilmu Adm.</option>
+          </select>
+          <select id="mhsFilterStatus" class="form-select" style="min-width:130px;">
+            <option value="">Semua Status</option>
+            <option value="aktif">Aktif</option>
+            <option value="cuti">Cuti</option>
+            <option value="lulus">Lulus</option>
+            <option value="do">DO</option>
+          </select>
+        </div>
+
+        <!-- Student Table -->
+        <div id="mhsTableContainer" style="margin-top:8px;">
+          <div style="text-align:center;padding:32px;color:var(--text-muted);">Memuat data mahasiswa...</div>
+        </div>
+        <div id="mhsCount" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);"></div>
+      </div>
+    </div>`;
+}
+
+function initMahasiswaPage() {
+  loadMahasiswaList();
+
+  // Search
+  document.getElementById('mhsSearch')?.addEventListener('input', filterMahasiswa);
+  document.getElementById('mhsFilterProdi')?.addEventListener('change', filterMahasiswa);
+  document.getElementById('mhsFilterStatus')?.addEventListener('change', filterMahasiswa);
+}
+
+async function loadMahasiswaList() {
+  try {
+    // Get accounts (validated = mahasiswa aktif)
+    const res = await fetch(`${MHS_API}/registrations`);
+    if (!res.ok) throw new Error('Gagal memuat data');
+    const registrations = await res.json();
+
+    // Filter only those with accounts (status = diterima)
+    _mahasiswaList = registrations
+      .filter(r => r.status === 'diterima')
+      .map((r, idx) => ({
+        ...r,
+        nim: r.nim || `20260${String(idx + 1).padStart(4, '0')}`,
+        angkatan: r.created_at ? new Date(r.created_at).getFullYear() : 2026,
+        semester: 1,
+        status_mhs: 'aktif',
+      }));
+
+    updateMhsStats();
+    renderMhsTable(_mahasiswaList);
+  } catch (err) {
+    document.getElementById('mhsTableContainer').innerHTML = `
+      <div style="text-align:center;padding:32px;">
+        <p style="color:var(--text-muted);font-size:var(--text-sm);">⚠️ ${err.message}</p>
+      </div>`;
+  }
+}
+
+function updateMhsStats() {
+  const total = _mahasiswaList.length;
+  const aktif = _mahasiswaList.filter(m => m.status_mhs === 'aktif').length;
+  const cuti = _mahasiswaList.filter(m => m.status_mhs === 'cuti').length;
+  const lulus = _mahasiswaList.filter(m => m.status_mhs === 'lulus').length;
+
+  const el = (id) => document.getElementById(id);
+  if (el('mhsTotal')) el('mhsTotal').textContent = total;
+  if (el('mhsAktif')) el('mhsAktif').textContent = aktif;
+  if (el('mhsCuti')) el('mhsCuti').textContent = cuti;
+  if (el('mhsLulus')) el('mhsLulus').textContent = lulus;
+}
+
+function filterMahasiswa() {
+  const query = (document.getElementById('mhsSearch')?.value || '').toLowerCase();
+  const prodi = document.getElementById('mhsFilterProdi')?.value || '';
+  const status = document.getElementById('mhsFilterStatus')?.value || '';
+
+  const filtered = _mahasiswaList.filter(m => {
+    const matchSearch = !query || (m.nama || '').toLowerCase().includes(query) || (m.nim || '').toLowerCase().includes(query) || (m.nik || '').includes(query);
+    const matchProdi = !prodi || m.prodi_pilihan === prodi;
+    const matchStatus = !status || m.status_mhs === status;
+    return matchSearch && matchProdi && matchStatus;
+  });
+
+  renderMhsTable(filtered);
+}
+
+function renderMhsTable(list) {
+  const container = document.getElementById('mhsTableContainer');
+  const countEl = document.getElementById('mhsCount');
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:32px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);">Tidak ada mahasiswa ditemukan</p>
+    </div>`;
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="sch-table" style="font-size:0.82rem;">
+      <thead><tr>
+        <th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Semester</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${list.map(m => `<tr class="mhs-tr" data-id="${m.id}" style="cursor:pointer;">
+          <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${m.nim}</td>
+          <td>
+            <strong>${m.nama}</strong><br>
+            <span style="font-size:0.7rem;color:var(--text-muted);">${m.email || '-'}</span>
+          </td>
+          <td style="font-size:0.8rem;">${m.prodi_pilihan || '-'}</td>
+          <td style="text-align:center;">${m.angkatan}</td>
+          <td style="text-align:center;">${m.semester}</td>
+          <td><span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : m.status_mhs === 'lulus' ? 'blue' : 'danger'}">${m.status_mhs}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  if (countEl) countEl.textContent = `Menampilkan ${list.length} mahasiswa`;
+
+  // Row click → profile modal
+  container.querySelectorAll('.mhs-tr').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = parseInt(row.dataset.id);
+      const mhs = _mahasiswaList.find(m => m.id === id);
+      if (mhs) showMhsProfile(mhs);
+    });
+  });
+}
+
+function showMhsProfile(m) {
+  const modalOverlay = document.querySelector('.modal-overlay');
+  const modalBody = document.querySelector('.modal-body');
+  const modalTitle = document.querySelector('.modal-title');
+  if (!modalOverlay || !modalBody) return;
+
+  if (modalTitle) modalTitle.textContent = 'Profil Mahasiswa';
+
+  const row = (label, value) => `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-50);">
+      <span style="font-size:0.78rem;color:var(--text-muted);">${label}</span>
+      <span style="font-size:0.85rem;font-weight:600;text-align:right;">${value || '-'}</span>
+    </div>`;
+
+  modalBody.innerHTML = `
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.2rem;">${(m.nama || '?')[0]}</div>
+      <div>
+        <h3 style="margin:0;font-size:1.1rem;">${m.nama}</h3>
+        <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);">NIM: ${m.nim}</div>
+        <span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : 'blue'}" style="margin-top:4px;">${m.status_mhs}</span>
+      </div>
+    </div>
+
+    <!-- Akademik -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🎓 Akademik</h4>
+    ${row('Program Studi', m.prodi_pilihan)}
+    ${row('Angkatan', m.angkatan)}
+    ${row('Semester', m.semester)}
+
+    <!-- Data Pribadi -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👤 Data Pribadi</h4>
+    ${row('NIK', m.nik)}
+    ${row('Email', m.email)}
+    ${row('Telepon', m.telepon_1)}
+    ${row('Tempat Lahir', m.tempat_lahir)}
+    ${row('Tanggal Lahir', m.tanggal_lahir)}
+    ${row('Gender', m.gender)}
+    ${row('Agama', m.agama)}
+
+    <!-- Alamat -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">📍 Alamat</h4>
+    ${row('Alamat', m.alamat)}
+    ${row('Kota', [m.kecamatan, m.kota, m.provinsi].filter(Boolean).join(', '))}
+
+    <!-- Orang Tua -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👨‍👩‍👧 Orang Tua / Wali</h4>
+    ${row('Nama Ayah', m.nama_ayah)}
+    ${row('Nama Ibu', m.nama_ibu)}
+    ${row('Pekerjaan Ayah', m.pekerjaan_ayah)}
+    ${row('Asal Sekolah', m.asal_sekolah)}
+  `;
+
+  modalOverlay.classList.add('active');
+}
+
 // ---- Content Router ----
 const CONTENT_RENDERERS = { mahasiswa: mahasiswaContent, dosen: dosenContent, kaprodi: kaprodiContent, bap: bapContent };
 
@@ -1172,23 +1409,20 @@ export function renderDashboard(container) {
       // Page routing
       const page = link.dataset.page;
       const mainContent = document.getElementById('dashMain');
+      const isoFooter = `<footer class="dash-iso-footer" role="contentinfo" aria-label="Sertifikasi ISO">
+            <span class="dash-iso-badge">${I.shield} ISO 27001 — Security</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 9241 — Usability</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 40500 — Accessibility</span>
+          </footer>`;
+
       if (mainContent && page === 'pmb' && user.role === 'bap') {
-        mainContent.innerHTML = `
-          ${bapPMBContent()}
-          <footer class="dash-iso-footer" role="contentinfo" aria-label="Sertifikasi ISO">
-            <span class="dash-iso-badge">${I.shield} ISO 27001 — Security</span>
-            <span class="dash-iso-badge">${I.checkCircle} ISO 9241 — Usability</span>
-            <span class="dash-iso-badge">${I.checkCircle} ISO 40500 — Accessibility</span>
-          </footer>`;
+        mainContent.innerHTML = bapPMBContent() + isoFooter;
         initPMBManagement();
+      } else if (mainContent && page === 'mahasiswa' && user.role === 'bap') {
+        mainContent.innerHTML = bapMahasiswaContent() + isoFooter;
+        initMahasiswaPage();
       } else if (mainContent && page === 'home') {
-        mainContent.innerHTML = `
-          ${contentFn(user)}
-          <footer class="dash-iso-footer" role="contentinfo" aria-label="Sertifikasi ISO">
-            <span class="dash-iso-badge">${I.shield} ISO 27001 — Security</span>
-            <span class="dash-iso-badge">${I.checkCircle} ISO 9241 — Usability</span>
-            <span class="dash-iso-badge">${I.checkCircle} ISO 40500 — Accessibility</span>
-          </footer>`;
+        mainContent.innerHTML = contentFn(user) + isoFooter;
       }
     });
   });
