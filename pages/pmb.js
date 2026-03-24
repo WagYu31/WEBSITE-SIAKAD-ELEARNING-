@@ -406,15 +406,42 @@ export async function renderPMB(container) {
 
         if (res.ok) {
           const mainArea = document.getElementById('pmbMainArea');
+          const acc = result.account || {};
           mainArea.innerHTML = `
             <div class="pmb-success">
               <div class="pmb-success-icon">✅</div>
               <h2>Pendaftaran Berhasil!</h2>
               <p>Simpan nomor pendaftaran Anda:</p>
               <div class="pmb-no-reg">${result.no_pendaftaran}</div>
-              <p class="pmb-success-info">Gunakan nomor ini untuk cek status dan pembayaran biaya pendaftaran.</p>
+
+              ${acc.nim ? `
+                <div class="pmb-account-card">
+                  <h3>🔐 Akun Login Anda</h3>
+                  <div class="pmb-account-grid">
+                    <div class="pmb-account-item">
+                      <span class="pmb-account-label">NIM</span>
+                      <span class="pmb-account-value" id="nimValue">${acc.nim}</span>
+                    </div>
+                    <div class="pmb-account-item">
+                      <span class="pmb-account-label">Password</span>
+                      <span class="pmb-account-value" id="pwdValue">${acc.password}</span>
+                    </div>
+                  </div>
+                  <div class="pmb-account-warning">
+                    ⚠️ <strong>Simpan data ini!</strong> Password hanya ditampilkan sekali.
+                  </div>
+                  ${acc.email_sent ? `
+                    <div class="pmb-account-email">
+                      📧 Email notifikasi + link validasi telah dikirim ke <strong>${data.email || 'email Anda'}</strong>.<br>
+                      Klik tombol validasi di email untuk mengaktifkan akun.
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+
+              <p class="pmb-success-info">Lakukan pembayaran biaya pendaftaran untuk melanjutkan proses.</p>
               <div class="pmb-success-actions">
-                <button class="pmb-btn blue" onclick="navigator.clipboard.writeText('${result.no_pendaftaran}')">📋 Copy No. Pendaftaran</button>
+                <button class="pmb-btn blue" onclick="navigator.clipboard.writeText('${acc.nim || result.no_pendaftaran}')">📋 Copy NIM</button>
                 <button class="pmb-btn green" id="goToPayBtn">💳 Bayar Sekarang</button>
               </div>
             </div>`;

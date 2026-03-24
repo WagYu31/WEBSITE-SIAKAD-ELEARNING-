@@ -445,6 +445,69 @@
 }
 .pmb-footer span { display: flex; align-items: center; gap: 6px; }
 
+/* ---- Account Card (post-registration) ---- */
+.pmb-account-card {
+  background: linear-gradient(135deg, hsl(215 80% 96%) 0%, hsl(200 60% 95%) 100%);
+  border: 2px solid hsl(215 60% 82%);
+  border-radius: 14px;
+  padding: 24px;
+  margin: 20px auto;
+  max-width: 420px;
+  text-align: left;
+}
+.pmb-account-card h3 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  text-align: center;
+  color: hsl(215 25% 25%);
+}
+.pmb-account-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pmb-account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid hsl(215 20% 90%);
+}
+.pmb-account-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: hsl(215 15% 50%);
+}
+.pmb-account-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: hsl(215 70% 40%);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+.pmb-account-warning {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: hsl(40 80% 93%);
+  border: 1px solid hsl(40 60% 78%);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: hsl(40 50% 30%);
+  text-align: center;
+}
+.pmb-account-email {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: hsl(150 40% 93%);
+  border: 1px solid hsl(150 40% 78%);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: hsl(150 40% 28%);
+  text-align: center;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .pmb-header { padding: 16px 20px; }

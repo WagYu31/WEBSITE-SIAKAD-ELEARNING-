@@ -145,7 +145,7 @@ export function renderLanding(container) {
           <h1>${CAMPUS.name}<br><span>Probolinggo</span></h1>
           <p>${CAMPUS.fullName} — ${CAMPUS.tagline}. Mempersiapkan generasi muda yang kompeten, profesional, dan bermoral Pancasila.</p>
           <div class="hero-cta">
-            <a href="#/login" class="btn-primary-l">${ICONS.graduationCap} Daftar Sekarang</a>
+            <a href="#/pmb" class="btn-primary-l">${ICONS.graduationCap} Daftar Sekarang</a>
             <a href="#" onclick="scrollTo('about')" class="btn-ghost-l">Tentang Kami ${ICONS.arrowRight}</a>
           </div>
         </div>
@@ -385,7 +385,7 @@ export function renderLanding(container) {
         <h2>Siap Bergabung dengan ${CAMPUS.name}?</h2>
         <p>Pendaftaran Mahasiswa Baru TA 2026/2027 telah dibuka. Daftarkan diri Anda sekarang!</p>
         <div class="cta-btns">
-          <a href="#/login" class="btn-primary-l">${ICONS.graduationCap} Daftar Sekarang</a>
+          <a href="#/pmb" class="btn-primary-l">${ICONS.graduationCap} Daftar Sekarang</a>
           <a href="#" onclick="scrollTo('about')" class="btn-ghost-l">${ICONS.phone} Hubungi Kami</a>
         </div>
       </div>

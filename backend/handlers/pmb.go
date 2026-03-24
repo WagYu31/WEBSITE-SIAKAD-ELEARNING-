@@ -54,10 +54,22 @@ func RegisterOnline(c *gin.Context) {
 		return
 	}
 
+	// Auto-create account & send email
+	account, err := CreateAccountAfterRegistration(reg.ID, reg.Email, reg.ProdiPilihan)
+	accountInfo := gin.H{}
+	if err == nil && account != nil {
+		accountInfo = gin.H{
+			"nim":      account.NIM,
+			"password": account.PlainPassword,
+			"email_sent": true,
+		}
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message":        "Pendaftaran berhasil!",
 		"no_pendaftaran": reg.NoPendaftaran,
 		"id":             reg.ID,
+		"account":        accountInfo,
 	})
 }
 
@@ -99,10 +111,21 @@ func RegisterOffline(c *gin.Context) {
 		return
 	}
 
+	// Auto-create account (BAP offline)
+	account, err := CreateAccountAfterRegistration(reg.ID, reg.Email, reg.ProdiPilihan)
+	accountInfo := gin.H{}
+	if err == nil && account != nil {
+		accountInfo = gin.H{
+			"nim":      account.NIM,
+			"password": account.PlainPassword,
+		}
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message":        "Pendaftaran offline berhasil!",
 		"no_pendaftaran": reg.NoPendaftaran,
 		"id":             reg.ID,
+		"account":        accountInfo,
 	})
 }
 

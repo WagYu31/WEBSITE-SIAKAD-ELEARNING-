@@ -43,6 +43,12 @@ func main() {
 		pmb.GET("/registration/:id", handlers.GetRegistration)
 		pmb.PUT("/registration/:id/status", handlers.UpdateStatus)
 		pmb.PUT("/payment/:id/confirm", handlers.ConfirmCashPayment)
+
+		// Account & Validation
+		pmb.GET("/validate/:token", handlers.ValidateAccountByEmail)
+		pmb.PUT("/account/:id/validate", handlers.ValidateAccountByBAP)
+		pmb.POST("/account/create", handlers.BAPCreateAccount)
+		pmb.GET("/account/:registration_id", handlers.GetAccountByRegistration)
 	}
 
 	log.Println("🚀 STIA Bayuangga PMB API running on :8080")
