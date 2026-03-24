@@ -877,7 +877,7 @@ async function handleMgmtAction(action, data) {
         });
         result = await res.json();
         if (res.ok) {
-          alert(`✅ Akun dibuat!\n\nNIM: ${result.nim}\nPassword: ${result.password}\nEmail: ${result.email}`);
+          alert(`✅ Akun dibuat!\n\nNIM: ${result.nim}\nPassword: ${result.plain_password}\nEmail: ${result.email}`);
         } else {
           alert('❌ ' + (result.error || 'Gagal membuat akun'));
         }
