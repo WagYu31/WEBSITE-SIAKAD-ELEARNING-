@@ -723,39 +723,31 @@ function renderPMBTable(registrations) {
     </div>`;
   }
 
-  return `<div class="table-wrapper">
-    <table class="table">
+  return `
+    <table class="sch-table" style="font-size:0.82rem;">
       <thead><tr>
-        <th>No. Daftar</th><th>Nama</th><th>NIK</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
+        <th>No. Daftar</th><th>Nama</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
       </tr></thead>
       <tbody>
-        ${registrations.map(r => `<tr class="pmb-row" data-id="${r.id}" style="cursor:pointer;">
-          <td><code style="font-family:var(--font-mono);font-weight:600;font-size:0.78rem;background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${r.no_pendaftaran}</code></td>
-          <td><strong>${r.nama}</strong></td>
-          <td style="font-family:var(--font-mono);font-size:0.82rem;">${r.nik}</td>
-          <td>${r.prodi_pilihan || '-'}</td>
-          <td><span class="badge ${r.metode === 'online' ? 'badge-primary' : 'badge-warning'}">${r.metode}</span></td>
-          <td><span class="badge ${r.status === 'diterima' ? 'badge-success' : r.status === 'ditolak' ? 'badge-danger' : r.status === 'proses' ? 'badge-primary' : 'badge-warning'}">${r.status}</span></td>
+        ${registrations.map(r => `<tr class="pmb-tr" data-id="${r.id}" style="cursor:pointer;">
+          <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${r.no_pendaftaran}</td>
           <td>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;" onclick="event.stopPropagation();">
-              <button class="btn btn-sm btn-outline mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Akun
-              </button>
-              <button class="btn btn-sm btn-success mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                Validasi
-              </button>
-              <button class="btn btn-sm btn-accent mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Konfirmasi Bayar">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Bayar
-              </button>
+            <strong>${r.nama}</strong><br>
+            <span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span>
+          </td>
+          <td style="font-size:0.8rem;">${r.prodi_pilihan || '-'}</td>
+          <td><span class="badge-sm ${r.metode === 'online' ? 'blue' : 'warning'}">${r.metode}</span></td>
+          <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
+          <td onclick="event.stopPropagation();">
+            <div style="display:flex;gap:4px;white-space:nowrap;">
+              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
+              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
+              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰 Bayar</button>
             </div>
           </td>
         </tr>`).join('')}
       </tbody>
-    </table>
-  </div>`;
+    </table>`;
 }
 
 function bindPMBActions() {
@@ -768,7 +760,7 @@ function bindPMBActions() {
   });
 
   // Row click → detail modal
-  document.querySelectorAll('.pmb-row').forEach(row => {
+  document.querySelectorAll('.pmb-tr').forEach(row => {
     row.addEventListener('click', () => {
       const id = parseInt(row.dataset.id);
       const reg = _pmbRegistrations.find(r => r.id === id);
