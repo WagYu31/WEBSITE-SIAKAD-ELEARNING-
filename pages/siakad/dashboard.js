@@ -26,6 +26,8 @@ const I = {
   barChart: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',
   checkCircle: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
   shield: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  userPlus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>',
+  graduationCap: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>',
 };
 
 // ---- Sidebar menu config per role ----
@@ -64,8 +66,7 @@ const MENUS = {
   bap: [
     { label: 'SIAKAD', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
-      { icon: I.users, text: 'Manajemen PMB', id: 'pmb' },
-      { icon: I.users, text: 'Data Mahasiswa', id: 'mahasiswa' },
+      { icon: I.userPlus, text: 'Manajemen PMB', id: 'pmb' },
       { icon: I.barChart, text: 'Statistik Akademik', id: 'statistik' },
       { icon: I.clipboard, text: 'Transkrip', id: 'transkrip' },
     ]},
@@ -529,15 +530,27 @@ const PMB_API = 'http://localhost:8080/api/pmb';
 function bapPMBContent() {
   return `
     <div class="dash-card" style="margin-bottom:20px;">
-      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>📋 Manajemen PMB</h3>
+      <div class="dash-card-head">
+        <h3>${I.userPlus} Manajemen PMB</h3>
         <div style="display:flex;gap:8px;">
           <button class="pmb-mgmt-btn active" data-tab="list">Daftar Pendaftar</button>
           <button class="pmb-mgmt-btn" data-tab="add">+ Tambah Offline</button>
         </div>
       </div>
       <div class="dash-card-body" id="pmbMgmtContent">
-        <div style="text-align:center;padding:20px;color:hsl(215 15% 55%);">Memuat data...</div>
+        <div style="text-align:center;padding:20px;color:var(--text-muted);">Memuat data...</div>
+      </div>
+    </div>
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="pmbDetailModal">
+      <div class="modal" style="max-width:580px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 style="font-family:var(--font-heading);font-size:1.1rem;">Detail Pendaftar</h3>
+          <button class="btn btn-ghost btn-icon" id="closeDetailModal" style="width:32px;height:32px;padding:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="pmbDetailContent"></div>
       </div>
     </div>`;
 }
@@ -552,13 +565,28 @@ async function initPMBManagement() {
       else if (btn.dataset.tab === 'add') showOfflineForm();
     });
   });
+
+  // Close detail modal
+  document.getElementById('closeDetailModal')?.addEventListener('click', () => {
+    document.getElementById('pmbDetailModal')?.classList.remove('active');
+  });
+  document.getElementById('pmbDetailModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'pmbDetailModal') e.target.classList.remove('active');
+  });
+
   loadRegistrationList();
 }
+
+// Store registrations globally for filtering
+let _pmbRegistrations = [];
 
 async function loadRegistrationList() {
   const content = document.getElementById('pmbMgmtContent');
   if (!content) return;
-  content.innerHTML = '<div style="text-align:center;padding:20px;">Memuat...</div>';
+  content.innerHTML = `<div style="text-align:center;padding:24px;">
+    <div class="anim-spin" style="width:24px;height:24px;border:2.5px solid var(--gray-200);border-top-color:var(--primary-500);border-radius:50%;margin:0 auto 8px;"></div>
+    <p style="color:var(--text-muted);font-size:var(--text-sm);">Memuat data pendaftar...</p>
+  </div>`;
 
   try {
     const [regRes, statsRes] = await Promise.all([
@@ -567,61 +595,281 @@ async function loadRegistrationList() {
     ]);
     const regData = await regRes.json();
     const stats = await statsRes.json();
-    const registrations = regData.data || [];
+    _pmbRegistrations = regData.data || [];
 
-    content.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
-        <div style="background:hsl(215 80% 95%);padding:10px;border-radius:8px;text-align:center;">
-          <div style="font-weight:800;font-size:1.3rem;color:hsl(215 70% 45%);">${stats.total_pendaftar}</div>
-          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Total</div>
-        </div>
-        <div style="background:hsl(40 80% 93%);padding:10px;border-radius:8px;text-align:center;">
-          <div style="font-weight:800;font-size:1.3rem;color:hsl(40 60% 40%);">${stats.total_proses}</div>
-          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Proses</div>
-        </div>
-        <div style="background:hsl(150 50% 92%);padding:10px;border-radius:8px;text-align:center;">
-          <div style="font-weight:800;font-size:1.3rem;color:hsl(150 50% 35%);">${stats.total_diterima}</div>
-          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Diterima</div>
-        </div>
-        <div style="background:hsl(0 60% 93%);padding:10px;border-radius:8px;text-align:center;">
-          <div style="font-weight:800;font-size:1.3rem;color:hsl(0 55% 45%);">${stats.total_ditolak}</div>
-          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Ditolak</div>
+    renderPMBList(stats, _pmbRegistrations);
+  } catch (err) {
+    content.innerHTML = `<div style="text-align:center;padding:24px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger-500)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p style="color:var(--danger-600);font-weight:var(--font-semibold);margin-bottom:4px;">Gagal memuat data</p>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);">Pastikan backend server berjalan di port 8080</p>
+      <button class="btn btn-outline" style="margin-top:12px;" onclick="loadRegistrationList()">Coba Lagi</button>
+    </div>`;
+  }
+}
+
+function renderPMBList(stats, registrations) {
+  const content = document.getElementById('pmbMgmtContent');
+  if (!content) return;
+
+  content.innerHTML = `
+    <!-- Stat Cards -->
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat-box">
+        <div class="stat-icon blue">${I.users}</div>
+        <div class="stat-info">
+          <div class="stat-value">${stats.total_pendaftar}</div>
+          <div class="stat-label">Total Pendaftar</div>
         </div>
       </div>
+      <div class="stat-box">
+        <div class="stat-icon gold">${I.clock}</div>
+        <div class="stat-info">
+          <div class="stat-value">${stats.total_proses}</div>
+          <div class="stat-label">Menunggu</div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon green">${I.checkCircle}</div>
+        <div class="stat-info">
+          <div class="stat-value">${stats.total_diterima}</div>
+          <div class="stat-label">Diterima</div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon rose">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">${stats.total_ditolak}</div>
+          <div class="stat-label">Ditolak</div>
+        </div>
+      </div>
+    </div>
 
-      ${registrations.length === 0 ? 
-        '<p style="text-align:center;color:hsl(215 15% 55%);padding:20px;">Belum ada pendaftar.</p>' :
-        `<table class="sch-table" style="font-size:0.82rem;">
-          <thead><tr>
-            <th>No. Daftar</th><th>Nama</th><th>NIK</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
-          </tr></thead>
-          <tbody>
-            ${registrations.map(r => `<tr>
-              <td style="font-family:monospace;font-weight:600;">${r.no_pendaftaran}</td>
-              <td><strong>${r.nama}</strong></td>
-              <td>${r.nik}</td>
-              <td>${r.prodi_pilihan || '-'}</td>
-              <td><span class="badge-sm ${r.metode === 'online' ? 'blue' : 'warning'}">${r.metode}</span></td>
-              <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
-              <td>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                  <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
-                  <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
-                  <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Konfirmasi Bayar">💰 Bayar</button>
-                </div>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`
-      }`;
+    <!-- Search & Filter Bar -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <div style="flex:1;min-width:200px;position:relative;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="pmbSearch" class="form-input" placeholder="Cari nama, NIK, atau no. pendaftaran..." style="padding-left:36px;">
+      </div>
+      <select id="pmbFilterStatus" class="form-select" style="width:auto;min-width:140px;">
+        <option value="">Semua Status</option>
+        <option value="menunggu">Menunggu</option>
+        <option value="proses">Proses</option>
+        <option value="diterima">Diterima</option>
+        <option value="ditolak">Ditolak</option>
+      </select>
+      <select id="pmbFilterProdi" class="form-select" style="width:auto;min-width:160px;">
+        <option value="">Semua Prodi</option>
+        <option value="S1 Administrasi Publik">S1 Adm. Publik</option>
+        <option value="S1 Administrasi Bisnis">S1 Adm. Bisnis</option>
+        <option value="S2 Administrasi Publik">S2 Adm. Publik</option>
+        <option value="D3 Ilmu Administrasi">D3 Ilmu Adm.</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">
+        ${I.fileText} Export
+      </button>
+    </div>
 
-    // Bind action buttons
-    document.querySelectorAll('.mgmt-action-btn').forEach(btn => {
-      btn.addEventListener('click', () => handleMgmtAction(btn.dataset.action, btn.dataset));
+    <!-- Table -->
+    <div id="pmbTableWrapper">
+      ${renderPMBTable(registrations)}
+    </div>
+
+    <!-- Result count -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+      <p style="font-size:var(--text-xs);color:var(--text-muted);" id="pmbResultCount">
+        Menampilkan ${registrations.length} pendaftar
+      </p>
+    </div>`;
+
+  // Bind search & filter
+  const searchInput = document.getElementById('pmbSearch');
+  const statusFilter = document.getElementById('pmbFilterStatus');
+  const prodiFilter = document.getElementById('pmbFilterProdi');
+
+  const filterFn = () => {
+    const q = (searchInput?.value || '').toLowerCase();
+    const status = statusFilter?.value || '';
+    const prodi = prodiFilter?.value || '';
+    let filtered = _pmbRegistrations.filter(r => {
+      const matchQ = !q || r.nama.toLowerCase().includes(q) || r.nik.includes(q) || (r.no_pendaftaran || '').toLowerCase().includes(q);
+      const matchStatus = !status || r.status === status;
+      const matchProdi = !prodi || r.prodi_pilihan === prodi;
+      return matchQ && matchStatus && matchProdi;
     });
-  } catch (err) {
-    content.innerHTML = '<p style="color:hsl(0 60% 50%);text-align:center;">❌ Gagal memuat data. Pastikan server backend berjalan.</p>';
+    document.getElementById('pmbTableWrapper').innerHTML = renderPMBTable(filtered);
+    document.getElementById('pmbResultCount').textContent = `Menampilkan ${filtered.length} dari ${_pmbRegistrations.length} pendaftar`;
+    bindPMBActions();
+  };
+
+  searchInput?.addEventListener('input', filterFn);
+  statusFilter?.addEventListener('change', filterFn);
+  prodiFilter?.addEventListener('change', filterFn);
+
+  // Export CSV
+  document.getElementById('pmbExportBtn')?.addEventListener('click', () => exportPMBCSV(_pmbRegistrations));
+
+  // Bind action buttons
+  bindPMBActions();
+}
+
+function renderPMBTable(registrations) {
+  if (registrations.length === 0) {
+    return `<div style="text-align:center;padding:32px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);">Tidak ada pendaftar ditemukan</p>
+    </div>`;
   }
+
+  return `<div class="table-wrapper">
+    <table class="table">
+      <thead><tr>
+        <th>No. Daftar</th><th>Nama</th><th>NIK</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
+      </tr></thead>
+      <tbody>
+        ${registrations.map(r => `<tr class="pmb-row" data-id="${r.id}" style="cursor:pointer;">
+          <td><code style="font-family:var(--font-mono);font-weight:600;font-size:0.78rem;background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${r.no_pendaftaran}</code></td>
+          <td><strong>${r.nama}</strong></td>
+          <td style="font-family:var(--font-mono);font-size:0.82rem;">${r.nik}</td>
+          <td>${r.prodi_pilihan || '-'}</td>
+          <td><span class="badge ${r.metode === 'online' ? 'badge-primary' : 'badge-warning'}">${r.metode}</span></td>
+          <td><span class="badge ${r.status === 'diterima' ? 'badge-success' : r.status === 'ditolak' ? 'badge-danger' : r.status === 'proses' ? 'badge-primary' : 'badge-warning'}">${r.status}</span></td>
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;" onclick="event.stopPropagation();">
+              <button class="btn btn-sm btn-outline mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Akun
+              </button>
+              <button class="btn btn-sm btn-success mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Validasi
+              </button>
+              <button class="btn btn-sm btn-accent mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Konfirmasi Bayar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Bayar
+              </button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function bindPMBActions() {
+  // Action buttons
+  document.querySelectorAll('.mgmt-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleMgmtAction(btn.dataset.action, btn.dataset);
+    });
+  });
+
+  // Row click → detail modal
+  document.querySelectorAll('.pmb-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = parseInt(row.dataset.id);
+      const reg = _pmbRegistrations.find(r => r.id === id);
+      if (reg) showRegistrantDetail(reg);
+    });
+  });
+}
+
+function showRegistrantDetail(reg) {
+  const modal = document.getElementById('pmbDetailModal');
+  const content = document.getElementById('pmbDetailContent');
+  if (!modal || !content) return;
+
+  const statusColors = { diterima: 'badge-success', ditolak: 'badge-danger', proses: 'badge-primary', menunggu: 'badge-warning' };
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--gray-100);">
+      <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.2rem;">
+        ${(reg.nama || 'X').charAt(0).toUpperCase()}
+      </div>
+      <div style="flex:1;">
+        <h4 style="font-family:var(--font-heading);font-size:1.1rem;margin-bottom:2px;">${reg.nama}</h4>
+        <code style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${reg.no_pendaftaran}</code>
+      </div>
+      <span class="badge ${statusColors[reg.status] || 'badge-warning'}" style="font-size:0.78rem;">${reg.status}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">NIK</p>
+        <p style="font-weight:var(--font-semibold);font-family:var(--font-mono);font-size:0.88rem;">${reg.nik}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Program Studi</p>
+        <p style="font-weight:var(--font-semibold);font-size:0.88rem;">${reg.prodi_pilihan || '-'}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Email</p>
+        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.email || '-'}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Telepon</p>
+        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.telepon_1 || '-'}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Metode Pendaftaran</p>
+        <span class="badge ${reg.metode === 'online' ? 'badge-primary' : 'badge-warning'}">${reg.metode}</span>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Asal Sekolah</p>
+        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.asal_sekolah || '-'}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Tanggal Daftar</p>
+        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.created_at ? new Date(reg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
+      </div>
+      <div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Alamat</p>
+        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.alamat || '-'}</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-100);">
+      <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${reg.id}" data-email="${reg.email}" data-prodi="${reg.prodi_pilihan}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Buat Akun
+      </button>
+      <button class="btn btn-success btn-sm mgmt-action-btn" data-action="validate" data-id="${reg.id}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Validasi
+      </button>
+      <button class="btn btn-accent btn-sm mgmt-action-btn" data-action="confirm-pay" data-id="${reg.id}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Konfirmasi Bayar
+      </button>
+    </div>`;
+
+  // Bind modal action buttons
+  content.querySelectorAll('.mgmt-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleMgmtAction(btn.dataset.action, btn.dataset);
+    });
+  });
+
+  modal.classList.add('active');
+}
+
+function exportPMBCSV(registrations) {
+  if (!registrations.length) { alert('Tidak ada data untuk diexport.'); return; }
+  const headers = ['No Pendaftaran','Nama','NIK','Email','Prodi','Metode','Status','Asal Sekolah','Telepon'];
+  const rows = registrations.map(r => [
+    r.no_pendaftaran, r.nama, r.nik, r.email || '', r.prodi_pilihan || '',
+    r.metode, r.status, r.asal_sekolah || '', r.telepon_1 || ''
+  ]);
+  const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `PMB_Data_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 async function handleMgmtAction(action, data) {
@@ -703,45 +951,47 @@ function showOfflineForm() {
   const prodiOptions = ['S1 Administrasi Publik', 'S1 Administrasi Bisnis', 'S2 Administrasi Publik', 'D3 Ilmu Administrasi'];
 
   content.innerHTML = `
-    <form id="offlineRegForm" style="max-width:600px;">
-      <h4 style="margin:0 0 16px;">➕ Input Data Mahasiswa Baru (Offline)</h4>
+    <form id="offlineRegForm" style="max-width:640px;">
+      <h4 style="font-family:var(--font-heading);margin:0 0 20px;display:flex;align-items:center;gap:8px;">
+        ${I.userPlus} Input Data Mahasiswa Baru (Offline)
+      </h4>
       
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Program Studi *</label>
-          <select name="prodi_pilihan" required style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Program Studi *</label>
+          <select name="prodi_pilihan" required class="form-select">
             <option value="">Pilih Prodi</option>
             ${prodiOptions.map(p => `<option value="${p}">${p}</option>`).join('')}
           </select>
         </div>
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">NIK *</label>
-          <input type="text" name="nik" required placeholder="NIK" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        <div class="form-group">
+          <label class="form-label">NIK *</label>
+          <input type="text" name="nik" required placeholder="Nomor Induk Kependudukan" class="form-input">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Nama Lengkap *</label>
-          <input type="text" name="nama" required placeholder="Nama" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap *</label>
+          <input type="text" name="nama" required placeholder="Nama lengkap sesuai KTP" class="form-input">
         </div>
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Email</label>
-          <input type="email" name="email" placeholder="Email" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" placeholder="email@example.com" class="form-input">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Telepon</label>
-          <input type="tel" name="telepon_1" placeholder="08xxx" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Telepon</label>
+          <input type="tel" name="telepon_1" placeholder="08xxxxxxxxxx" class="form-input">
         </div>
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Asal Sekolah *</label>
-          <input type="text" name="asal_sekolah" required placeholder="Asal Sekolah" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        <div class="form-group">
+          <label class="form-label">Asal Sekolah *</label>
+          <input type="text" name="asal_sekolah" required placeholder="Nama SMA/SMK/MA" class="form-input">
         </div>
       </div>
       
-      <button type="submit" style="background:linear-gradient(135deg,hsl(180 70% 42%),hsl(180 60% 36%));color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.88rem;" id="offlineSubmitBtn">
-        📝 Daftarkan & Buat Akun
+      <button type="submit" class="btn btn-primary" id="offlineSubmitBtn">
+        ${I.userPlus} Daftarkan & Buat Akun
       </button>
     </form>`;
 
