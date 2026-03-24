@@ -2,8 +2,7 @@
 
 > Sistem Informasi Akademik dan E-Learning untuk Sekolah Tinggi Ilmu Administrasi Bayuangga Probolinggo.
 
-[![CI/CD](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/ci.yml/badge.svg)](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/ci.yml)
-[![Deploy](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/deploy.yml/badge.svg)](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/deploy.yml)
+[![CI](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/ci.yml/badge.svg)](https://github.com/WagYu31/WEBSITE-SIAKAD-ELEARNING-/actions/workflows/ci.yml)
 
 ---
 
