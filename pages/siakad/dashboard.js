@@ -877,7 +877,12 @@ async function handleMgmtAction(action, data) {
         });
         result = await res.json();
         if (res.ok) {
-          alert(`✅ Akun dibuat!\n\nNIM: ${result.nim}\nPassword: ${result.plain_password}\nEmail: ${result.email}`);
+          const pwd = result.password;
+          if (pwd) {
+            alert(`✅ Akun dibuat!\n\nNIM: ${result.nim}\nPassword: ${pwd}\nEmail: ${result.email}`);
+          } else {
+            alert(`ℹ️ Akun sudah dibuat sebelumnya.\n\nNIM: ${result.nim}\nEmail: ${result.email}\n\nPassword hanya ditampilkan saat pertama kali dibuat.`);
+          }
         } else {
           alert('❌ ' + (result.error || 'Gagal membuat akun'));
         }
