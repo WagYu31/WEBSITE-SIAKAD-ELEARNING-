@@ -522,6 +522,42 @@
 .badge-sm.warning { background: hsl(42 80% 92%); color: hsl(42 80% 35%); }
 .badge-sm.success { background: hsl(150 50% 92%); color: hsl(150 50% 30%); }
 .badge-sm.primary { background: hsl(215 60% 95%); color: hsl(215 55% 40%); }
+.badge-sm.danger { background: hsl(0 60% 93%); color: hsl(0 55% 42%); }
+
+/* PMB Management Buttons (BAP Dashboard) */
+.pmb-mgmt-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid hsl(215 20% 88%);
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: hsl(215 15% 45%);
+}
+.pmb-mgmt-btn:hover { border-color: hsl(215 60% 70%); color: hsl(215 70% 45%); }
+.pmb-mgmt-btn.active {
+  background: hsl(215 70% 50%);
+  color: #fff;
+  border-color: hsl(215 70% 50%);
+}
+.mgmt-action-btn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid hsl(215 20% 88%);
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: hsl(215 15% 40%);
+}
+.mgmt-action-btn:hover {
+  background: hsl(215 80% 96%);
+  border-color: hsl(215 60% 75%);
+  transform: translateY(-1px);
+}
 
 .prodi-card h4 { font-size: 1.05rem; font-weight: 700; color: hsl(215 55% 20%); margin-bottom: 8px; }
 .prodi-card p { font-size: 0.84rem; color: hsl(215 15% 55%); line-height: 1.6; margin-bottom: 14px; }

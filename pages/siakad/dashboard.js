@@ -64,6 +64,7 @@ const MENUS = {
   bap: [
     { label: 'SIAKAD', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
+      { icon: I.users, text: 'Manajemen PMB', id: 'pmb' },
       { icon: I.users, text: 'Data Mahasiswa', id: 'mahasiswa' },
       { icon: I.barChart, text: 'Statistik Akademik', id: 'statistik' },
       { icon: I.clipboard, text: 'Transkrip', id: 'transkrip' },
@@ -522,6 +523,275 @@ function bapContent(user) {
     </div>`;
 }
 
+// ---- PMB Management Page (BAP) ----
+const PMB_API = 'http://localhost:8080/api/pmb';
+
+function bapPMBContent() {
+  return `
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>📋 Manajemen PMB</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="pmb-mgmt-btn active" data-tab="list">Daftar Pendaftar</button>
+          <button class="pmb-mgmt-btn" data-tab="add">+ Tambah Offline</button>
+        </div>
+      </div>
+      <div class="dash-card-body" id="pmbMgmtContent">
+        <div style="text-align:center;padding:20px;color:hsl(215 15% 55%);">Memuat data...</div>
+      </div>
+    </div>`;
+}
+
+async function initPMBManagement() {
+  // Tab switching
+  document.querySelectorAll('.pmb-mgmt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pmb-mgmt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.tab === 'list') loadRegistrationList();
+      else if (btn.dataset.tab === 'add') showOfflineForm();
+    });
+  });
+  loadRegistrationList();
+}
+
+async function loadRegistrationList() {
+  const content = document.getElementById('pmbMgmtContent');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:20px;">Memuat...</div>';
+
+  try {
+    const [regRes, statsRes] = await Promise.all([
+      fetch(`${PMB_API}/registrations`),
+      fetch(`${PMB_API}/stats`)
+    ]);
+    const regData = await regRes.json();
+    const stats = await statsRes.json();
+    const registrations = regData.data || [];
+
+    content.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div style="background:hsl(215 80% 95%);padding:10px;border-radius:8px;text-align:center;">
+          <div style="font-weight:800;font-size:1.3rem;color:hsl(215 70% 45%);">${stats.total_pendaftar}</div>
+          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Total</div>
+        </div>
+        <div style="background:hsl(40 80% 93%);padding:10px;border-radius:8px;text-align:center;">
+          <div style="font-weight:800;font-size:1.3rem;color:hsl(40 60% 40%);">${stats.total_proses}</div>
+          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Proses</div>
+        </div>
+        <div style="background:hsl(150 50% 92%);padding:10px;border-radius:8px;text-align:center;">
+          <div style="font-weight:800;font-size:1.3rem;color:hsl(150 50% 35%);">${stats.total_diterima}</div>
+          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Diterima</div>
+        </div>
+        <div style="background:hsl(0 60% 93%);padding:10px;border-radius:8px;text-align:center;">
+          <div style="font-weight:800;font-size:1.3rem;color:hsl(0 55% 45%);">${stats.total_ditolak}</div>
+          <div style="font-size:0.75rem;color:hsl(215 15% 50%);">Ditolak</div>
+        </div>
+      </div>
+
+      ${registrations.length === 0 ? 
+        '<p style="text-align:center;color:hsl(215 15% 55%);padding:20px;">Belum ada pendaftar.</p>' :
+        `<table class="sch-table" style="font-size:0.82rem;">
+          <thead><tr>
+            <th>No. Daftar</th><th>Nama</th><th>NIK</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
+          </tr></thead>
+          <tbody>
+            ${registrations.map(r => `<tr>
+              <td style="font-family:monospace;font-weight:600;">${r.no_pendaftaran}</td>
+              <td><strong>${r.nama}</strong></td>
+              <td>${r.nik}</td>
+              <td>${r.prodi_pilihan || '-'}</td>
+              <td><span class="badge-sm ${r.metode === 'online' ? 'blue' : 'warning'}">${r.metode}</span></td>
+              <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
+                  <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
+                  <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Konfirmasi Bayar">💰 Bayar</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
+      }`;
+
+    // Bind action buttons
+    document.querySelectorAll('.mgmt-action-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleMgmtAction(btn.dataset.action, btn.dataset));
+    });
+  } catch (err) {
+    content.innerHTML = '<p style="color:hsl(0 60% 50%);text-align:center;">❌ Gagal memuat data. Pastikan server backend berjalan.</p>';
+  }
+}
+
+async function handleMgmtAction(action, data) {
+  try {
+    let res, result;
+    switch (action) {
+      case 'create-account':
+        res = await fetch(`${PMB_API}/account/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ registration_id: parseInt(data.id) }),
+        });
+        result = await res.json();
+        if (res.ok) {
+          alert(`✅ Akun dibuat!\n\nNIM: ${result.nim}\nPassword: ${result.password}\nEmail: ${result.email}`);
+        } else {
+          alert('❌ ' + (result.error || 'Gagal membuat akun'));
+        }
+        break;
+
+      case 'validate':
+        // First get account
+        const accRes = await fetch(`${PMB_API}/account/${data.id}`);
+        if (!accRes.ok) {
+          alert('❌ Akun belum dibuat. Buat akun terlebih dahulu.');
+          return;
+        }
+        const accData = await accRes.json();
+        if (accData.is_validated) {
+          alert('ℹ️ Akun sudah divalidasi sebelumnya.');
+          return;
+        }
+        // Get account ID from DB  
+        const valRes = await fetch(`${PMB_API}/account/${data.id}/validate`, { method: 'PUT' });
+        result = await valRes.json();
+        if (valRes.ok) {
+          alert('✅ ' + result.message);
+          loadRegistrationList();
+        } else {
+          alert('❌ ' + (result.error || 'Gagal validasi'));
+        }
+        break;
+
+      case 'confirm-pay':
+        // First create payment if needed
+        const payCreateRes = await fetch(`${PMB_API}/payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ registration_id: parseInt(data.id), metode_bayar: 'cash', jumlah: 350000 }),
+        });
+        if (payCreateRes.ok) {
+          const payData = await payCreateRes.json();
+          // Confirm cash payment
+          const confirmRes = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
+          if (confirmRes.ok) {
+            alert('✅ Pembayaran cash dikonfirmasi!');
+            loadRegistrationList();
+          }
+        } else {
+          const payErr = await payCreateRes.json();
+          // If payment already exists, try to get and confirm
+          if (payErr.error && payErr.error.includes('sudah')) {
+            alert('ℹ️ Pembayaran sudah tercatat.');
+          } else {
+            alert('❌ ' + (payErr.error || 'Gagal'));
+          }
+        }
+        break;
+    }
+  } catch (err) {
+    alert('❌ Error: ' + err.message);
+  }
+}
+
+function showOfflineForm() {
+  const content = document.getElementById('pmbMgmtContent');
+  if (!content) return;
+
+  const prodiOptions = ['S1 Administrasi Publik', 'S1 Administrasi Bisnis', 'S2 Administrasi Publik', 'D3 Ilmu Administrasi'];
+
+  content.innerHTML = `
+    <form id="offlineRegForm" style="max-width:600px;">
+      <h4 style="margin:0 0 16px;">➕ Input Data Mahasiswa Baru (Offline)</h4>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Program Studi *</label>
+          <select name="prodi_pilihan" required style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;">
+            <option value="">Pilih Prodi</option>
+            ${prodiOptions.map(p => `<option value="${p}">${p}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">NIK *</label>
+          <input type="text" name="nik" required placeholder="NIK" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Nama Lengkap *</label>
+          <input type="text" name="nama" required placeholder="Nama" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Email</label>
+          <input type="email" name="email" placeholder="Email" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Telepon</label>
+          <input type="tel" name="telepon_1" placeholder="08xxx" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:hsl(215 15% 50%);display:block;margin-bottom:4px;">Asal Sekolah *</label>
+          <input type="text" name="asal_sekolah" required placeholder="Asal Sekolah" style="width:100%;padding:8px 12px;border:1.5px solid hsl(215 20% 88%);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        </div>
+      </div>
+      
+      <button type="submit" style="background:linear-gradient(135deg,hsl(180 70% 42%),hsl(180 60% 36%));color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.88rem;" id="offlineSubmitBtn">
+        📝 Daftarkan & Buat Akun
+      </button>
+    </form>`;
+
+  document.getElementById('offlineRegForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('offlineSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+
+    const formData = new FormData(e.target);
+    const data = {};
+    formData.forEach((v, k) => { data[k] = v; });
+
+    try {
+      const res = await fetch(`${PMB_API}/register/offline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+
+      if (res.ok) {
+        const acc = result.account || {};
+        content.innerHTML = `
+          <div style="text-align:center;padding:24px;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">✅</div>
+            <h3 style="color:hsl(150 60% 35%);margin:0 0 12px;">Pendaftaran Offline Berhasil!</h3>
+            <div style="background:hsl(215 80% 96%);border:2px solid hsl(215 70% 55%);border-radius:10px;padding:12px;display:inline-block;font-size:1.1rem;font-weight:800;letter-spacing:2px;margin-bottom:12px;">${result.no_pendaftaran}</div>
+            ${acc.nim ? `
+              <div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 88%);border-radius:10px;padding:16px;max-width:350px;margin:12px auto;text-align:left;">
+                <h4 style="margin:0 0 10px;text-align:center;">🔐 Akun Login</h4>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid hsl(215 20% 92%);"><span style="color:hsl(215 15% 55%);font-size:0.82rem;">NIM</span><strong style="font-family:monospace;">${acc.nim}</strong></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="color:hsl(215 15% 55%);font-size:0.82rem;">Password</span><strong style="font-family:monospace;">${acc.password}</strong></div>
+              </div>
+            ` : ''}
+            <button onclick="document.querySelector('.pmb-mgmt-btn').click()" style="background:hsl(215 70% 50%);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px;">← Kembali ke Daftar</button>
+          </div>`;
+      } else {
+        alert('❌ ' + (result.error || 'Gagal'));
+        btn.disabled = false;
+        btn.textContent = '📝 Daftarkan & Buat Akun';
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+      btn.disabled = false;
+      btn.textContent = '📝 Daftarkan & Buat Akun';
+    }
+  });
+}
+
 // ---- Content Router ----
 const CONTENT_RENDERERS = { mahasiswa: mahasiswaContent, dosen: dosenContent, kaprodi: kaprodiContent, bap: bapContent };
 
@@ -575,6 +845,28 @@ export function renderDashboard(container) {
       sidebar?.classList.remove('open');
       overlay?.classList.remove('open');
       hamburger?.setAttribute('aria-expanded', 'false');
+
+      // Page routing
+      const page = link.dataset.page;
+      const mainContent = document.getElementById('dashMain');
+      if (mainContent && page === 'pmb' && user.role === 'bap') {
+        mainContent.innerHTML = `
+          ${bapPMBContent()}
+          <footer class="dash-iso-footer" role="contentinfo" aria-label="Sertifikasi ISO">
+            <span class="dash-iso-badge">${I.shield} ISO 27001 — Security</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 9241 — Usability</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 40500 — Accessibility</span>
+          </footer>`;
+        initPMBManagement();
+      } else if (mainContent && page === 'home') {
+        mainContent.innerHTML = `
+          ${contentFn(user)}
+          <footer class="dash-iso-footer" role="contentinfo" aria-label="Sertifikasi ISO">
+            <span class="dash-iso-badge">${I.shield} ISO 27001 — Security</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 9241 — Usability</span>
+            <span class="dash-iso-badge">${I.checkCircle} ISO 40500 — Accessibility</span>
+          </footer>`;
+      }
     });
   });
 
