@@ -387,7 +387,7 @@
 
 /* ======= TABLET (≤ 900px) ======= */
 @media (max-width: 900px) {
-  .portal-main { padding: 56px 20px 28px; }
+  .portal-main { padding: 56px 20px 28px; max-width: 100%; }
   .portal-sso-grid { grid-template-columns: 1fr; gap: 14px; }
   .portal-sso-thumb { height: 160px; }
   .portal-welcome {
@@ -395,15 +395,33 @@
     text-align: center;
     padding: 20px;
   }
+  .portal-welcome-text { order: 1; }
+  .portal-welcome-img { order: 0; width: 80px; height: 80px; margin: 0 auto; }
   .portal-welcome-stats { justify-content: center; }
   .portal-welcome-text h2 { font-size: 1.1rem; }
-  .portal-welcome-img { width: 90px; height: 90px; }
+  .portal-welcome-text p { justify-content: center; }
 }
 
 /* ======= MOBILE (≤ 768px) ======= */
 @media (max-width: 768px) {
-  .portal-main { padding: 52px 16px 24px; }
-  .portal-sso-thumb { height: 150px; }
+  .portal-main { padding: 52px 14px 24px; max-width: 100%; overflow-x: hidden; }
+  .portal-sso-grid { grid-template-columns: 1fr; gap: 12px; }
+  .portal-sso-thumb { height: 140px; }
+  .portal-sso-body h3 { font-size: 0.95rem; }
+  .portal-welcome {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .portal-welcome-text { order: 1; min-width: 0; }
+  .portal-welcome-text h2 { font-size: 1.05rem; word-break: break-word; }
+  .portal-welcome-text p { font-size: 0.78rem; justify-content: center; flex-wrap: wrap; }
+  .portal-welcome-img { order: 0; width: 70px; height: 70px; margin: 0 auto; }
+  .portal-welcome-stats { justify-content: center; gap: 20px; }
+  .portal-welcome-stat strong { font-size: 1.4rem; }
+  .portal-welcome-stat span { font-size: 0.68rem; }
   .portal-services-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -422,32 +440,45 @@
 
 /* ======= SMALL MOBILE (≤ 480px) ======= */
 @media (max-width: 480px) {
-  .portal-main { padding: 52px 12px 24px; }
-  .portal-sso-thumb { height: 130px; }
+  .portal { overflow-x: hidden; }
+  .portal-main { padding: 50px 10px 20px; }
+  .portal-sso-grid { gap: 10px; }
+  .portal-sso-thumb { height: 120px; }
   .portal-sso-body { padding: 12px 14px; }
-  .portal-sso-body h3 { font-size: 0.92rem; }
-  .portal-sso-body p { font-size: 0.72rem; }
-  .portal-sso-arrow { width: 30px; height: 30px; }
-  .portal-welcome { padding: 16px; gap: 12px; }
-  .portal-welcome-text h2 { font-size: 1rem; }
-  .portal-welcome-stat strong { font-size: 1.3rem; }
-  .portal-welcome-stat span { font-size: 0.65rem; }
-  .portal-welcome-img { width: 80px; height: 80px; }
+  .portal-sso-body h3 { font-size: 0.88rem; }
+  .portal-sso-body p { font-size: 0.7rem; }
+  .portal-sso-arrow { width: 28px; height: 28px; }
+  .portal-sso-arrow svg { width: 14px; height: 14px; }
+  .portal-welcome { padding: 14px; gap: 10px; border-radius: 14px; }
+  .portal-welcome-text h2 { font-size: 0.95rem; }
+  .portal-welcome-img { width: 60px; height: 60px; }
+  .portal-welcome-stats { gap: 16px; }
+  .portal-welcome-stat strong { font-size: 1.2rem; }
+  .portal-welcome-stat span { font-size: 0.62rem; }
   .portal-services-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .portal-service-card { padding: 12px 10px; border-radius: 10px; }
   .portal-service-icon { width: 36px; height: 36px; border-radius: 10px; }
   .portal-service-card h4 { font-size: 0.74rem; }
   .portal-iso-badge { font-size: 0.58rem; }
+  .portal-section-title { font-size: 0.88rem; }
+  .portal-ticker { padding: 6px 10px; border-radius: 8px; }
 }
 
 /* ======= TINY MOBILE (≤ 375px) ======= */
 @media (max-width: 375px) {
-  .portal-main { padding: 48px 10px 20px; }
-  .portal-welcome { padding: 14px; }
-  .portal-welcome-text h2 { font-size: 0.92rem; }
-  .portal-welcome-stats { gap: 18px; }
-  .portal-sso-thumb { height: 110px; }
+  .portal-main { padding: 48px 8px 16px; }
+  .portal-welcome { padding: 12px; }
+  .portal-welcome-text h2 { font-size: 0.88rem; }
+  .portal-welcome-img { width: 50px; height: 50px; }
+  .portal-welcome-stats { gap: 14px; flex-wrap: wrap; }
+  .portal-welcome-stat strong { font-size: 1.1rem; }
+  .portal-sso-thumb { height: 100px; }
+  .portal-sso-body { padding: 10px 12px; }
+  .portal-sso-body h3 { font-size: 0.82rem; }
   .portal-services-grid { gap: 6px; }
+  .portal-service-card h4 { font-size: 0.7rem; }
+  .portal-service-card p { font-size: 0.62rem; }
+  .portal-service-icon { width: 32px; height: 32px; }
 }
 
 /* ======= PORTAL HAMBURGER TOGGLE (always visible) ======= */
