@@ -8,6 +8,7 @@ import { renderLogin } from '../pages/login.js';
 import { renderDashboard } from '../pages/siakad/index.js';
 import { renderPortal } from '../pages/portal.js';
 import { renderElearning } from '../pages/elearning/index.js';
+import { renderPMB } from '../pages/pmb.js';
 
 // ---- State ----
 export const appState = {
@@ -59,6 +60,7 @@ registerRoute('/login', (container) => renderLogin(container), 'Login');
 registerRoute('/portal', (container) => renderPortal(container), 'Portal');
 registerRoute('/dashboard', (container) => renderDashboard(container), 'SIAKAD');
 registerRoute('/elearning', (container) => renderElearning(container), 'E-Learning');
+registerRoute('/pmb', (container) => renderPMB(container), 'PMB');
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {

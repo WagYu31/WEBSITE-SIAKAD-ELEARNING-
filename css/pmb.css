@@ -1,0 +1,480 @@
+/* ============================================
+   PMB (Pendaftaran Mahasiswa Baru) Styles
+   ============================================ */
+
+.pmb-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, hsl(215 25% 97%) 0%, hsl(220 20% 94%) 100%);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---- Header ---- */
+.pmb-header {
+  background: linear-gradient(135deg, hsl(215 70% 30%) 0%, hsl(220 60% 22%) 100%);
+  color: #fff;
+  padding: 24px 32px;
+}
+.pmb-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pmb-header-inner h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+.pmb-header-inner p { font-size: 0.85rem; opacity: 0.8; margin: 4px 0 0; }
+.pmb-header-logo { height: 48px; margin-left: auto; }
+.pmb-back {
+  color: #fff;
+  background: hsla(0 0% 100%/.12);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  text-decoration: none;
+  transition: background .2s;
+}
+.pmb-back:hover { background: hsla(0 0% 100%/.25); }
+
+/* ---- Stats ---- */
+.pmb-stats {
+  max-width: 1100px;
+  margin: -20px auto 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 0 32px;
+  position: relative;
+  z-index: 1;
+}
+.pmb-stat-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 20px hsla(215 30% 20%/.08);
+  transition: transform .2s, box-shadow .2s;
+}
+.pmb-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px hsla(215 30% 20%/.12); }
+.pmb-stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
+}
+.pmb-stat-icon.blue { background: hsl(215 80% 92%); color: hsl(215 70% 50%); }
+.pmb-stat-icon.gold { background: hsl(40 80% 92%); color: hsl(40 70% 45%); }
+.pmb-stat-icon.green { background: hsl(150 60% 90%); color: hsl(150 60% 38%); }
+.pmb-stat-icon.red { background: hsl(0 60% 92%); color: hsl(0 60% 48%); }
+.pmb-stat-value { font-size: 1.8rem; font-weight: 800; color: hsl(215 25% 20%); }
+.pmb-stat-label { font-size: 0.78rem; color: hsl(215 15% 55%); margin-top: 2px; }
+
+/* ---- Content Layout ---- */
+.pmb-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 40px;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 24px;
+}
+
+/* ---- Nav Sidebar ---- */
+.pmb-nav {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 2px 12px hsla(215 30% 20%/.06);
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+}
+.pmb-nav h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: hsl(215 25% 25%);
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid hsl(215 20% 92%);
+}
+.pmb-nav-link {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: hsl(215 15% 45%);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all .2s;
+  margin-bottom: 4px;
+}
+.pmb-nav-link:hover { background: hsl(215 20% 96%); color: hsl(215 70% 45%); }
+.pmb-nav-link.active {
+  background: hsl(215 70% 50%);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---- Form Container ---- */
+.pmb-form-container {
+  background: #fff;
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 2px 12px hsla(215 30% 20%/.06);
+}
+.pmb-form-container h2 { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: hsl(215 25% 20%); }
+.pmb-form-sub { font-size: 0.85rem; color: hsl(215 15% 55%); margin: 0 0 24px; }
+
+/* ---- Form Sections ---- */
+.pmb-section {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid hsl(215 20% 94%);
+}
+.pmb-section:last-of-type { border-bottom: none; }
+.pmb-section h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: hsl(215 25% 30%);
+  margin: 0 0 16px;
+}
+
+/* ---- Form Row & Fields ---- */
+.pmb-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pmb-field { position: relative; }
+.pmb-field.full { grid-column: 1 / -1; }
+.pmb-field input,
+.pmb-field select,
+.pmb-field textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid hsl(215 20% 88%);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  background: hsl(215 20% 98%);
+  color: hsl(215 25% 20%);
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+.pmb-field input:focus,
+.pmb-field select:focus,
+.pmb-field textarea:focus {
+  outline: none;
+  border-color: hsl(215 70% 55%);
+  box-shadow: 0 0 0 3px hsla(215 70% 55%/.12);
+  background: #fff;
+}
+.pmb-field input::placeholder { color: hsl(215 15% 65%); }
+.pmb-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: hsl(215 15% 50%);
+  margin-bottom: 6px;
+}
+
+/* ---- Radio Group ---- */
+.pmb-radio-group {
+  display: flex;
+  gap: 16px;
+  padding: 10px 0;
+}
+.pmb-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: hsl(215 15% 40%);
+  cursor: pointer;
+}
+.pmb-radio input[type="radio"] { accent-color: hsl(215 70% 50%); }
+
+/* ---- Submit Button ---- */
+.pmb-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, hsl(180 70% 42%) 0%, hsl(180 60% 36%) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  letter-spacing: 1px;
+}
+.pmb-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px hsla(180 70% 42%/.35);
+}
+.pmb-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---- Success ---- */
+.pmb-success {
+  text-align: center;
+  padding: 32px;
+}
+.pmb-success-icon { font-size: 3rem; margin-bottom: 12px; }
+.pmb-success h2 { color: hsl(150 60% 35%); margin: 0 0 8px; }
+.pmb-no-reg {
+  display: inline-block;
+  background: hsl(215 80% 96%);
+  border: 2px solid hsl(215 70% 55%);
+  color: hsl(215 70% 40%);
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin: 12px 0;
+}
+.pmb-success-info { font-size: 0.85rem; color: hsl(215 15% 55%); margin: 12px 0 20px; }
+.pmb-success-actions { display: flex; gap: 12px; justify-content: center; }
+
+/* ---- Buttons ---- */
+.pmb-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.pmb-btn:hover { transform: translateY(-1px); }
+.pmb-btn.blue { background: hsl(215 70% 50%); color: #fff; }
+.pmb-btn.green { background: hsl(150 55% 42%); color: #fff; }
+
+/* ---- Search Box ---- */
+.pmb-search-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.pmb-search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1.5px solid hsl(215 20% 88%);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: hsl(215 20% 98%);
+  transition: border-color .2s;
+}
+.pmb-search-input:focus { outline: none; border-color: hsl(215 70% 55%); background: #fff; }
+.pmb-search-btn {
+  padding: 12px 20px;
+  background: hsl(215 70% 50%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+}
+.pmb-search-btn:hover { background: hsl(215 70% 42%); }
+
+/* ---- Status Card ---- */
+.pmb-status-card {
+  background: hsl(215 20% 98%);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid hsl(215 20% 90%);
+}
+.pmb-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.pmb-status-header h3 { margin: 0; font-size: 1.1rem; }
+.pmb-status-no { font-size: 0.82rem; color: hsl(215 15% 55%); margin: 4px 0 0; }
+.pmb-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.pmb-badge.gold { background: hsl(40 80% 90%); color: hsl(40 60% 35%); }
+.pmb-badge.blue { background: hsl(215 80% 92%); color: hsl(215 70% 40%); }
+.pmb-badge.green { background: hsl(150 60% 90%); color: hsl(150 60% 32%); }
+.pmb-badge.red { background: hsl(0 60% 92%); color: hsl(0 60% 42%); }
+.pmb-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: hsl(215 15% 40%);
+}
+.pmb-status-date {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: hsl(215 15% 60%);
+}
+
+/* ---- Error ---- */
+.pmb-error {
+  background: hsl(0 60% 95%);
+  color: hsl(0 60% 42%);
+  padding: 16px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ---- Payment Card ---- */
+.pmb-payment-card {
+  background: hsl(215 20% 98%);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid hsl(215 20% 90%);
+}
+.pmb-pay-info h3 { margin: 0 0 4px; }
+.pmb-pay-info p { color: hsl(215 15% 55%); font-size: 0.85rem; margin: 0 0 16px; }
+.pmb-pay-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid hsl(215 20% 90%);
+  margin-bottom: 20px;
+}
+.pmb-pay-amount span { color: hsl(215 15% 50%); font-size: 0.9rem; }
+.pmb-pay-amount strong { font-size: 1.2rem; color: hsl(215 25% 20%); }
+.pmb-pay-methods h4 { font-size: 0.9rem; color: hsl(215 15% 40%); margin: 0 0 12px; }
+.pmb-pay-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pmb-pay-option {
+  background: #fff;
+  border: 2px solid hsl(215 20% 90%);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+.pmb-pay-option:hover {
+  border-color: hsl(215 70% 55%);
+  box-shadow: 0 4px 15px hsla(215 70% 55%/.15);
+  transform: translateY(-2px);
+}
+.pmb-pay-option:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.pmb-pay-option-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+.pmb-pay-option-title { display: block; font-weight: 700; color: hsl(215 25% 25%); margin-bottom: 4px; }
+.pmb-pay-option-desc { display: block; font-size: 0.75rem; color: hsl(215 15% 55%); }
+
+/* ---- Pay Done ---- */
+.pmb-pay-done {
+  text-align: center;
+  padding: 24px;
+}
+.pmb-pay-done h3 { color: hsl(150 60% 35%); margin: 8px 0; }
+.pmb-pay-done p { color: hsl(215 15% 50%); font-size: 0.88rem; margin: 4px 0; }
+.pmb-pay-done.cash h3 { color: hsl(215 70% 45%); }
+.pmb-pay-cash-info {
+  background: hsl(215 20% 96%);
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: hsl(215 15% 40%);
+  text-align: left;
+}
+
+/* ---- Info Cards ---- */
+.pmb-info-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.pmb-info-card {
+  background: hsl(215 20% 98%);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid hsl(215 20% 92%);
+}
+.pmb-info-card h3 { font-size: 0.95rem; margin: 0 0 12px; color: hsl(215 25% 25%); }
+.pmb-info-table {
+  width: 100%;
+  font-size: 0.85rem;
+  border-collapse: collapse;
+}
+.pmb-info-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid hsl(215 20% 93%);
+  color: hsl(215 15% 40%);
+}
+.pmb-info-table td:last-child { text-align: right; }
+.pmb-req-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.pmb-req-list li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  font-size: 0.85rem;
+  color: hsl(215 15% 40%);
+}
+.pmb-req-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: hsl(150 60% 42%);
+  font-weight: 700;
+}
+
+/* ---- Footer ---- */
+.pmb-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 32px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: hsl(215 15% 55%);
+}
+.pmb-footer span { display: flex; align-items: center; gap: 6px; }
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .pmb-header { padding: 16px 20px; }
+  .pmb-header-inner h1 { font-size: 1.1rem; }
+  .pmb-header-logo { height: 36px; }
+  .pmb-stats {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 16px;
+    margin-top: -16px;
+    gap: 10px;
+  }
+  .pmb-content {
+    grid-template-columns: 1fr;
+    padding: 0 16px 32px;
+  }
+  .pmb-nav {
+    order: -1;
+    position: static;
+    display: flex;
+    gap: 0;
+    padding: 12px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .pmb-nav h3 { display: none; }
+  .pmb-nav-link { white-space: nowrap; font-size: 0.8rem; padding: 8px 12px; }
+  .pmb-form-container { padding: 20px; }
+  .pmb-row { grid-template-columns: 1fr; }
+  .pmb-info-cards { grid-template-columns: 1fr; }
+  .pmb-pay-options { grid-template-columns: 1fr; }
+  .pmb-search-box { flex-direction: column; }
+  .pmb-success-actions { flex-direction: column; }
+}
