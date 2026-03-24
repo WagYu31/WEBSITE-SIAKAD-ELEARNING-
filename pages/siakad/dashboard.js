@@ -740,9 +740,9 @@ function renderPMBTable(registrations) {
           <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
           <td onclick="event.stopPropagation();">
             <div style="display:flex;gap:4px;white-space:nowrap;">
-              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
-              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
               <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰 Bayar</button>
+              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
+              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -824,17 +824,17 @@ function showRegistrantDetail(reg) {
     </div>
 
     <div style="display:flex;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-100);">
-      <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${reg.id}" data-email="${reg.email}" data-prodi="${reg.prodi_pilihan}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Buat Akun
+      <button class="btn btn-accent btn-sm mgmt-action-btn" data-action="confirm-pay" data-id="${reg.id}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Konfirmasi Bayar
       </button>
       <button class="btn btn-success btn-sm mgmt-action-btn" data-action="validate" data-id="${reg.id}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Validasi
       </button>
-      <button class="btn btn-accent btn-sm mgmt-action-btn" data-action="confirm-pay" data-id="${reg.id}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Konfirmasi Bayar
+      <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${reg.id}" data-email="${reg.email}" data-prodi="${reg.prodi_pilihan}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Buat Akun
       </button>
     </div>`;
 
