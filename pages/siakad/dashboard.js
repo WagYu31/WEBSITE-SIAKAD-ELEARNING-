@@ -38,7 +38,7 @@ const MENUS = {
       { icon: I.calendar, text: 'Jadwal Kuliah', id: 'jadwal' },
       { icon: I.clipboard, text: 'KRS / KHS', id: 'krs' },
       { icon: I.award, text: 'Nilai', id: 'nilai' },
-      { icon: I.users, text: 'Data Mahasiswa', id: 'data' },
+      { icon: I.users, text: 'Profil Saya', id: 'data' },
     ]},
   ],
   dosen: [
@@ -1203,7 +1203,8 @@ async function loadMahasiswaList() {
     // Get accounts (validated = mahasiswa aktif)
     const res = await fetch(`${MHS_API}/registrations`);
     if (!res.ok) throw new Error('Gagal memuat data');
-    const registrations = await res.json();
+    const response = await res.json();
+    const registrations = Array.isArray(response) ? response : (response.data || []);
 
     // Filter only those with accounts (status = diterima)
     _mahasiswaList = registrations
