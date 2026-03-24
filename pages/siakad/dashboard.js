@@ -947,42 +947,123 @@ function showOfflineForm() {
       <h4 style="font-family:var(--font-heading);margin:0 0 20px;display:flex;align-items:center;gap:8px;">
         ${I.userPlus} Input Data Mahasiswa Baru (Offline)
       </h4>
-      
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-        <div class="form-group">
-          <label class="form-label">Program Studi *</label>
-          <select name="prodi_pilihan" required class="form-select">
-            <option value="">Pilih Prodi</option>
-            ${prodiOptions.map(p => `<option value="${p}">${p}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">NIK *</label>
-          <input type="text" name="nik" required placeholder="Nomor Induk Kependudukan" class="form-input">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-        <div class="form-group">
-          <label class="form-label">Nama Lengkap *</label>
-          <input type="text" name="nama" required placeholder="Nama lengkap sesuai KTP" class="form-input">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" name="email" placeholder="email@example.com" class="form-input">
+      <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:20px;">Lengkapi data berikut. Tanda <span style="color:hsl(0 70% 55%);">*</span> wajib diisi.</p>
+
+      <!-- Program Studi -->
+      <div class="off-section">
+        <h5 class="off-section-title">🎓 Program Studi Pilihan</h5>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Program Studi *</label>
+            <select name="prodi_pilihan" required class="form-select">
+              <option value="">Pilih Program Studi</option>
+              ${prodiOptions.map(p => `<option value="${p}">${p}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-        <div class="form-group">
-          <label class="form-label">Telepon</label>
-          <input type="tel" name="telepon_1" placeholder="08xxxxxxxxxx" class="form-input">
+
+      <!-- Data Pribadi -->
+      <div class="off-section">
+        <h5 class="off-section-title">👤 Data Pribadi</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">NISN</label><input type="text" name="nisn" placeholder="NISN" class="form-input"></div>
+          <div class="form-group"><label class="form-label">KIP</label><input type="text" name="kip" placeholder="KIP" class="form-input"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Asal Sekolah *</label>
-          <input type="text" name="asal_sekolah" required placeholder="Nama SMA/SMK/MA" class="form-input">
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">KKS</label><input type="text" name="kks" placeholder="KKS" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" required placeholder="NIK" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama Lengkap *</label><input type="text" name="nama" required placeholder="Nama Lengkap" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" placeholder="Tempat Lahir" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Tanggal Lahir</label>
+            <input type="date" name="tanggal_lahir" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            <div style="display:flex;gap:16px;padding-top:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-sm);cursor:pointer;"><input type="radio" name="gender" value="Laki-laki"> Laki-laki</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-sm);cursor:pointer;"><input type="radio" name="gender" value="Perempuan"> Perempuan</label>
+            </div>
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Agama</label>
+            <select name="agama" class="form-select">
+              <option value="">Agama</option>
+              ${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => `<option value="${a}">${a}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" required placeholder="Email" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" required placeholder="08xxxxxxxxxx" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" placeholder="Telepon 2 (Optional)" class="form-input"></div>
         </div>
       </div>
-      
-      <button type="submit" class="btn btn-primary" id="offlineSubmitBtn">
+
+      <!-- Alamat -->
+      <div class="off-section">
+        <h5 class="off-section-title">📍 Alamat</h5>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Alamat Lengkap</label>
+          <textarea name="alamat" placeholder="Alamat Lengkap" rows="3" class="form-input" style="resize:vertical;"></textarea>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Provinsi</label>
+            <select name="provinsi" class="form-select">
+              <option value="">Provinsi</option>
+              ${['Jawa Timur','Jawa Tengah','Jawa Barat','DKI Jakarta','Bali','Sumatera Utara','Sumatera Barat','Kalimantan Timur','Sulawesi Selatan','Lainnya'].map(p => `<option value="${p}">${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Kota/Kabupaten</label><input type="text" name="kota" placeholder="Kota/Kabupaten" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kecamatan</label><input type="text" name="kecamatan" placeholder="Kecamatan" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Desa/Kelurahan</label><input type="text" name="kelurahan" placeholder="Desa/Kelurahan" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kode Pos</label><input type="text" name="kode_pos" placeholder="Kode Pos" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Anak Ke</label><input type="number" name="anak_ke" placeholder="Anak Ke" class="form-input"></div>
+        </div>
+      </div>
+
+      <!-- Data Orang Tua / Wali -->
+      <div class="off-section">
+        <h5 class="off-section-title">👨‍👩‍👧 Data Orang Tua / Wali</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Dari Jumlah Anak</label><input type="number" name="dari_jumlah" placeholder="Dari Jumlah Anak" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Nama Ayah</label><input type="text" name="nama_ayah" placeholder="Nama Ayah" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama Ibu</label><input type="text" name="nama_ibu" placeholder="Nama Ibu" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Pekerjaan Ayah</label><input type="text" name="pekerjaan_ayah" placeholder="Pekerjaan Ayah" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Pekerjaan Ibu</label><input type="text" name="pekerjaan_ibu" placeholder="Pekerjaan Ibu" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK Ayah</label><input type="text" name="nik_ayah" placeholder="NIK Ayah" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">NIK Ibu</label><input type="text" name="nik_ibu" placeholder="NIK Ibu" class="form-input"></div>
+          <div class="form-group"><label class="form-label">No. KK</label><input type="text" name="no_kk" placeholder="No. KK" class="form-input"></div>
+        </div>
+      </div>
+
+      <!-- Asal Sekolah -->
+      <div class="off-section">
+        <h5 class="off-section-title">🏫 Asal Sekolah</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Asal Sekolah *</label><input type="text" name="asal_sekolah" required placeholder="Asal Sekolah" class="form-input"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="offlineSubmitBtn" style="width:100%;padding:14px;">
         ${I.userPlus} Daftarkan & Buat Akun
       </button>
     </form>`;

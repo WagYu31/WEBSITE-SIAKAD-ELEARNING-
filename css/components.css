@@ -779,3 +779,32 @@
   background: var(--gray-200);
   color: var(--text-primary);
 }
+
+/* ============================================
+   OFFLINE FORM SECTIONS
+   ============================================ */
+.off-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.off-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 20px;
+}
+.off-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.off-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
