@@ -2147,6 +2147,7 @@ function dataDosenContent() {
     + '<option value="Administrasi Publik">Administrasi Publik</option>'
     + '<option value="Administrasi Bisnis">Administrasi Bisnis</option>'
     + '</select>'
+    + '<button id="btnTambahDosen" style="padding:8px 16px;background:var(--primary-500);color:white;border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">\u2795 Tambah Dosen</button>'
     + '</div>'
 
     // Dosen Table
@@ -2179,7 +2180,8 @@ function dataDosenContent() {
           + '<td style="padding:10px 14px;text-align:center;"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">\u2713 ' + d.status + '</span></td>'
           + '<td style="padding:10px 14px;text-align:center;">'
           + '<button class="btn-dosen-detail" data-id="' + d.id + '" style="background:none;border:1px solid var(--primary-300);color:var(--primary-500);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;margin-right:4px;" title="Detail">\ud83d\udc41\ufe0f</button>'
-          + '<button class="btn-dosen-edit" data-id="' + d.id + '" style="background:none;border:1px solid var(--gray-200);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;" title="Edit">\u270f\ufe0f</button>'
+          + '<button class="btn-dosen-edit" data-id="' + d.id + '" style="background:none;border:1px solid hsl(215 50% 85%);color:hsl(215 50% 45%);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;margin-right:4px;" title="Edit">\u270f\ufe0f</button>'
+          + '<button class="btn-dosen-delete" data-id="' + d.id + '" data-nama="' + d.nama + '" style="background:none;border:1px solid hsl(0 60% 80%);color:hsl(0 60% 45%);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;" title="Hapus">\ud83d\uddd1\ufe0f</button>'
           + '</td></tr>';
       }).join('')
     + '</tbody></table></div>'
@@ -2187,7 +2189,33 @@ function dataDosenContent() {
     // Dosen Detail Modal
     + '<div id="dosenDetailModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;">'
     + '<div style="background:white;border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;" id="dosenDetailContent"></div>'
-    + '</div>';
+    + '</div>'
+
+    // Tambah / Edit Form Modal
+    + '<div id="dosenFormModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1001;align-items:center;justify-content:center;">'
+    + '<div style="background:white;border-radius:16px;max-width:640px;width:92%;max-height:85vh;overflow-y:auto;padding:24px;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+    + '<h3 id="dosenFormTitle" style="margin:0;font-size:1rem;">Tambah Dosen Baru</h3>'
+    + '<button id="closeDosenForm" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">\u2716</button></div>'
+    + '<form id="dosenCrudForm">'
+    + '<input type="hidden" id="dosenFormId" value="">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Nama Lengkap *</label><input name="nama" id="dfNama" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">NIP *</label><input name="nip" id="dfNip" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">NIDN</label><input name="nidn" id="dfNidn" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Email</label><input name="email" id="dfEmail" type="email" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Telepon</label><input name="telepon" id="dfTelepon" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Prodi *</label><select name="prodi" id="dfProdi" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Administrasi Publik</option><option>Administrasi Bisnis</option></select></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan Fungsional *</label><select name="jabatan_fungsional" id="dfJabFung" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Guru Besar</option><option>Lektor Kepala</option><option>Lektor</option><option>Asisten Ahli</option></select></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan Struktural</label><input name="jabatan_struktural" id="dfJabStrukt" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Golongan</label><input name="golongan" id="dfGolongan" placeholder="cth: III/d" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Pendidikan Terakhir</label><input name="pendidikan" id="dfPendidikan" placeholder="cth: S3 Ilmu Administrasi \u2014 Universitas Brawijaya" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Bidang Keahlian</label><input name="bidang_keahlian" id="dfBidang" placeholder="pisahkan dengan koma" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">'
+    + '<button type="button" id="cancelDosenForm" style="padding:8px 18px;border:1px solid var(--gray-200);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;">Batal</button>'
+    + '<button type="submit" id="submitDosenForm" style="padding:8px 18px;border:none;background:var(--primary-500);color:white;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">Simpan</button>'
+    + '</div></form></div></div>';
 }
 
 
@@ -2307,6 +2335,102 @@ export function renderDashboard(container) {
             modal.style.display = 'flex';
             document.getElementById('closeDosenModal')?.addEventListener('click', () => { modal.style.display = 'none'; });
             modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+          });
+        });
+
+        // --- Tambah Dosen ---
+        const formModal = document.getElementById('dosenFormModal');
+        const closeFormBtns = () => { formModal.style.display = 'none'; document.getElementById('dosenCrudForm')?.reset(); document.getElementById('dosenFormId').value = ''; };
+        document.getElementById('btnTambahDosen')?.addEventListener('click', () => {
+          document.getElementById('dosenFormTitle').textContent = '\u2795 Tambah Dosen Baru';
+          document.getElementById('dosenCrudForm')?.reset();
+          document.getElementById('dosenFormId').value = '';
+          formModal.style.display = 'flex';
+        });
+        document.getElementById('closeDosenForm')?.addEventListener('click', closeFormBtns);
+        document.getElementById('cancelDosenForm')?.addEventListener('click', closeFormBtns);
+        formModal?.addEventListener('click', (e) => { if (e.target === formModal) closeFormBtns(); });
+
+        // --- Submit Create / Edit ---
+        document.getElementById('dosenCrudForm')?.addEventListener('submit', (ev) => {
+          ev.preventDefault();
+          const editId = document.getElementById('dosenFormId').value;
+          const formData = {
+            nama: document.getElementById('dfNama').value,
+            nip: document.getElementById('dfNip').value,
+            nidn: document.getElementById('dfNidn').value,
+            email: document.getElementById('dfEmail').value,
+            telepon: document.getElementById('dfTelepon').value,
+            prodi: document.getElementById('dfProdi').value,
+            jabatanFungsional: document.getElementById('dfJabFung').value,
+            jabatanStruktural: document.getElementById('dfJabStrukt').value || '-',
+            golongan: document.getElementById('dfGolongan').value,
+            pendidikan: document.getElementById('dfPendidikan').value,
+            bidangKeahlian: document.getElementById('dfBidang').value.split(',').map(s => s.trim()).filter(Boolean),
+            mataKuliah: [],
+            totalMK: 0,
+            totalMahasiswaBimbingan: 0,
+            totalPublikasi: 0,
+            totalPenelitian: 0,
+            totalPengabdian: 0,
+            status: 'Aktif',
+            avatar: null
+          };
+          if (editId) {
+            // Edit existing
+            const idx = DOSEN_LIST.findIndex(d => d.id === editId);
+            if (idx >= 0) {
+              Object.assign(DOSEN_LIST[idx], formData);
+              alert('\u2705 Data dosen berhasil diperbarui!');
+            }
+          } else {
+            // Create new
+            formData.id = 'DSN' + String(DOSEN_LIST.length + 1).padStart(3, '0');
+            DOSEN_LIST.push(formData);
+            alert('\u2705 Dosen baru berhasil ditambahkan!');
+          }
+          closeFormBtns();
+          // Re-render
+          mainContent.innerHTML = dataDosenContent() + isoFooter;
+          document.querySelector('.sidebar-link[data-page="dosen"]')?.click();
+        });
+
+        // --- Edit Buttons ---
+        document.querySelectorAll('.btn-dosen-edit').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dId = btn.dataset.id;
+            const d = DOSEN_LIST.find(x => x.id === dId);
+            if (!d) return;
+            document.getElementById('dosenFormTitle').textContent = '\u270f\ufe0f Edit Dosen';
+            document.getElementById('dosenFormId').value = d.id;
+            document.getElementById('dfNama').value = d.nama;
+            document.getElementById('dfNip').value = d.nip;
+            document.getElementById('dfNidn').value = d.nidn;
+            document.getElementById('dfEmail').value = d.email;
+            document.getElementById('dfTelepon').value = d.telepon || '';
+            document.getElementById('dfProdi').value = d.prodi;
+            document.getElementById('dfJabFung').value = d.jabatanFungsional;
+            document.getElementById('dfJabStrukt').value = d.jabatanStruktural || '';
+            document.getElementById('dfGolongan').value = d.golongan;
+            document.getElementById('dfPendidikan').value = d.pendidikan || '';
+            document.getElementById('dfBidang').value = (d.bidangKeahlian || []).join(', ');
+            formModal.style.display = 'flex';
+          });
+        });
+
+        // --- Delete Buttons ---
+        document.querySelectorAll('.btn-dosen-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dId = btn.dataset.id;
+            const nama = btn.dataset.nama;
+            if (!confirm('\u26a0\ufe0f Yakin ingin menghapus dosen:\n\n' + nama + '\n\nData yang dihapus tidak dapat dikembalikan.')) return;
+            const idx = DOSEN_LIST.findIndex(d => d.id === dId);
+            if (idx >= 0) {
+              DOSEN_LIST.splice(idx, 1);
+              alert('\u2705 Dosen berhasil dihapus');
+              mainContent.innerHTML = dataDosenContent() + isoFooter;
+              document.querySelector('.sidebar-link[data-page="dosen"]')?.click();
+            }
           });
         });
       } else if (mainContent && page === 'home') {
