@@ -2090,7 +2090,7 @@ function profilSayaContent(user) {
     + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="profOldPw">Password Lama</label><input type="password" id="profOldPw" class="form-input" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" autocomplete="current-password"></div>'
     + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="profNewPw">Password Baru</label><input type="password" id="profNewPw" class="form-input" placeholder="Minimal 8 karakter" autocomplete="new-password" minlength="8"></div>'
     + '<div class="form-group" style="margin-bottom:16px;"><label class="form-label" for="profConfPw">Konfirmasi Password Baru</label><input type="password" id="profConfPw" class="form-input" placeholder="Ulangi password baru" autocomplete="new-password"></div>'
-    + '<button type="button" class="btn btn-primary btn-sm" style="border-radius:8px;" onclick="alert(\'\u2705 Password berhasil diubah!\')">\ud83d\udd10 Ubah Password</button>'
+    + '<button type="button" class="btn btn-primary btn-sm" style="border-radius:8px;" >\ud83d\udd10 Ubah Password</button>'
     + '</form></div></div>';
 }
 
@@ -2139,7 +2139,7 @@ export function renderDashboard(container) {
 
   // Sidebar nav
   document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
-    link.addEventListener('click', (e) => {
+    link.addEventListener('click', async (e) => {
       e.preventDefault();
       document.querySelectorAll('.sidebar-link').forEach(l => { l.classList.remove('active'); l.removeAttribute('aria-current'); });
       link.classList.add('active');
@@ -2166,62 +2166,162 @@ export function renderDashboard(container) {
       } else if (mainContent && page === 'home') {
         mainContent.innerHTML = contentFn(user) + isoFooter;
       } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
-        mainContent.innerHTML = profilSayaContent(user) + isoFooter;
-        // Init edit profil handlers
+        const PROFILE_API = 'http://localhost:8080/api/profile';
+        // Try to fetch profile from backend, fallback to local user data
+        let profileUser = { ...user };
+        try {
+          const res = await fetch(PROFILE_API + '/' + user.nim);
+          if (res.ok) {
+            const data = await res.json();
+            profileUser = { ...user, ...data, avatar: data.avatar_url || user.avatar };
+          }
+        } catch (e) { console.log('Profile API offline, using local data'); }
+
+        mainContent.innerHTML = profilSayaContent(profileUser) + isoFooter;
+
+        // --- Init Edit Profil Toggle ---
         const editToggle = document.getElementById('editProfilToggle');
         const editSection = document.getElementById('editProfilSection');
         const cancelBtn = document.getElementById('cancelEditProfil');
         editToggle?.addEventListener('click', () => {
           const showing = editSection.style.display !== 'none';
           editSection.style.display = showing ? 'none' : 'block';
-          editToggle.textContent = showing ? '✏️ Edit Profil' : '❌ Tutup Form';
+          editToggle.textContent = showing ? '\u270f\ufe0f Edit Profil' : '\u274c Tutup Form';
         });
         cancelBtn?.addEventListener('click', () => {
           editSection.style.display = 'none';
-          editToggle.textContent = '✏️ Edit Profil';
+          editToggle.textContent = '\u270f\ufe0f Edit Profil';
         });
-        document.getElementById('editProfilForm')?.addEventListener('submit', (ev) => {
+
+        // --- Edit Form -> PUT /api/profile/:nim ---
+        document.getElementById('editProfilForm')?.addEventListener('submit', async (ev) => {
           ev.preventDefault();
+          const btn = ev.target.querySelector('button[type="submit"]');
+          const origText = btn.textContent;
+          btn.textContent = '\u23f3 Menyimpan...';
+          btn.disabled = true;
+
           const fd = new FormData(ev.target);
-          const updated = { ...user };
-          fd.forEach((val, key) => { updated[key] = val; });
-          // Persist to session
-          sessionStorage.setItem('user', JSON.stringify(updated));
-          // Also update appState
-          import('../../js/app.js').then(mod => { mod.setUser(updated); });
-          alert('✅ Profil berhasil diperbarui!');
-          mainContent.innerHTML = profilSayaContent(updated) + isoFooter;
+          const payload = {};
+          fd.forEach((val, key) => { payload[key] = val; });
+
+          try {
+            const res = await fetch(PROFILE_API + '/' + user.nim, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+              alert('\u2705 ' + (data.message || 'Profil berhasil diperbarui!'));
+              Object.assign(profileUser, payload);
+              sessionStorage.setItem('user', JSON.stringify(profileUser));
+              mainContent.innerHTML = profilSayaContent(profileUser) + isoFooter;
+            } else {
+              alert('\u274c ' + (data.error || 'Gagal memperbarui profil'));
+            }
+          } catch (e) {
+            Object.assign(profileUser, payload);
+            sessionStorage.setItem('user', JSON.stringify(profileUser));
+            alert('\u2705 Profil disimpan secara lokal (server offline)');
+            mainContent.innerHTML = profilSayaContent(profileUser) + isoFooter;
+          }
+          btn.textContent = origText;
+          btn.disabled = false;
         });
-        // Avatar upload handler
+
+        // --- Avatar Upload -> POST /api/profile/:nim/avatar ---
         const avatarWrap = document.getElementById('avatarWrap');
         const avatarInput = document.getElementById('avatarInput');
         avatarWrap?.addEventListener('click', () => avatarInput?.click());
-        avatarInput?.addEventListener('change', (ev) => {
+        avatarInput?.addEventListener('change', async (ev) => {
           const file = ev.target.files[0];
           if (!file || !file.type.startsWith('image/')) return;
-          if (file.size > 2 * 1024 * 1024) { alert('⚠️ Ukuran foto maksimal 2MB'); return; }
+          if (file.size > 2 * 1024 * 1024) { alert('\u26a0\ufe0f Ukuran foto maksimal 2MB'); return; }
+
+          const circle = document.getElementById('avatarCircle');
+          const origBg = circle?.style.background;
+
+          // Preview immediately
           const reader = new FileReader();
           reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            const circle = document.getElementById('avatarCircle');
             if (circle) {
-              circle.style.background = 'url(' + dataUrl + ') center/cover';
+              circle.style.background = 'url(' + e.target.result + ') center/cover';
               circle.textContent = '';
             }
-            // Also update sidebar avatar
-            const sidebarAvatar = document.querySelector('.sidebar-avatar');
-            if (sidebarAvatar) {
-              sidebarAvatar.style.background = 'url(' + dataUrl + ') center/cover';
-              sidebarAvatar.textContent = '';
-            }
-            // Persist
-            user.avatar = dataUrl;
-            sessionStorage.setItem('user', JSON.stringify(user));
-            import('../../js/app.js').then(mod => { mod.setUser(user); });
-            alert('✅ Foto profil berhasil diperbarui!');
           };
           reader.readAsDataURL(file);
+
+          // Upload to backend
+          try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const res = await fetch(PROFILE_API + '/' + user.nim + '/avatar', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+              profileUser.avatar = data.avatar_url;
+              profileUser.avatar_url = data.avatar_url;
+              sessionStorage.setItem('user', JSON.stringify(profileUser));
+              const sidebarAvatar = document.querySelector('.sidebar-avatar');
+              if (sidebarAvatar) {
+                sidebarAvatar.style.background = 'url(http://localhost:8080' + data.avatar_url + ') center/cover';
+                sidebarAvatar.textContent = '';
+              }
+              alert('\u2705 Foto profil berhasil diperbarui!');
+            } else {
+              alert('\u274c ' + (data.error || 'Gagal upload foto'));
+              if (circle) circle.style.background = origBg;
+            }
+          } catch (e) {
+            alert('\u2705 Foto disimpan secara lokal (server offline)');
+          }
         });
+
+        // --- Password Change -> PUT /api/profile/:nim/password ---
+        const pwForm = document.getElementById('profilForm');
+        const pwBtn = pwForm?.querySelector('button');
+        if (pwBtn) {
+          pwBtn.removeAttribute('onclick');
+          pwBtn.addEventListener('click', async () => {
+            const oldPw = document.getElementById('profOldPw')?.value;
+            const newPw = document.getElementById('profNewPw')?.value;
+            const confPw = document.getElementById('profConfPw')?.value;
+
+            if (!oldPw || !newPw || !confPw) { alert('\u26a0\ufe0f Semua field password harus diisi'); return; }
+            if (newPw.length < 8) { alert('\u26a0\ufe0f Password baru minimal 8 karakter'); return; }
+            if (newPw !== confPw) { alert('\u26a0\ufe0f Konfirmasi password tidak cocok'); return; }
+
+            pwBtn.textContent = '\u23f3 Memproses...';
+            pwBtn.disabled = true;
+
+            try {
+              const res = await fetch(PROFILE_API + '/' + user.nim + '/password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  old_password: oldPw,
+                  new_password: newPw,
+                  confirm_password: confPw
+                })
+              });
+              const data = await res.json();
+              if (res.ok) {
+                alert('\u2705 ' + (data.message || 'Password berhasil diubah!'));
+                pwForm.reset();
+              } else {
+                alert('\u274c ' + (data.error || 'Gagal mengubah password'));
+              }
+            } catch (e) {
+              alert('\u26a0\ufe0f Server offline, tidak bisa mengubah password');
+            }
+            pwBtn.textContent = '\ud83d\udd10 Ubah Password';
+            pwBtn.disabled = false;
+          });
+        }
+
       }
     });
   });
