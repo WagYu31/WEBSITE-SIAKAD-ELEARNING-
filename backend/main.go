@@ -54,6 +54,18 @@ func main() {
 		pmb.GET("/account/:registration_id", handlers.GetAccountByRegistration)
 	}
 
+	// Profile Routes
+	profile := r.Group("/api/profile")
+	{
+		profile.GET("/:nim", handlers.GetProfile)
+		profile.PUT("/:nim", handlers.UpdateProfile)
+		profile.POST("/:nim/avatar", handlers.UploadAvatar)
+		profile.PUT("/:nim/password", handlers.ChangePassword)
+	}
+
+	// Serve uploaded files (avatars, documents)
+	r.Static("/uploads", "./uploads")
+
 	log.Println("🚀 STIA Bayuangga PMB API running on :8080")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("❌ Server failed:", err)

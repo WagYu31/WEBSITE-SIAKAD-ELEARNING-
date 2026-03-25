@@ -14,6 +14,7 @@ type Account struct {
 	ValidatedBy    string    `json:"validated_by" gorm:"size:20"`        // "email" or "bap"
 	ValidationToken string   `json:"-" gorm:"size:100"`
 	ValidatedAt    *time.Time `json:"validated_at"`
+	AvatarURL      string     `json:"avatar_url" gorm:"size:255"`
 	CreatedAt      time.Time  `json:"created_at"`
 }
 
