@@ -1246,8 +1246,46 @@ function showOfflineForm() {
         </div>
       </div>
 
+      <!-- Upload Berkas -->
+      <div class="off-section">
+        <h5 class="off-section-title">📎 Upload Berkas Persyaratan</h5>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Format: PDF, JPG, PNG (maks. 5MB per file)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label class="pmb-upload-label" style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;">
+            <span style="font-size:1.4rem;">📄</span>
+            <span style="font-size:0.78rem;font-weight:600;">Ijazah SMA/SMK/MA *</span>
+            <span class="pmb-upload-name" style="font-size:0.7rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_ijazah" accept=".pdf,.jpg,.jpeg,.png" required style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label class="pmb-upload-label" style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;">
+            <span style="font-size:1.4rem;">🪪</span>
+            <span style="font-size:0.78rem;font-weight:600;">Fotokopi KTP / KK *</span>
+            <span class="pmb-upload-name" style="font-size:0.7rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_ktp_kk" accept=".pdf,.jpg,.jpeg,.png" required style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label class="pmb-upload-label" style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;">
+            <span style="font-size:1.4rem;">📷</span>
+            <span style="font-size:0.78rem;font-weight:600;">Pas Foto 3×4 *</span>
+            <span class="pmb-upload-name" style="font-size:0.7rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_pas_foto" accept=".jpg,.jpeg,.png" required style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label class="pmb-upload-label" style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;">
+            <span style="font-size:1.4rem;">📊</span>
+            <span style="font-size:0.78rem;font-weight:600;">Transkip Rapor</span>
+            <span class="pmb-upload-name" style="font-size:0.7rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_rapor" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label class="pmb-upload-label" style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .2s;grid-column:span 2;">
+            <span style="font-size:1.4rem;">🏥</span>
+            <span style="font-size:0.78rem;font-weight:600;">Surat Keterangan Sehat</span>
+            <span class="pmb-upload-name" style="font-size:0.7rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_surat_sehat" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+        </div>
+      </div>
+
       <button type="submit" class="btn btn-primary" id="offlineSubmitBtn" style="width:100%;padding:14px;">
-        ${I.userPlus} Daftarkan & Buat Akun
+        ✨ Daftarkan & Buat Akun
       </button>
     </form>`;
 
@@ -1259,7 +1297,9 @@ function showOfflineForm() {
 
     const formData = new FormData(e.target);
     const data = {};
-    formData.forEach((v, k) => { data[k] = v; });
+    const fileInputs = e.target.querySelectorAll('input[type="file"]');
+    const fileFieldNames = new Set([...fileInputs].map(f => f.name));
+    formData.forEach((v, k) => { if (!fileFieldNames.has(k)) data[k] = v; });
 
     try {
       const res = await fetch(`${PMB_API}/register/offline`, {
@@ -1270,6 +1310,12 @@ function showOfflineForm() {
       const result = await res.json();
 
       if (res.ok) {
+        // Upload files
+        const uploadData = new FormData();
+        let hasFiles = false;
+        fileInputs.forEach(fi => { if (fi.files.length > 0) { uploadData.append(fi.name, fi.files[0]); hasFiles = true; } });
+        if (hasFiles && result.id) { try { await fetch(`${PMB_API}/registration/${result.id}/upload`, { method: 'POST', body: uploadData }); } catch {} }
+
         const acc = result.account || {};
         content.innerHTML = `
           <div style="text-align:center;padding:24px;">
