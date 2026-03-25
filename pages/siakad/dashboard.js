@@ -1146,17 +1146,14 @@ function showEditForm(regId) {
   const reg = _pmbRegistrations.find(r => r.id === regId);
   if (!reg) return;
 
-  const modalOverlay = document.querySelector('.modal-overlay');
-  const modalBody = document.querySelector('.modal-body');
-  const modalTitle = document.querySelector('.modal-title');
-  if (!modalOverlay || !modalBody) return;
-
-  if (modalTitle) modalTitle.textContent = '✏️ Edit Data Pendaftaran';
+  const modal = document.getElementById('pmbDetailModal');
+  const content = document.getElementById('pmbDetailContent');
+  if (!modal || !content) return;
 
   const prodiOptions = ['S1 Administrasi Publik','S1 Administrasi Bisnis','S2 Administrasi Publik','D3 Ilmu Administrasi'];
   const v = (val) => val || '';
 
-  modalBody.innerHTML = `
+  content.innerHTML = `
     <form id="editRegForm" style="max-height:60vh;overflow-y:auto;padding-right:8px;">
       <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 16px;">No. Daftar: <strong>${reg.no_pendaftaran}</strong></p>
 
@@ -1228,11 +1225,11 @@ function showEditForm(regId) {
 
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
-        <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Batal</button>
+        <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').classList.remove('active')">Batal</button>
       </div>
     </form>`;
 
-  modalOverlay.classList.add('active');
+  modal.classList.add('active');
 
   document.getElementById('editRegForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1253,7 +1250,7 @@ function showEditForm(regId) {
       const result = await res.json();
       if (res.ok) {
         alert('✅ ' + result.message);
-        modalOverlay.classList.remove('active');
+        modal.classList.remove('active');
         loadRegistrationList();
       } else {
         alert('❌ ' + (result.error || 'Gagal menyimpan'));
