@@ -2055,3 +2055,7 @@
   .el-forum-reply-box { flex-wrap: wrap; }
   .el-forum-input-wrap { width: 100%; }
 }
+
+/* Detail Modal Data Labels/Values */
+.dl { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 1px; text-transform: uppercase; letter-spacing: .02em; }
+.dv { font-weight: 500; font-size: 0.82rem; color: var(--text-primary); }

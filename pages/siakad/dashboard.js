@@ -879,67 +879,122 @@ function showRegistrantDetail(reg) {
   if (!modal || !content) return;
 
   const statusColors = { diterima: 'badge-success', ditolak: 'badge-danger', proses: 'badge-primary', menunggu: 'badge-warning' };
+  const v = (val) => val || '<span style="color:var(--danger-400);font-style:italic;">— kosong</span>';
+  const check = (val) => val ? '✅' : '❌';
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+
+  // Count completeness
+  const requiredFields = ['nik','nama','email','telepon_1','prodi_pilihan','asal_sekolah','alamat','tempat_lahir','tanggal_lahir','gender'];
+  const filled = requiredFields.filter(f => reg[f] && String(reg[f]).trim()).length;
+  const pct = Math.round((filled / requiredFields.length) * 100);
+  const pctColor = pct === 100 ? 'hsl(145 60% 45%)' : pct >= 70 ? 'hsl(38 90% 50%)' : 'hsl(0 70% 55%)';
 
   content.innerHTML = `
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--gray-100);">
-      <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.2rem;">
-        ${(reg.nama || 'X').charAt(0).toUpperCase()}
+    <div style="max-height:65vh;overflow-y:auto;padding-right:6px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);">
+        <div style="width:52px;height:52px;border-radius:var(--radius-xl);background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.1rem;flex-shrink:0;">
+          ${(reg.nama || 'X').charAt(0).toUpperCase()}
+        </div>
+        <div style="flex:1;">
+          <h4 style="font-family:var(--font-heading);font-size:1rem;margin-bottom:2px;">${reg.nama}</h4>
+          <code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${reg.no_pendaftaran}</code>
+        </div>
+        <span class="badge ${statusColors[reg.status] || 'badge-warning'}" style="font-size:0.75rem;">${reg.status}</span>
       </div>
-      <div style="flex:1;">
-        <h4 style="font-family:var(--font-heading);font-size:1.1rem;margin-bottom:2px;">${reg.nama}</h4>
-        <code style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${reg.no_pendaftaran}</code>
+
+      <!-- Kelengkapan Data -->
+      <div style="background:hsl(215 40% 97%);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:0.78rem;font-weight:600;">📋 Kelengkapan Data</span>
+          <span style="font-size:0.82rem;font-weight:700;color:${pctColor};">${pct}%</span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${pctColor};border-radius:8px;transition:width .3s;"></div>
+        </div>
       </div>
-      <span class="badge ${statusColors[reg.status] || 'badge-warning'}" style="font-size:0.78rem;">${reg.status}</span>
+
+      <!-- Data Pribadi -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👤 Data Pribadi</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">NIK</p><p class="dv" style="font-family:var(--font-mono);">${v(reg.nik)}</p></div>
+          <div><p class="dl">NISN</p><p class="dv">${v(reg.nisn)}</p></div>
+          <div><p class="dl">Tempat Lahir</p><p class="dv">${v(reg.tempat_lahir)}</p></div>
+          <div><p class="dl">Tanggal Lahir</p><p class="dv">${v(reg.tanggal_lahir)}</p></div>
+          <div><p class="dl">Gender</p><p class="dv">${v(reg.gender)}</p></div>
+          <div><p class="dl">Agama</p><p class="dv">${v(reg.agama)}</p></div>
+          <div><p class="dl">Email</p><p class="dv">${v(reg.email)}</p></div>
+          <div><p class="dl">Telepon 1</p><p class="dv">${v(reg.telepon_1)}</p></div>
+          <div><p class="dl">Telepon 2</p><p class="dv">${v(reg.telepon_2)}</p></div>
+          <div><p class="dl">KIP</p><p class="dv">${v(reg.kip)}</p></div>
+          <div><p class="dl">KKS</p><p class="dv">${v(reg.kks)}</p></div>
+        </div>
+      </div>
+
+      <!-- Alamat -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📍 Alamat</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="grid-column:span 2;"><p class="dl">Alamat Lengkap</p><p class="dv">${v(reg.alamat)}</p></div>
+          <div><p class="dl">Kota</p><p class="dv">${v(reg.kota)}</p></div>
+          <div><p class="dl">Provinsi</p><p class="dv">${v(reg.provinsi)}</p></div>
+          <div><p class="dl">Kecamatan</p><p class="dv">${v(reg.kecamatan)}</p></div>
+          <div><p class="dl">Kelurahan</p><p class="dv">${v(reg.kelurahan)}</p></div>
+          <div><p class="dl">Kode Pos</p><p class="dv">${v(reg.kode_pos)}</p></div>
+        </div>
+      </div>
+
+      <!-- Data Keluarga -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👨‍👩‍👧 Data Keluarga</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Anak Ke</p><p class="dv">${reg.anak_ke || '-'} dari ${reg.dari_jumlah || '-'}</p></div>
+          <div><p class="dl">No. KK</p><p class="dv">${v(reg.no_kk)}</p></div>
+          <div><p class="dl">Nama Ayah</p><p class="dv">${v(reg.nama_ayah)}</p></div>
+          <div><p class="dl">Pekerjaan Ayah</p><p class="dv">${v(reg.pekerjaan_ayah)}</p></div>
+          <div><p class="dl">NIK Ayah</p><p class="dv">${v(reg.nik_ayah)}</p></div>
+          <div><p class="dl">Nama Ibu</p><p class="dv">${v(reg.nama_ibu)}</p></div>
+          <div><p class="dl">Pekerjaan Ibu</p><p class="dv">${v(reg.pekerjaan_ibu)}</p></div>
+          <div><p class="dl">NIK Ibu</p><p class="dv">${v(reg.nik_ibu)}</p></div>
+        </div>
+      </div>
+
+      <!-- Akademik -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">🎓 Akademik</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Program Studi</p><p class="dv">${v(reg.prodi_pilihan)}</p></div>
+          <div><p class="dl">Asal Sekolah</p><p class="dv">${v(reg.asal_sekolah)}</p></div>
+          <div><p class="dl">Metode</p><span class="badge ${reg.metode === 'online' ? 'badge-primary' : 'badge-warning'}" style="font-size:0.72rem;">${reg.metode}</span></div>
+          <div><p class="dl">Tanggal Daftar</p><p class="dv">${formatDate(reg.created_at)}</p></div>
+        </div>
+      </div>
+
+      <!-- Checklist Kelengkapan -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📎 Checklist Kelengkapan</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.8rem;">
+          <div>${check(reg.nik)} NIK</div>
+          <div>${check(reg.nama)} Nama</div>
+          <div>${check(reg.email)} Email</div>
+          <div>${check(reg.telepon_1)} Telepon</div>
+          <div>${check(reg.tempat_lahir)} Tempat Lahir</div>
+          <div>${check(reg.tanggal_lahir)} Tanggal Lahir</div>
+          <div>${check(reg.gender)} Gender</div>
+          <div>${check(reg.alamat)} Alamat</div>
+          <div>${check(reg.prodi_pilihan)} Prodi</div>
+          <div>${check(reg.asal_sekolah)} Asal Sekolah</div>
+        </div>
+      </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">NIK</p>
-        <p style="font-weight:var(--font-semibold);font-family:var(--font-mono);font-size:0.88rem;">${reg.nik}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Program Studi</p>
-        <p style="font-weight:var(--font-semibold);font-size:0.88rem;">${reg.prodi_pilihan || '-'}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Email</p>
-        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.email || '-'}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Telepon</p>
-        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.telepon_1 || '-'}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Metode Pendaftaran</p>
-        <span class="badge ${reg.metode === 'online' ? 'badge-primary' : 'badge-warning'}">${reg.metode}</span>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Asal Sekolah</p>
-        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.asal_sekolah || '-'}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Tanggal Daftar</p>
-        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.created_at ? new Date(reg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
-      </div>
-      <div>
-        <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Alamat</p>
-        <p style="font-weight:var(--font-medium);font-size:0.88rem;">${reg.alamat || '-'}</p>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-100);">
-      <button class="btn btn-accent btn-sm mgmt-action-btn" data-action="confirm-pay" data-id="${reg.id}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Konfirmasi Bayar
-      </button>
-      <button class="btn btn-success btn-sm mgmt-action-btn" data-action="validate" data-id="${reg.id}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        Validasi
-      </button>
-      <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${reg.id}" data-email="${reg.email}" data-prodi="${reg.prodi_pilihan}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Buat Akun
-      </button>
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-100);flex-wrap:wrap;">
+      <button class="btn btn-accent btn-sm mgmt-action-btn" data-action="confirm-pay" data-id="${reg.id}">💰 Bayar</button>
+      <button class="btn btn-success btn-sm mgmt-action-btn" data-action="validate" data-id="${reg.id}">✅ Validasi</button>
+      <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${reg.id}" data-email="${reg.email}" data-prodi="${reg.prodi_pilihan}">🔐 Buat Akun</button>
+      <button class="btn btn-secondary btn-sm mgmt-action-btn" data-action="edit" data-id="${reg.id}">✏️ Edit</button>
+      <button class="btn btn-danger btn-sm mgmt-action-btn" data-action="delete" data-id="${reg.id}" style="margin-left:auto;">🗑️ Hapus</button>
     </div>`;
 
   // Bind modal action buttons
@@ -952,6 +1007,7 @@ function showRegistrantDetail(reg) {
 
   modal.classList.add('active');
 }
+
 
 function exportPMBCSV(registrations) {
   if (!registrations.length) { alert('Tidak ada data untuk diexport.'); return; }
