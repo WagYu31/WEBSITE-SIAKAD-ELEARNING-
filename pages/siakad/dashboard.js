@@ -2105,17 +2105,18 @@ function dataDosenContent() {
   const dosenList = typeof DOSEN_LIST !== 'undefined' ? DOSEN_LIST : [];
 
   const jabatanColors = {
-    'Guru Besar': 'hsl(280 60% 50%)',
-    'Lektor Kepala': 'hsl(215 60% 50%)',
-    'Lektor': 'hsl(145 50% 40%)',
-    'Asisten Ahli': 'hsl(38 60% 45%)'
+    'Dekan': 'hsl(280 60% 50%)',
+    'Wadek': 'hsl(215 60% 50%)',
+    'Kaprodi': 'hsl(145 50% 40%)',
+    'Dosen': 'hsl(38 60% 45%)'
   };
 
   const stats = {
     total: dosenList.length,
-    guruBesar: dosenList.filter(d => d.jabatanFungsional === 'Guru Besar').length,
-    lektor: dosenList.filter(d => d.jabatanFungsional === 'Lektor Kepala' || d.jabatanFungsional === 'Lektor').length,
-    asistenAhli: dosenList.filter(d => d.jabatanFungsional === 'Asisten Ahli').length
+    dekan: dosenList.filter(d => d.jabatanFungsional === 'Dekan').length,
+    wadek: dosenList.filter(d => d.jabatanFungsional === 'Wadek').length,
+    kaprodi: dosenList.filter(d => d.jabatanFungsional === 'Kaprodi').length,
+    dosen: dosenList.filter(d => d.jabatanFungsional === 'Dosen').length
   };
 
   return '<div style="margin-bottom:16px;">'
@@ -2129,24 +2130,23 @@ function dataDosenContent() {
     + '<div style="font-size:1.8rem;font-weight:800;">' + stats.total + '</div>'
     + '<div style="font-size:0.72rem;opacity:.8;">Total Dosen</div></div>'
     + '<div style="background:linear-gradient(135deg,hsl(280 60% 50%),hsl(280 60% 40%));border-radius:12px;padding:16px;color:white;">'
-    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.guruBesar + '</div>'
-    + '<div style="font-size:0.72rem;opacity:.8;">Guru Besar</div></div>'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.dekan + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Dekan</div></div>'
     + '<div style="background:linear-gradient(135deg,hsl(215 60% 50%),hsl(215 60% 40%));border-radius:12px;padding:16px;color:white;">'
-    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.lektor + '</div>'
-    + '<div style="font-size:0.72rem;opacity:.8;">Lektor</div></div>'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.wadek + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Wadek</div></div>'
+    + '<div style="background:linear-gradient(135deg,hsl(145 50% 40%),hsl(145 50% 30%));border-radius:12px;padding:16px;color:white;">'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.kaprodi + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Kaprodi</div></div>'
     + '<div style="background:linear-gradient(135deg,hsl(38 60% 45%),hsl(38 60% 35%));border-radius:12px;padding:16px;color:white;">'
-    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.asistenAhli + '</div>'
-    + '<div style="font-size:0.72rem;opacity:.8;">Asisten Ahli</div></div>'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.dosen + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Dosen</div></div>'
     + '</div>'
 
     // Search & Filter
     + '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">'
     + '<input type="text" id="dosenSearch" placeholder="\ud83d\udd0d Cari dosen..." style="flex:1;min-width:200px;padding:8px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;outline:none;" aria-label="Cari dosen">'
-    + '<select id="dosenFilterProdi" style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;" aria-label="Filter prodi">'
-    + '<option value="">Semua Prodi</option>'
-    + '<option value="Administrasi Publik">Administrasi Publik</option>'
-    + '<option value="Administrasi Bisnis">Administrasi Bisnis</option>'
-    + '</select>'
+    
     + '<button id="btnTambahDosen" style="padding:8px 16px;background:var(--primary-500);color:white;border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">\u2795 Tambah Dosen</button>'
     + '</div>'
 
@@ -2156,8 +2156,7 @@ function dataDosenContent() {
     + '<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-100);">'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Dosen</th>'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">NIP / NIDN</th>'
-    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Prodi</th>'
-    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Jabatan Fungsional</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Jabatan</th>'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Golongan</th>'
     + '<th style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Status</th>'
     + '<th style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Aksi</th>'
@@ -2166,7 +2165,7 @@ function dataDosenContent() {
     + dosenList.map(d => {
         const initials = d.nama.split(' ').filter(n => !['Dr.','Ir.','Prof.','H.','Hj.','S.AP.','M.AP.','M.Si.','M.T.','M.M.','M.Kom.','S.H.','M.H.','S.Sos.','S.E.'].includes(n)).map(n => n[0]).join('').substring(0,2).toUpperCase();
         const jColor = jabatanColors[d.jabatanFungsional] || 'var(--text-muted)';
-        return '<tr class="dosen-row" data-prodi="' + d.prodi + '" data-nama="' + d.nama.toLowerCase() + '" style="border-bottom:1px solid var(--gray-50);transition:background .15s;"'
+        return '<tr class="dosen-row" data-nama="' + d.nama.toLowerCase() + '" style="border-bottom:1px solid var(--gray-50);transition:background .15s;"'
           + ' onmouseover="this.style.background=\'hsl(215 30% 98%)\';" onmouseout="this.style.background=\'transparent\';">'
           + '<td style="padding:10px 14px;">'
           + '<div style="display:flex;align-items:center;gap:10px;">'
@@ -2174,7 +2173,6 @@ function dataDosenContent() {
           + '<div><div style="font-weight:600;font-size:0.82rem;">' + d.nama + '</div>'
           + '<div style="font-size:0.7rem;color:var(--text-muted);">' + d.email + '</div></div></div></td>'
           + '<td style="padding:10px 14px;font-family:var(--font-mono);font-size:0.75rem;"><div>' + d.nip + '</div><div style="color:var(--text-muted);font-size:0.7rem;">NIDN: ' + d.nidn + '</div></td>'
-          + '<td style="padding:10px 14px;font-size:0.8rem;">' + d.prodi + '</td>'
           + '<td style="padding:10px 14px;"><span style="background:' + jColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">' + d.jabatanFungsional + '</span></td>'
           + '<td style="padding:10px 14px;font-size:0.8rem;font-weight:600;">' + d.golongan + '</td>'
           + '<td style="padding:10px 14px;text-align:center;"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">\u2713 ' + d.status + '</span></td>'
@@ -2205,8 +2203,8 @@ function dataDosenContent() {
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">NIDN</label><input name="nidn" id="dfNidn" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Email</label><input name="email" id="dfEmail" type="email" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Telepon</label><input name="telepon" id="dfTelepon" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
-    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Prodi *</label><select name="prodi" id="dfProdi" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Administrasi Publik</option><option>Administrasi Bisnis</option></select></div>'
-    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan Fungsional *</label><select name="jabatan_fungsional" id="dfJabFung" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Guru Besar</option><option>Lektor Kepala</option><option>Lektor</option><option>Asisten Ahli</option></select></div>'
+    + 
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan *</label><select name="jabatan_fungsional" id="dfJabFung" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Guru Besar</option><option>Lektor Kepala</option><option>Lektor</option><option>Asisten Ahli</option></select></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan Struktural</label><input name="jabatan_struktural" id="dfJabStrukt" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Golongan</label><input name="golongan" id="dfGolongan" placeholder="cth: III/d" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Pendidikan Terakhir</label><input name="pendidikan" id="dfPendidikan" placeholder="cth: S3 Ilmu Administrasi \u2014 Universitas Brawijaya" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
@@ -2296,12 +2294,7 @@ export function renderDashboard(container) {
             row.style.display = row.dataset.nama.includes(q) ? '' : 'none';
           });
         });
-        document.getElementById('dosenFilterProdi')?.addEventListener('change', (ev) => {
-          const v = ev.target.value;
-          document.querySelectorAll('.dosen-row').forEach(row => {
-            row.style.display = (!v || row.dataset.prodi === v) ? '' : 'none';
-          });
-        });
+
         // Detail buttons
         document.querySelectorAll('.btn-dosen-detail').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -2361,7 +2354,6 @@ export function renderDashboard(container) {
             nidn: document.getElementById('dfNidn').value,
             email: document.getElementById('dfEmail').value,
             telepon: document.getElementById('dfTelepon').value,
-            prodi: document.getElementById('dfProdi').value,
             jabatanFungsional: document.getElementById('dfJabFung').value,
             jabatanStruktural: document.getElementById('dfJabStrukt').value || '-',
             golongan: document.getElementById('dfGolongan').value,
@@ -2408,7 +2400,6 @@ export function renderDashboard(container) {
             document.getElementById('dfNidn').value = d.nidn;
             document.getElementById('dfEmail').value = d.email;
             document.getElementById('dfTelepon').value = d.telepon || '';
-            document.getElementById('dfProdi').value = d.prodi;
             document.getElementById('dfJabFung').value = d.jabatanFungsional;
             document.getElementById('dfJabStrukt').value = d.jabatanStruktural || '';
             document.getElementById('dfGolongan').value = d.golongan;
