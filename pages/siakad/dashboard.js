@@ -2206,8 +2206,7 @@ function dataDosenContent() {
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Email</label><input name="email" id="dfEmail" type="email" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Telepon</label><input name="telepon" id="dfTelepon" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + 
-    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan *</label><select name="jabatan_fungsional" id="dfJabFung" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Guru Besar</option><option>Lektor Kepala</option><option>Lektor</option><option>Asisten Ahli</option></select></div>'
-    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan Struktural</label><input name="jabatan_struktural" id="dfJabStrukt" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Jabatan *</label><select name="jabatan_fungsional" id="dfJabFung" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"><option value="">-- Pilih --</option><option>Dekan</option><option>Wadek</option><option>Kaprodi</option><option>Dosen</option></select></div>'
     + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Golongan</label><input name="golongan" id="dfGolongan" placeholder="cth: III/d" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Pendidikan Terakhir</label><input name="pendidikan" id="dfPendidikan" placeholder="cth: S3 Ilmu Administrasi \u2014 Universitas Brawijaya" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Bidang Keahlian</label><input name="bidang_keahlian" id="dfBidang" placeholder="pisahkan dengan koma" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
@@ -2338,7 +2337,6 @@ function initDosenPage(mainContent, isoFooter) {
       document.getElementById('dfEmail').value = d.email;
       document.getElementById('dfTelepon').value = d.telepon || '';
       document.getElementById('dfJabFung').value = d.jabatanFungsional;
-      document.getElementById('dfJabStrukt').value = d.jabatanStruktural || '';
       document.getElementById('dfGolongan').value = d.golongan;
       document.getElementById('dfPendidikan').value = d.pendidikan || '';
       document.getElementById('dfBidang').value = (d.bidangKeahlian || []).join(', ');
