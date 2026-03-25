@@ -3,7 +3,7 @@
 // Shared layout with role-specific content
 // ============================================
 
-import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus } from '../../js/data.js';
+import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST} from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 
 // ---- SVG Icons ----
@@ -68,6 +68,7 @@ const MENUS = {
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
       { icon: I.userPlus, text: 'Manajemen PMB', id: 'pmb' },
       { icon: I.graduationCap, text: 'Data Mahasiswa', id: 'mahasiswa' },
+      { icon: I.users, text: 'Data Dosen', id: 'dosen' },
       { icon: I.barChart, text: 'Statistik Akademik', id: 'statistik' },
       { icon: I.clipboard, text: 'Transkrip', id: 'transkrip' },
     ]},
@@ -2095,6 +2096,101 @@ function profilSayaContent(user) {
 }
 
 
+// ============================================
+// DATA DOSEN — Content Renderer
+// ============================================
+
+function dataDosenContent() {
+  // Import DOSEN_LIST data
+  const dosenList = typeof DOSEN_LIST !== 'undefined' ? DOSEN_LIST : [];
+
+  const jabatanColors = {
+    'Guru Besar': 'hsl(280 60% 50%)',
+    'Lektor Kepala': 'hsl(215 60% 50%)',
+    'Lektor': 'hsl(145 50% 40%)',
+    'Asisten Ahli': 'hsl(38 60% 45%)'
+  };
+
+  const stats = {
+    total: dosenList.length,
+    guruBesar: dosenList.filter(d => d.jabatanFungsional === 'Guru Besar').length,
+    lektor: dosenList.filter(d => d.jabatanFungsional === 'Lektor Kepala' || d.jabatanFungsional === 'Lektor').length,
+    asistenAhli: dosenList.filter(d => d.jabatanFungsional === 'Asisten Ahli').length
+  };
+
+  return '<div style="margin-bottom:16px;">'
+    + '<h2 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:800;margin:0 0 4px;color:var(--text-primary);">\ud83d\udc68\u200d\ud83c\udfeb Data Dosen</h2>'
+    + '<p style="color:var(--text-muted);font-size:0.8rem;margin:0;">Manajemen data dosen STIA Bayuangga</p>'
+    + '</div>'
+
+    // Stats Cards
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">'
+    + '<div style="background:var(--gradient-primary);border-radius:12px;padding:16px;color:white;">'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.total + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Total Dosen</div></div>'
+    + '<div style="background:linear-gradient(135deg,hsl(280 60% 50%),hsl(280 60% 40%));border-radius:12px;padding:16px;color:white;">'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.guruBesar + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Guru Besar</div></div>'
+    + '<div style="background:linear-gradient(135deg,hsl(215 60% 50%),hsl(215 60% 40%));border-radius:12px;padding:16px;color:white;">'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.lektor + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Lektor</div></div>'
+    + '<div style="background:linear-gradient(135deg,hsl(38 60% 45%),hsl(38 60% 35%));border-radius:12px;padding:16px;color:white;">'
+    + '<div style="font-size:1.8rem;font-weight:800;">' + stats.asistenAhli + '</div>'
+    + '<div style="font-size:0.72rem;opacity:.8;">Asisten Ahli</div></div>'
+    + '</div>'
+
+    // Search & Filter
+    + '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">'
+    + '<input type="text" id="dosenSearch" placeholder="\ud83d\udd0d Cari dosen..." style="flex:1;min-width:200px;padding:8px 14px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;outline:none;" aria-label="Cari dosen">'
+    + '<select id="dosenFilterProdi" style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;" aria-label="Filter prodi">'
+    + '<option value="">Semua Prodi</option>'
+    + '<option value="Administrasi Publik">Administrasi Publik</option>'
+    + '<option value="Administrasi Bisnis">Administrasi Bisnis</option>'
+    + '</select>'
+    + '</div>'
+
+    // Dosen Table
+    + '<div class="profil-section" style="overflow-x:auto;">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;" aria-label="Tabel data dosen">'
+    + '<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-100);">'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Dosen</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">NIP / NIDN</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Prodi</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Jabatan Fungsional</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Golongan</th>'
+    + '<th style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Status</th>'
+    + '<th style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Aksi</th>'
+    + '</tr></thead>'
+    + '<tbody id="dosenTableBody">'
+    + dosenList.map(d => {
+        const initials = d.nama.split(' ').filter(n => !['Dr.','Ir.','Prof.','H.','Hj.','S.AP.','M.AP.','M.Si.','M.T.','M.M.','M.Kom.','S.H.','M.H.','S.Sos.','S.E.'].includes(n)).map(n => n[0]).join('').substring(0,2).toUpperCase();
+        const jColor = jabatanColors[d.jabatanFungsional] || 'var(--text-muted)';
+        return '<tr class="dosen-row" data-prodi="' + d.prodi + '" data-nama="' + d.nama.toLowerCase() + '" style="border-bottom:1px solid var(--gray-50);transition:background .15s;"'
+          + ' onmouseover="this.style.background=\'hsl(215 30% 98%)\';" onmouseout="this.style.background=\'transparent\';">'
+          + '<td style="padding:10px 14px;">'
+          + '<div style="display:flex;align-items:center;gap:10px;">'
+          + '<div style="width:36px;height:36px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.7rem;flex-shrink:0;">' + initials + '</div>'
+          + '<div><div style="font-weight:600;font-size:0.82rem;">' + d.nama + '</div>'
+          + '<div style="font-size:0.7rem;color:var(--text-muted);">' + d.email + '</div></div></div></td>'
+          + '<td style="padding:10px 14px;font-family:var(--font-mono);font-size:0.75rem;"><div>' + d.nip + '</div><div style="color:var(--text-muted);font-size:0.7rem;">NIDN: ' + d.nidn + '</div></td>'
+          + '<td style="padding:10px 14px;font-size:0.8rem;">' + d.prodi + '</td>'
+          + '<td style="padding:10px 14px;"><span style="background:' + jColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">' + d.jabatanFungsional + '</span></td>'
+          + '<td style="padding:10px 14px;font-size:0.8rem;font-weight:600;">' + d.golongan + '</td>'
+          + '<td style="padding:10px 14px;text-align:center;"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">\u2713 ' + d.status + '</span></td>'
+          + '<td style="padding:10px 14px;text-align:center;">'
+          + '<button class="btn-dosen-detail" data-id="' + d.id + '" style="background:none;border:1px solid var(--primary-300);color:var(--primary-500);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;margin-right:4px;" title="Detail">\ud83d\udc41\ufe0f</button>'
+          + '<button class="btn-dosen-edit" data-id="' + d.id + '" style="background:none;border:1px solid var(--gray-200);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;" title="Edit">\u270f\ufe0f</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table></div>'
+
+    // Dosen Detail Modal
+    + '<div id="dosenDetailModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;">'
+    + '<div style="background:white;border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;" id="dosenDetailContent"></div>'
+    + '</div>';
+}
+
+
 const CONTENT_RENDERERS = { mahasiswa: mahasiswaContent, dosen: dosenContent, kaprodi: kaprodiContent, bap: bapContent };
 
 // ============================================
@@ -2163,6 +2259,56 @@ export function renderDashboard(container) {
       } else if (mainContent && page === 'mahasiswa' && user.role === 'bap') {
         mainContent.innerHTML = bapMahasiswaContent() + isoFooter;
         initMahasiswaPage();
+      } else if (mainContent && page === 'dosen' && (user.role === 'bap' || user.role === 'kaprodi')) {
+        mainContent.innerHTML = dataDosenContent() + isoFooter;
+        // Search filter
+        document.getElementById('dosenSearch')?.addEventListener('input', (ev) => {
+          const q = ev.target.value.toLowerCase();
+          document.querySelectorAll('.dosen-row').forEach(row => {
+            row.style.display = row.dataset.nama.includes(q) ? '' : 'none';
+          });
+        });
+        document.getElementById('dosenFilterProdi')?.addEventListener('change', (ev) => {
+          const v = ev.target.value;
+          document.querySelectorAll('.dosen-row').forEach(row => {
+            row.style.display = (!v || row.dataset.prodi === v) ? '' : 'none';
+          });
+        });
+        // Detail buttons
+        document.querySelectorAll('.btn-dosen-detail').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dId = btn.dataset.id;
+            const d = DOSEN_LIST.find(x => x.id === dId);
+            if (!d) return;
+            const modal = document.getElementById('dosenDetailModal');
+            const content = document.getElementById('dosenDetailContent');
+            content.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+              + '<h3 style="margin:0;font-size:1rem;">Detail Dosen</h3>'
+              + '<button id="closeDosenModal" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">\u2716</button></div>'
+              + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">'
+              + '<div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;">' + d.nama[0] + '</div>'
+              + '<div><div style="font-weight:700;font-size:1rem;">' + d.nama + '</div>'
+              + '<div style="color:var(--text-muted);font-size:0.8rem;">' + d.jabatanFungsional + ' \u2014 ' + d.golongan + '</div></div></div>'
+              + '<div class="profil-section" style="margin-bottom:12px;"><div class="profil-section-header"><h3 class="profil-section-title"><span class="pst-icon" style="background:hsl(215 50% 94%);color:var(--primary-600);">\ud83d\udcbc</span> Informasi</h3></div>'
+              + '<div class="profil-row"><div class="profil-row-label">NIP</div><span class="profil-row-value mono">' + d.nip + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">NIDN</div><span class="profil-row-value mono">' + d.nidn + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Email</div><span class="profil-row-value">' + d.email + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Telepon</div><span class="profil-row-value">' + d.telepon + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Prodi</div><span class="profil-row-value">' + d.prodi + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Pendidikan</div><span class="profil-row-value">' + d.pendidikan + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Jabatan Struktural</div><span class="profil-row-value">' + d.jabatanStruktural + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Bidang Keahlian</div><span class="profil-row-value">' + d.bidangKeahlian.join(', ') + '</span></div>'
+              + '<div class="profil-row"><div class="profil-row-label">Mata Kuliah</div><span class="profil-row-value">' + d.mataKuliah.join(', ') + '</span></div>'
+              + '</div>'
+              + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">'
+              + '<div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:10px;"><div style="font-size:1.3rem;font-weight:800;color:var(--primary-600);">' + d.totalPublikasi + '</div><div style="font-size:0.68rem;color:var(--text-muted);">Publikasi</div></div>'
+              + '<div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:10px;"><div style="font-size:1.3rem;font-weight:800;color:var(--primary-600);">' + d.totalPenelitian + '</div><div style="font-size:0.68rem;color:var(--text-muted);">Penelitian</div></div>'
+              + '<div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:10px;"><div style="font-size:1.3rem;font-weight:800;color:var(--primary-600);">' + d.totalPengabdian + '</div><div style="font-size:0.68rem;color:var(--text-muted);">Pengabdian</div></div></div>';
+            modal.style.display = 'flex';
+            document.getElementById('closeDosenModal')?.addEventListener('click', () => { modal.style.display = 'none'; });
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+          });
+        });
       } else if (mainContent && page === 'home') {
         mainContent.innerHTML = contentFn(user) + isoFooter;
       } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
