@@ -609,6 +609,12 @@ async function loadRegistrationList() {
   }
 }
 
+// ---- PMB State ----
+let _pmbPage = 1;
+const PMB_PER_PAGE = 20;
+let _pmbSort = { key: 'created_at', dir: 'desc' };
+let _pmbSelected = new Set();
+
 function renderPMBList(stats, registrations) {
   const content = document.getElementById('pmbMgmtContent');
   if (!content) return;
@@ -618,48 +624,32 @@ function renderPMBList(stats, registrations) {
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
       <div class="stat-box">
         <div class="stat-icon blue">${I.users}</div>
-        <div class="stat-info">
-          <div class="stat-value">${stats.total_pendaftar}</div>
-          <div class="stat-label">Total Pendaftar</div>
-        </div>
+        <div class="stat-info"><div class="stat-value">${stats.total_pendaftar}</div><div class="stat-label">Total Pendaftar</div></div>
       </div>
       <div class="stat-box">
-        <div class="stat-icon gold">${I.clock}</div>
-        <div class="stat-info">
-          <div class="stat-value">${stats.total_proses}</div>
-          <div class="stat-label">Menunggu</div>
-        </div>
+        <div class="stat-icon gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-info"><div class="stat-value">${stats.total_proses}</div><div class="stat-label">Menunggu</div></div>
       </div>
       <div class="stat-box">
         <div class="stat-icon green">${I.checkCircle}</div>
-        <div class="stat-info">
-          <div class="stat-value">${stats.total_diterima}</div>
-          <div class="stat-label">Diterima</div>
-        </div>
+        <div class="stat-info"><div class="stat-value">${stats.total_diterima}</div><div class="stat-label">Diterima</div></div>
       </div>
       <div class="stat-box">
-        <div class="stat-icon rose">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">${stats.total_ditolak}</div>
-          <div class="stat-label">Ditolak</div>
-        </div>
+        <div class="stat-icon rose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <div class="stat-info"><div class="stat-value">${stats.total_ditolak}</div><div class="stat-label">Ditolak</div></div>
       </div>
     </div>
 
     <!-- Search & Filter Bar -->
-    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
       <div style="flex:1;min-width:200px;position:relative;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="pmbSearch" class="form-input" placeholder="Cari nama, NIK, atau no. pendaftaran..." style="padding-left:36px;">
       </div>
       <select id="pmbFilterStatus" class="form-select" style="width:auto;min-width:140px;">
         <option value="">Semua Status</option>
-        <option value="menunggu">Menunggu</option>
-        <option value="proses">Proses</option>
-        <option value="diterima">Diterima</option>
-        <option value="ditolak">Ditolak</option>
+        <option value="menunggu">Menunggu</option><option value="proses">Proses</option>
+        <option value="diterima">Diterima</option><option value="ditolak">Ditolak</option>
       </select>
       <select id="pmbFilterProdi" class="form-select" style="width:auto;min-width:160px;">
         <option value="">Semua Prodi</option>
@@ -668,84 +658,155 @@ function renderPMBList(stats, registrations) {
         <option value="S2 Administrasi Publik">S2 Adm. Publik</option>
         <option value="D3 Ilmu Administrasi">D3 Ilmu Adm.</option>
       </select>
-      <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">
-        ${I.fileText} Export
-      </button>
+      <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">${I.fileText} Export</button>
+    </div>
+
+    <!-- Date Filter -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">📅 Periode:</label>
+      <input type="date" id="pmbDateFrom" class="form-input" style="width:auto;min-width:140px;font-size:0.78rem;">
+      <span style="color:var(--text-muted);font-size:0.8rem;">—</span>
+      <input type="date" id="pmbDateTo" class="form-input" style="width:auto;min-width:140px;font-size:0.78rem;">
+      <button class="btn btn-ghost btn-sm" id="pmbClearDate" style="font-size:0.72rem;">✕ Reset</button>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div id="pmbBulkBar" style="display:none;background:hsl(215 80% 96%);border:1px solid hsl(215 70% 85%);border-radius:10px;padding:10px 16px;margin-bottom:12px;gap:12px;align-items:center;flex-wrap:wrap;">
+      <span id="pmbBulkCount" style="font-size:0.82rem;font-weight:600;color:hsl(215 70% 40%);"></span>
+      <div style="display:flex;gap:6px;margin-left:auto;">
+        <button class="btn btn-success btn-sm" id="pmbBulkValidate">✅ Validasi Semua</button>
+        <button class="btn btn-primary btn-sm" id="pmbBulkAccount">🔐 Buat Akun Semua</button>
+        <button class="btn btn-danger btn-sm" id="pmbBulkDelete">🗑️ Hapus Semua</button>
+        <button class="btn btn-ghost btn-sm" id="pmbBulkCancel">Batal</button>
+      </div>
     </div>
 
     <!-- Table -->
-    <div id="pmbTableWrapper">
-      ${renderPMBTable(registrations)}
-    </div>
+    <div id="pmbTableWrapper"></div>
 
-    <!-- Result count -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
-      <p style="font-size:var(--text-xs);color:var(--text-muted);" id="pmbResultCount">
-        Menampilkan ${registrations.length} pendaftar
-      </p>
+    <!-- Pagination & Count -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
+      <p style="font-size:var(--text-xs);color:var(--text-muted);" id="pmbResultCount"></p>
+      <div id="pmbPagination" style="display:flex;gap:4px;align-items:center;"></div>
     </div>`;
 
-  // Bind search & filter
-  const searchInput = document.getElementById('pmbSearch');
-  const statusFilter = document.getElementById('pmbFilterStatus');
-  const prodiFilter = document.getElementById('pmbFilterProdi');
-
-  const filterFn = () => {
-    const q = (searchInput?.value || '').toLowerCase();
-    const status = statusFilter?.value || '';
-    const prodi = prodiFilter?.value || '';
-    let filtered = _pmbRegistrations.filter(r => {
-      const matchQ = !q || r.nama.toLowerCase().includes(q) || r.nik.includes(q) || (r.no_pendaftaran || '').toLowerCase().includes(q);
-      const matchStatus = !status || r.status === status;
-      const matchProdi = !prodi || r.prodi_pilihan === prodi;
-      return matchQ && matchStatus && matchProdi;
-    });
-    document.getElementById('pmbTableWrapper').innerHTML = renderPMBTable(filtered);
-    document.getElementById('pmbResultCount').textContent = `Menampilkan ${filtered.length} dari ${_pmbRegistrations.length} pendaftar`;
-    bindPMBActions();
-  };
-
-  searchInput?.addEventListener('input', filterFn);
-  statusFilter?.addEventListener('change', filterFn);
-  prodiFilter?.addEventListener('change', filterFn);
-
-  // Export CSV
+  // Bind controls
+  const onFilter = () => { _pmbPage = 1; applyPMBFilters(); };
+  document.getElementById('pmbSearch')?.addEventListener('input', onFilter);
+  document.getElementById('pmbFilterStatus')?.addEventListener('change', onFilter);
+  document.getElementById('pmbFilterProdi')?.addEventListener('change', onFilter);
+  document.getElementById('pmbDateFrom')?.addEventListener('change', onFilter);
+  document.getElementById('pmbDateTo')?.addEventListener('change', onFilter);
+  document.getElementById('pmbClearDate')?.addEventListener('click', () => {
+    document.getElementById('pmbDateFrom').value = '';
+    document.getElementById('pmbDateTo').value = '';
+    onFilter();
+  });
   document.getElementById('pmbExportBtn')?.addEventListener('click', () => exportPMBCSV(_pmbRegistrations));
+  document.getElementById('pmbBulkValidate')?.addEventListener('click', bulkValidate);
+  document.getElementById('pmbBulkAccount')?.addEventListener('click', bulkCreateAccount);
+  document.getElementById('pmbBulkDelete')?.addEventListener('click', bulkDelete);
+  document.getElementById('pmbBulkCancel')?.addEventListener('click', () => { _pmbSelected.clear(); updateBulkBar(); applyPMBFilters(); });
 
-  // Bind action buttons
+  applyPMBFilters();
+}
+
+function applyPMBFilters() {
+  const q = (document.getElementById('pmbSearch')?.value || '').toLowerCase();
+  const status = document.getElementById('pmbFilterStatus')?.value || '';
+  const prodi = document.getElementById('pmbFilterProdi')?.value || '';
+  const dateFrom = document.getElementById('pmbDateFrom')?.value || '';
+  const dateTo = document.getElementById('pmbDateTo')?.value || '';
+
+  let filtered = _pmbRegistrations.filter(r => {
+    const matchQ = !q || (r.nama||'').toLowerCase().includes(q) || (r.nik||'').includes(q) || (r.no_pendaftaran||'').toLowerCase().includes(q);
+    const matchS = !status || r.status === status;
+    const matchP = !prodi || r.prodi_pilihan === prodi;
+    let matchD = true;
+    if (dateFrom || dateTo) {
+      const d = r.created_at ? r.created_at.slice(0, 10) : '';
+      if (dateFrom && d < dateFrom) matchD = false;
+      if (dateTo && d > dateTo) matchD = false;
+    }
+    return matchQ && matchS && matchP && matchD;
+  });
+
+  // Sort
+  const { key, dir } = _pmbSort;
+  filtered.sort((a, b) => {
+    let va = a[key] || '', vb = b[key] || '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    return va < vb ? (dir === 'asc' ? -1 : 1) : va > vb ? (dir === 'asc' ? 1 : -1) : 0;
+  });
+
+  // Paginate
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PMB_PER_PAGE));
+  if (_pmbPage > totalPages) _pmbPage = totalPages;
+  const start = (_pmbPage - 1) * PMB_PER_PAGE;
+  const pageData = filtered.slice(start, start + PMB_PER_PAGE);
+
+  document.getElementById('pmbTableWrapper').innerHTML = renderPMBTable(pageData);
+  document.getElementById('pmbResultCount').textContent = total > 0
+    ? `Menampilkan ${start + 1}–${Math.min(start + PMB_PER_PAGE, total)} dari ${total} pendaftar`
+    : 'Tidak ada data';
+  renderPagination(totalPages);
   bindPMBActions();
+}
+
+function renderPagination(totalPages) {
+  const c = document.getElementById('pmbPagination');
+  if (!c || totalPages <= 1) { if (c) c.innerHTML = ''; return; }
+  const s = (act) => `style="padding:4px 10px;border-radius:6px;border:1px solid ${act?'var(--primary-500)':'var(--gray-200)'};background:${act?'var(--primary-500)':'#fff'};color:${act?'#fff':'var(--text-primary)'};cursor:pointer;font-size:0.75rem;font-weight:600;"`;
+  let h = `<button ${s(false)} ${_pmbPage<=1?'disabled':''} data-pg="${_pmbPage-1}">‹</button>`;
+  let sp = Math.max(1, _pmbPage-2), ep = Math.min(totalPages, sp+4);
+  if (ep-sp < 4) sp = Math.max(1, ep-4);
+  for (let i=sp; i<=ep; i++) h += `<button ${s(i===_pmbPage)} data-pg="${i}">${i}</button>`;
+  h += `<button ${s(false)} ${_pmbPage>=totalPages?'disabled':''} data-pg="${_pmbPage+1}">›</button>`;
+  c.innerHTML = h;
+  c.querySelectorAll('button[data-pg]').forEach(b => b.addEventListener('click', () => {
+    const pg = parseInt(b.dataset.pg);
+    if (pg >= 1 && pg <= totalPages) { _pmbPage = pg; applyPMBFilters(); }
+  }));
 }
 
 function renderPMBTable(registrations) {
   if (registrations.length === 0) {
     return `<div style="text-align:center;padding:32px;">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       <p style="color:var(--text-muted);font-size:var(--text-sm);">Tidak ada pendaftar ditemukan</p>
     </div>`;
   }
-
+  const si = (k) => _pmbSort.key !== k ? '<span style="opacity:.3;font-size:0.7em;">⇅</span>' : _pmbSort.dir === 'asc' ? '<span style="font-size:0.7em;">↑</span>' : '<span style="font-size:0.7em;">↓</span>';
+  const allChk = registrations.every(r => _pmbSelected.has(r.id));
   return `
     <table class="sch-table" style="font-size:0.82rem;">
       <thead><tr>
-        <th>No. Daftar</th><th>Nama</th><th>Prodi</th><th>Metode</th><th>Status</th><th>Aksi</th>
+        <th style="width:36px;text-align:center;"><input type="checkbox" id="pmbSelectAll" ${allChk?'checked':''} title="Pilih semua"></th>
+        <th class="sortable-th" data-sort="no_pendaftaran" style="cursor:pointer;">No. Daftar ${si('no_pendaftaran')}</th>
+        <th class="sortable-th" data-sort="nama" style="cursor:pointer;">Nama ${si('nama')}</th>
+        <th>Prodi</th><th>Metode</th>
+        <th class="sortable-th" data-sort="status" style="cursor:pointer;">Status ${si('status')}</th>
+        <th class="sortable-th" data-sort="created_at" style="cursor:pointer;">Tanggal ${si('created_at')}</th>
+        <th>Aksi</th>
       </tr></thead>
       <tbody>
-        ${registrations.map(r => `<tr class="pmb-tr" data-id="${r.id}" style="cursor:pointer;">
+        ${registrations.map(r => `<tr class="pmb-tr" data-id="${r.id}" style="cursor:pointer;${_pmbSelected.has(r.id)?'background:hsl(215 80% 97%);':''}">
+          <td onclick="event.stopPropagation();" style="text-align:center;"><input type="checkbox" class="pmb-chk" data-id="${r.id}" ${_pmbSelected.has(r.id)?'checked':''}></td>
           <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${r.no_pendaftaran}</td>
-          <td>
-            <strong>${r.nama}</strong><br>
-            <span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span>
-          </td>
+          <td><strong>${r.nama}</strong><br><span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span></td>
           <td style="font-size:0.8rem;">${r.prodi_pilihan || '-'}</td>
-          <td><span class="badge-sm ${r.metode === 'online' ? 'blue' : 'warning'}">${r.metode}</span></td>
-          <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
+          <td><span class="badge-sm ${r.metode==='online'?'blue':'warning'}">${r.metode}</span></td>
+          <td><span class="badge-sm ${r.status==='diterima'?'success':r.status==='ditolak'?'danger':r.status==='proses'?'blue':'warning'}">${r.status}</span></td>
+          <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td onclick="event.stopPropagation();">
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;">
-              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰 Bayar</button>
-              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
-              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
-              <button class="mgmt-action-btn" data-action="edit" data-id="${r.id}" title="Edit" style="color:hsl(215 70% 50%);">✏️ Edit</button>
-              <button class="mgmt-action-btn" data-action="delete" data-id="${r.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️ Hapus</button>
+              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰</button>
+              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅</button>
+              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐</button>
+              <button class="mgmt-action-btn" data-action="edit" data-id="${r.id}" title="Edit" style="color:hsl(215 70% 50%);">✏️</button>
+              <button class="mgmt-action-btn" data-action="delete" data-id="${r.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -753,24 +814,64 @@ function renderPMBTable(registrations) {
     </table>`;
 }
 
+function updateBulkBar() {
+  const bar = document.getElementById('pmbBulkBar');
+  const cnt = document.getElementById('pmbBulkCount');
+  if (!bar) return;
+  if (_pmbSelected.size > 0) { bar.style.display = 'flex'; if (cnt) cnt.textContent = `${_pmbSelected.size} pendaftar dipilih`; }
+  else { bar.style.display = 'none'; }
+}
+
+async function bulkValidate() {
+  if (!confirm(`Validasi ${_pmbSelected.size} pendaftar sekaligus?`)) return;
+  let ok = 0, fail = 0;
+  for (const id of _pmbSelected) { try { const r = await fetch(`${PMB_API}/account/${id}/validate`, { method: 'PUT' }); if (r.ok) ok++; else fail++; } catch { fail++; } }
+  alert(`✅ Berhasil: ${ok}\n❌ Gagal: ${fail}`);
+  _pmbSelected.clear(); loadRegistrationList();
+}
+
+async function bulkCreateAccount() {
+  if (!confirm(`Buat akun untuk ${_pmbSelected.size} pendaftar sekaligus?`)) return;
+  let ok = 0, fail = 0;
+  for (const id of _pmbSelected) { try { const r = await fetch(`${PMB_API}/account/create`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ registration_id: id }) }); if (r.ok) ok++; else fail++; } catch { fail++; } }
+  alert(`✅ Berhasil: ${ok}\n❌ Gagal: ${fail}`);
+  _pmbSelected.clear(); loadRegistrationList();
+}
+
+async function bulkDelete() {
+  if (!confirm(`⚠️ HAPUS ${_pmbSelected.size} pendaftar?\n\nAksi ini tidak bisa dibatalkan!`)) return;
+  let ok = 0, fail = 0;
+  for (const id of _pmbSelected) { try { const r = await fetch(`${PMB_API}/registration/${id}`, { method: 'DELETE' }); if (r.ok) ok++; else fail++; } catch { fail++; } }
+  alert(`✅ Terhapus: ${ok}\n❌ Gagal: ${fail}`);
+  _pmbSelected.clear(); loadRegistrationList();
+}
+
 function bindPMBActions() {
-  // Action buttons
   document.querySelectorAll('.mgmt-action-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      handleMgmtAction(btn.dataset.action, btn.dataset);
+    btn.addEventListener('click', (e) => { e.stopPropagation(); handleMgmtAction(btn.dataset.action, btn.dataset); });
+  });
+  document.querySelectorAll('.pmb-tr').forEach(row => {
+    row.addEventListener('click', () => { const id = parseInt(row.dataset.id); const reg = _pmbRegistrations.find(r => r.id === id); if (reg) showRegistrantDetail(reg); });
+  });
+  // Sort headers
+  document.querySelectorAll('.sortable-th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (_pmbSort.key === key) _pmbSort.dir = _pmbSort.dir === 'asc' ? 'desc' : 'asc';
+      else _pmbSort = { key, dir: 'asc' };
+      applyPMBFilters();
     });
   });
-
-  // Row click → detail modal
-  document.querySelectorAll('.pmb-tr').forEach(row => {
-    row.addEventListener('click', () => {
-      const id = parseInt(row.dataset.id);
-      const reg = _pmbRegistrations.find(r => r.id === id);
-      if (reg) showRegistrantDetail(reg);
-    });
+  // Checkboxes
+  document.getElementById('pmbSelectAll')?.addEventListener('change', (e) => {
+    document.querySelectorAll('.pmb-chk').forEach(chk => { const id = parseInt(chk.dataset.id); if (e.target.checked) _pmbSelected.add(id); else _pmbSelected.delete(id); chk.checked = e.target.checked; });
+    updateBulkBar();
+  });
+  document.querySelectorAll('.pmb-chk').forEach(chk => {
+    chk.addEventListener('change', () => { const id = parseInt(chk.dataset.id); if (chk.checked) _pmbSelected.add(id); else _pmbSelected.delete(id); updateBulkBar(); });
   });
 }
+
 
 function showRegistrantDetail(reg) {
   const modal = document.getElementById('pmbDetailModal');
