@@ -213,6 +213,56 @@
 }
 .pmb-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ---- Upload Berkas ---- */
+.pmb-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.pmb-upload-item {
+  border: 2px dashed hsl(215 30% 82%);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.pmb-upload-item:hover {
+  border-color: var(--primary-400);
+  background: hsl(215 80% 97%);
+}
+.pmb-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 12px;
+  cursor: pointer;
+  text-align: center;
+}
+.pmb-upload-icon {
+  font-size: 1.6rem;
+}
+.pmb-upload-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.pmb-upload-name {
+  font-size: 0.72rem;
+  color: var(--primary-500);
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pmb-upload-input {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .pmb-upload-grid { grid-template-columns: 1fr; }
+}
+
 /* ---- Success ---- */
 .pmb-success {
   text-align: center;

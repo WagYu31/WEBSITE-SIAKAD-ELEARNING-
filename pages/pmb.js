@@ -210,6 +210,55 @@ function renderDaftarPage() {
           </div>
         </div>
 
+        <!-- Upload Berkas -->
+        <div class="pmb-section">
+          <h3>📎 Upload Berkas Persyaratan</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">Format: PDF, JPG, PNG (maks. 5MB per file)</p>
+          
+          <div class="pmb-upload-grid">
+            <div class="pmb-upload-item">
+              <label class="pmb-upload-label">
+                <span class="pmb-upload-icon">📄</span>
+                <span class="pmb-upload-title">Ijazah SMA/SMK/MA <span style="color:var(--danger-500);">*</span></span>
+                <span class="pmb-upload-name" id="file-ijazah-name">Pilih file...</span>
+                <input type="file" name="file_ijazah" accept=".pdf,.jpg,.jpeg,.png" required class="pmb-upload-input" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+              </label>
+            </div>
+            <div class="pmb-upload-item">
+              <label class="pmb-upload-label">
+                <span class="pmb-upload-icon">🪪</span>
+                <span class="pmb-upload-title">Fotokopi KTP / KK <span style="color:var(--danger-500);">*</span></span>
+                <span class="pmb-upload-name" id="file-ktp-name">Pilih file...</span>
+                <input type="file" name="file_ktp_kk" accept=".pdf,.jpg,.jpeg,.png" required class="pmb-upload-input" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+              </label>
+            </div>
+            <div class="pmb-upload-item">
+              <label class="pmb-upload-label">
+                <span class="pmb-upload-icon">📷</span>
+                <span class="pmb-upload-title">Pas Foto 3×4 <span style="color:var(--danger-500);">*</span></span>
+                <span class="pmb-upload-name" id="file-foto-name">Pilih file...</span>
+                <input type="file" name="file_pas_foto" accept=".jpg,.jpeg,.png" required class="pmb-upload-input" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+              </label>
+            </div>
+            <div class="pmb-upload-item">
+              <label class="pmb-upload-label">
+                <span class="pmb-upload-icon">📊</span>
+                <span class="pmb-upload-title">Transkip Nilai Rapor</span>
+                <span class="pmb-upload-name" id="file-rapor-name">Pilih file...</span>
+                <input type="file" name="file_rapor" accept=".pdf,.jpg,.jpeg,.png" class="pmb-upload-input" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+              </label>
+            </div>
+            <div class="pmb-upload-item">
+              <label class="pmb-upload-label">
+                <span class="pmb-upload-icon">🏥</span>
+                <span class="pmb-upload-title">Surat Keterangan Sehat</span>
+                <span class="pmb-upload-name" id="file-sehat-name">Pilih file...</span>
+                <input type="file" name="file_surat_sehat" accept=".pdf,.jpg,.jpeg,.png" class="pmb-upload-input" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+              </label>
+            </div>
+          </div>
+        </div>
+
         <button type="submit" class="pmb-submit-btn" id="pmbSubmitBtn">
           DAFTAR
         </button>
@@ -389,7 +438,11 @@ export async function renderPMB(container) {
 
       const formData = new FormData(form);
       const data = {};
+      const fileInputs = form.querySelectorAll('input[type="file"]');
+      const fileFieldNames = new Set([...fileInputs].map(f => f.name));
+      
       formData.forEach((value, key) => {
+        if (fileFieldNames.has(key)) return; // skip file fields
         if (key === 'anak_ke' || key === 'dari_jumlah') {
           data[key] = value ? parseInt(value) : 0;
         } else {
@@ -406,6 +459,16 @@ export async function renderPMB(container) {
         const result = await res.json();
 
         if (res.ok) {
+          // Upload files if any selected
+          const uploadData = new FormData();
+          let hasFiles = false;
+          fileInputs.forEach(fi => {
+            if (fi.files.length > 0) { uploadData.append(fi.name, fi.files[0]); hasFiles = true; }
+          });
+          if (hasFiles && result.id) {
+            try { await fetch(`${API}/registration/${result.id}/upload`, { method: 'POST', body: uploadData }); } catch {}
+          }
+
           const mainArea = document.getElementById('pmbMainArea');
           const acc = result.account || {};
           mainArea.innerHTML = `

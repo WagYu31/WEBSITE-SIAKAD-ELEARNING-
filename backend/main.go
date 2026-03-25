@@ -44,6 +44,7 @@ func main() {
 		pmb.PUT("/registration/:id/status", handlers.UpdateStatus)
 		pmb.PUT("/registration/:id", handlers.UpdateRegistration)
 		pmb.DELETE("/registration/:id", handlers.DeleteRegistration)
+		pmb.POST("/registration/:id/upload", handlers.UploadDocuments)
 		pmb.PUT("/payment/:id/confirm", handlers.ConfirmCashPayment)
 
 		// Account & Validation
