@@ -2061,73 +2061,113 @@
 .dv { font-weight: 500; font-size: 0.82rem; color: var(--text-primary); }
 
 /* ============================================
-   PROFIL SAYA — Premium Profile Styles
+   PROFIL SAYA — ISO 9241 Compliant Profile
    ============================================ */
 .profil-section {
   background: var(--card-bg);
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--gray-100);
-  padding: 24px;
-  margin-bottom: 20px;
-  transition: box-shadow .3s, transform .2s;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: box-shadow .25s;
 }
 .profil-section:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,.06);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+}
+.profil-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
 }
 .profil-section-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 18px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--gray-100);
+  margin: 0;
 }
 .profil-section-title .pst-icon {
-  width: 32px; height: 32px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
-.profil-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-}
-.profil-field {
-  padding: 12px 16px;
+/* Table-row field layout */
+.profil-row {
+  display: flex;
   border-bottom: 1px solid var(--gray-50);
-  transition: background .2s;
+  transition: background .15s;
 }
-.profil-field:hover {
-  background: var(--gray-50);
-}
-.profil-field.full { grid-column: span 2; }
-.profil-field-label {
-  font-size: 0.68rem;
+.profil-row:last-child { border-bottom: none; }
+.profil-row:hover { background: hsl(215 30% 98%); }
+.profil-row-label {
+  width: 170px;
+  flex-shrink: 0;
+  padding: 10px 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: .04em;
-  margin-bottom: 3px;
+  letter-spacing: .03em;
   display: flex;
   align-items: center;
-  gap: 6px;
 }
-.profil-field-label svg { width: 12px; height: 12px; opacity: .5; }
-.profil-field-value {
-  font-size: 0.88rem;
-  font-weight: 600;
+.profil-row-value {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-primary);
+  border-left: 1px solid var(--gray-50);
 }
-.profil-field-value.mono { font-family: var(--font-mono); letter-spacing: .03em; }
-.profil-field-value.muted { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.profil-row-value.mono {
+  font-family: var(--font-mono);
+  letter-spacing: .02em;
+}
+.profil-row-value.muted {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+/* Two-column layout */
+.profil-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.profil-2col .profil-row:nth-child(odd) {
+  border-right: 1px solid var(--gray-50);
+}
+.profil-2col .profil-row.full-row { grid-column: span 2; border-right: none; }
+/* Edit button */
+.profil-edit-btn {
+  background: none;
+  border: 1px solid var(--gray-200);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  font-weight: 500;
+}
+.profil-edit-btn:hover {
+  background: var(--primary-500);
+  color: white;
+  border-color: var(--primary-500);
+}
 
-@media (max-width: 600px) {
-  .profil-grid { grid-template-columns: 1fr; }
-  .profil-field.full { grid-column: span 1; }
-  .profil-section { padding: 16px; }
+@media (max-width: 640px) {
+  .profil-2col { grid-template-columns: 1fr; }
+  .profil-2col .profil-row:nth-child(odd) { border-right: none; }
+  .profil-2col .profil-row.full-row { grid-column: span 1; }
+  .profil-row-label { width: 120px; font-size: 0.68rem; }
+  .profil-row-value { font-size: 0.8rem; }
 }
+

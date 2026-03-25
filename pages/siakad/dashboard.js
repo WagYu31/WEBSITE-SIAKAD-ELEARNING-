@@ -1969,180 +1969,125 @@ function showMhsEditModal(m) {
 // ============================================
 function profilSayaContent(user) {
   const initials = (user.nama || '?').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-  const v = (val) => val ? `<span class="profil-field-value">${val}</span>` : `<span class="profil-field-value muted">Belum diisi</span>`;
-  const vm = (val) => val ? `<span class="profil-field-value mono">${val}</span>` : `<span class="profil-field-value muted">Belum diisi</span>`;
-  const field = (label, value, cls='') => `<div class="profil-field ${cls}"><div class="profil-field-label">${label}</div>${value}</div>`;
+  const vv = (val) => val ? '<span class="profil-row-value">' + val + '</span>' : '<span class="profil-row-value muted">Belum diisi</span>';
+  const vm = (val) => val ? '<span class="profil-row-value mono">' + val + '</span>' : '<span class="profil-row-value muted">Belum diisi</span>';
+  const row = (label, value, cls) => '<div class="profil-row' + (cls ? ' '+cls : '') + '"><div class="profil-row-label">' + label + '</div>' + value + '</div>';
 
-  return `
-    <!-- Profile Header -->
-    <div style="background:var(--gradient-primary);border-radius:20px;padding:32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.06);border-radius:50%;"></div>
-      <div style="position:absolute;bottom:-20px;left:40%;width:80px;height:80px;background:rgba(255,255,255,.04);border-radius:50%;"></div>
-      <div style="width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.7rem;border:3px solid rgba(255,255,255,.3);flex-shrink:0;" role="img" aria-label="Avatar ${user.nama}">
-        ${initials}
-      </div>
-      <div style="flex:1;color:white;min-width:200px;">
-        <h2 style="font-family:var(--font-heading);margin:0 0 4px;font-size:1.4rem;font-weight:800;">${user.nama}</h2>
-        <p style="margin:0 0 10px;opacity:.8;font-size:0.88rem;">${user.prodi}</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <span style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);padding:4px 12px;border-radius:20px;font-size:0.73rem;font-family:var(--font-mono);border:1px solid rgba(255,255,255,.2);">NIM ${user.nim}</span>
-          <span style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);padding:4px 12px;border-radius:20px;font-size:0.73rem;border:1px solid rgba(255,255,255,.2);">Semester ${user.semester}</span>
-          <span style="background:hsl(145 70% 40%);padding:4px 12px;border-radius:20px;font-size:0.73rem;font-weight:700;" role="status">✓ Aktif</span>
-        </div>
-      </div>
-      <button class="btn btn-sm" id="editProfilToggle" style="background:rgba(255,255,255,.15);backdrop-filter:blur(8px);color:white;border:1px solid rgba(255,255,255,.3);padding:8px 18px;border-radius:12px;font-weight:600;cursor:pointer;transition:all .2s;" aria-label="Edit profil" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✏️ Edit Profil</button>
-    </div>
+  const agamaOpts = ['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => '<option value="'+a+'" '+(user.agama===a?'selected':'')+'>'+a+'</option>').join('');
 
-    <!-- Edit Form (hidden) -->
-    <div id="editProfilSection" style="display:none;margin-bottom:24px;">
-      <div class="profil-section" style="border:2px solid var(--primary-100);background:linear-gradient(135deg,var(--primary-50),var(--card-bg));">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:var(--primary-100);color:var(--primary-600);">📝</span>
-          Edit Data Profil
-        </h3>
-        <form id="editProfilForm">
-          <div class="off-section"><h5 class="off-section-title">👤 Data Pribadi</h5>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_nama">Nama Lengkap</label><input type="text" id="ep_nama" name="nama" value="${user.nama}" class="form-input" required></div>
-              <div class="form-group"><label class="form-label" for="ep_nik">NIK</label><input type="text" id="ep_nik" name="nik" value="${user.nik || ''}" class="form-input" maxlength="16"></div>
-            </div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_email">Email</label><input type="email" id="ep_email" name="email" value="${user.email}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_telepon">Telepon</label><input type="tel" id="ep_telepon" name="telepon_1" value="${user.telepon_1 || ''}" class="form-input" maxlength="13"></div>
-            </div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_tempat">Tempat Lahir</label><input type="text" id="ep_tempat" name="tempat_lahir" value="${user.tempat_lahir || ''}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_tgl">Tanggal Lahir</label><input type="date" id="ep_tgl" name="tanggal_lahir" value="${user.tanggal_lahir || ''}" class="form-input"></div>
-            </div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_gender">Gender</label><select id="ep_gender" name="gender" class="form-select"><option value="">—</option><option value="Laki-laki" ${user.gender==='Laki-laki'?'selected':''}>Laki-laki</option><option value="Perempuan" ${user.gender==='Perempuan'?'selected':''}>Perempuan</option></select></div>
-              <div class="form-group"><label class="form-label" for="ep_agama">Agama</label><select id="ep_agama" name="agama" class="form-select"><option value="">—</option>${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a=>'<option value="'+a+'" '+(user.agama===a?'selected':'')+'>'+a+'</option>').join('')}</select></div>
-            </div>
-          </div>
-          <div class="off-section"><h5 class="off-section-title">📍 Alamat</h5>
-            <div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="ep_alamat">Alamat</label><textarea id="ep_alamat" name="alamat" class="form-input" rows="2">${user.alamat || ''}</textarea></div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_prov">Provinsi</label><input type="text" id="ep_prov" name="provinsi" value="${user.provinsi || ''}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_kota">Kota</label><input type="text" id="ep_kota" name="kota" value="${user.kota || ''}" class="form-input"></div>
-            </div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_kec">Kecamatan</label><input type="text" id="ep_kec" name="kecamatan" value="${user.kecamatan || ''}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_kel">Kelurahan</label><input type="text" id="ep_kel" name="kelurahan" value="${user.kelurahan || ''}" class="form-input"></div>
-            </div>
-          </div>
-          <div class="off-section"><h5 class="off-section-title">👨‍👩‍👧 Data Keluarga</h5>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_ayah">Nama Ayah</label><input type="text" id="ep_ayah" name="nama_ayah" value="${user.nama_ayah || ''}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_pkayah">Pekerjaan Ayah</label><input type="text" id="ep_pkayah" name="pekerjaan_ayah" value="${user.pekerjaan_ayah || ''}" class="form-input"></div>
-            </div>
-            <div class="off-row">
-              <div class="form-group"><label class="form-label" for="ep_ibu">Nama Ibu</label><input type="text" id="ep_ibu" name="nama_ibu" value="${user.nama_ibu || ''}" class="form-input"></div>
-              <div class="form-group"><label class="form-label" for="ep_pkibu">Pekerjaan Ibu</label><input type="text" id="ep_pkibu" name="pekerjaan_ibu" value="${user.pekerjaan_ibu || ''}" class="form-input"></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:20px;">
-            <button type="submit" class="btn btn-primary" style="flex:1;border-radius:12px;padding:10px;">💾 Simpan Perubahan</button>
-            <button type="button" class="btn btn-secondary" id="cancelEditProfil" style="border-radius:12px;padding:10px 20px;">Batal</button>
-          </div>
-        </form>
-      </div>
-    </div>
+  return '<div style="background:var(--gradient-primary);border-radius:16px;padding:28px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;position:relative;overflow:hidden;" role="banner" aria-label="Profil mahasiswa">'
+    + '<div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%;"></div>'
+    + '<div style="position:absolute;bottom:-30px;left:30%;width:100px;height:100px;background:rgba(255,255,255,.03);border-radius:50%;"></div>'
+    + '<div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.5rem;border:2px solid rgba(255,255,255,.3);flex-shrink:0;" role="img" aria-label="Avatar">' + initials + '</div>'
+    + '<div style="flex:1;color:white;min-width:180px;">'
+    + '<h2 style="font-family:var(--font-heading);margin:0 0 4px;font-size:1.25rem;font-weight:800;">' + user.nama + '</h2>'
+    + '<p style="margin:0 0 8px;opacity:.8;font-size:0.82rem;">' + user.prodi + '</p>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+    + '<span style="background:rgba(255,255,255,.15);padding:3px 10px;border-radius:16px;font-size:0.7rem;font-family:var(--font-mono);border:1px solid rgba(255,255,255,.15);">NIM ' + user.nim + '</span>'
+    + '<span style="background:rgba(255,255,255,.15);padding:3px 10px;border-radius:16px;font-size:0.7rem;border:1px solid rgba(255,255,255,.15);">Semester ' + user.semester + '</span>'
+    + '<span style="background:hsl(145 65% 38%);padding:3px 10px;border-radius:16px;font-size:0.7rem;font-weight:700;" role="status">\u2713 Aktif</span>'
+    + '</div></div>'
+    + '<button class="profil-edit-btn" id="editProfilToggle" style="background:rgba(255,255,255,.15);color:white;border-color:rgba(255,255,255,.3);padding:6px 16px;border-radius:8px;" aria-label="Edit profil">\u270f\ufe0f Edit Profil</button>'
+    + '</div>'
 
-    <!-- Data Sections Grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" id="profilDataSections">
-      <!-- Data Pribadi -->
-      <div class="profil-section" style="grid-column:span 2;">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:hsl(215 50% 95%);color:var(--primary-600);">👤</span>
-          Data Pribadi
-        </h3>
-        <div class="profil-grid">
-          ${field('Nama Lengkap', v(user.nama))}
-          ${field('NIM', vm(user.nim))}
-          ${field('NIK', vm(user.nik))}
-          ${field('NISN', vm(user.nisn))}
-          ${field('Email', v(user.email))}
-          ${field('Telepon', v(user.telepon_1))}
-          ${field('Tempat Lahir', v(user.tempat_lahir))}
-          ${field('Tanggal Lahir', v(user.tanggal_lahir))}
-          ${field('Gender', v(user.gender))}
-          ${field('Agama', v(user.agama))}
-          ${field('KIP', v(user.kip))}
-          ${field('KKS', v(user.kks))}
-        </div>
-      </div>
+    // Edit Form (hidden)
+    + '<div id="editProfilSection" style="display:none;margin-bottom:16px;" role="form" aria-label="Form edit profil">'
+    + '<div class="profil-section" style="border:2px solid var(--primary-100);">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title"><span class="pst-icon" style="background:var(--primary-100);color:var(--primary-600);">\ud83d\udcdd</span> Edit Data Profil</h3></div>'
+    + '<div style="padding:20px;">'
+    + '<form id="editProfilForm">'
+    + '<div class="off-section"><h5 class="off-section-title">\ud83d\udc64 Data Pribadi</h5>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_nama">Nama Lengkap</label><input type="text" id="ep_nama" name="nama" value="' + user.nama + '" class="form-input" required></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_nik">NIK</label><input type="text" id="ep_nik" name="nik" value="' + (user.nik||'') + '" class="form-input" maxlength="16"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_email">Email</label><input type="email" id="ep_email" name="email" value="' + user.email + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_telepon">Telepon</label><input type="tel" id="ep_telepon" name="telepon_1" value="' + (user.telepon_1||'') + '" class="form-input" maxlength="13"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_tempat">Tempat Lahir</label><input type="text" id="ep_tempat" name="tempat_lahir" value="' + (user.tempat_lahir||'') + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_tgl">Tanggal Lahir</label><input type="date" id="ep_tgl" name="tanggal_lahir" value="' + (user.tanggal_lahir||'') + '" class="form-input"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_gender">Gender</label><select id="ep_gender" name="gender" class="form-select"><option value="">\u2014</option><option value="Laki-laki" ' + (user.gender==='Laki-laki'?'selected':'') + '>Laki-laki</option><option value="Perempuan" ' + (user.gender==='Perempuan'?'selected':'') + '>Perempuan</option></select></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_agama">Agama</label><select id="ep_agama" name="agama" class="form-select"><option value="">\u2014</option>' + agamaOpts + '</select></div></div>'
+    + '</div>'
+    + '<div class="off-section"><h5 class="off-section-title">\ud83d\udccd Alamat</h5>'
+    + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="ep_alamat">Alamat</label><textarea id="ep_alamat" name="alamat" class="form-input" rows="2">' + (user.alamat||'') + '</textarea></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_prov">Provinsi</label><input type="text" id="ep_prov" name="provinsi" value="' + (user.provinsi||'') + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_kota">Kota</label><input type="text" id="ep_kota" name="kota" value="' + (user.kota||'') + '" class="form-input"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_kec">Kecamatan</label><input type="text" id="ep_kec" name="kecamatan" value="' + (user.kecamatan||'') + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_kel">Kelurahan</label><input type="text" id="ep_kel" name="kelurahan" value="' + (user.kelurahan||'') + '" class="form-input"></div></div></div>'
+    + '<div class="off-section"><h5 class="off-section-title">\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Data Keluarga</h5>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_ayah">Nama Ayah</label><input type="text" id="ep_ayah" name="nama_ayah" value="' + (user.nama_ayah||'') + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_pkayah">Pekerjaan Ayah</label><input type="text" id="ep_pkayah" name="pekerjaan_ayah" value="' + (user.pekerjaan_ayah||'') + '" class="form-input"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_ibu">Nama Ibu</label><input type="text" id="ep_ibu" name="nama_ibu" value="' + (user.nama_ibu||'') + '" class="form-input"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_pkibu">Pekerjaan Ibu</label><input type="text" id="ep_pkibu" name="pekerjaan_ibu" value="' + (user.pekerjaan_ibu||'') + '" class="form-input"></div></div></div>'
+    + '<div style="display:flex;gap:10px;margin-top:16px;">'
+    + '<button type="submit" class="btn btn-primary" style="flex:1;border-radius:10px;padding:10px;">\ud83d\udcbe Simpan Perubahan</button>'
+    + '<button type="button" class="btn btn-secondary" id="cancelEditProfil" style="border-radius:10px;padding:10px 20px;">Batal</button>'
+    + '</div></form></div></div></div>'
 
-      <!-- Alamat -->
-      <div class="profil-section">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:hsl(145 40% 93%);color:hsl(145 55% 35%);">📍</span>
-          Alamat
-        </h3>
-        <div class="profil-grid" style="grid-template-columns:1fr;">
-          ${field('Alamat Lengkap', v(user.alamat), 'full')}
-          ${field('Provinsi', v(user.provinsi))}
-          ${field('Kota / Kabupaten', v(user.kota))}
-          ${field('Kecamatan', v(user.kecamatan))}
-          ${field('Kelurahan', v(user.kelurahan))}
-          ${field('Kode Pos', vm(user.kode_pos))}
-        </div>
-      </div>
+    // Data Pribadi Section
+    + '<div class="profil-section" role="region" aria-labelledby="secPribadi">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secPribadi"><span class="pst-icon" style="background:hsl(215 50% 94%);color:var(--primary-600);">\ud83d\udc64</span> Data Pribadi</h3></div>'
+    + '<div class="profil-2col">'
+    + row('Nama Lengkap', vv(user.nama))
+    + row('NIM', vm(user.nim))
+    + row('NIK', vm(user.nik))
+    + row('NISN', vm(user.nisn))
+    + row('Email', vv(user.email))
+    + row('Telepon', vv(user.telepon_1))
+    + row('Tempat Lahir', vv(user.tempat_lahir))
+    + row('Tanggal Lahir', vv(user.tanggal_lahir))
+    + row('Jenis Kelamin', vv(user.gender))
+    + row('Agama', vv(user.agama))
+    + row('No. KIP', vv(user.kip))
+    + row('No. KKS', vv(user.kks))
+    + '</div></div>'
 
-      <!-- Data Orang Tua -->
-      <div class="profil-section">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:hsl(38 50% 93%);color:hsl(38 70% 40%);">👨‍👩‍👧</span>
-          Data Orang Tua / Wali
-        </h3>
-        <div class="profil-grid" style="grid-template-columns:1fr;">
-          ${field('Anak Ke', `<span class="profil-field-value">${user.anak_ke || '—'} dari ${user.dari_jumlah || '—'} bersaudara</span>`)}
-          ${field('No. KK', vm(user.no_kk))}
-          ${field('Nama Ayah', v(user.nama_ayah))}
-          ${field('Pekerjaan Ayah', v(user.pekerjaan_ayah))}
-          ${field('NIK Ayah', vm(user.nik_ayah))}
-          ${field('Nama Ibu', v(user.nama_ibu))}
-          ${field('Pekerjaan Ibu', v(user.pekerjaan_ibu))}
-          ${field('NIK Ibu', vm(user.nik_ibu))}
-        </div>
-      </div>
+    // Alamat Section
+    + '<div class="profil-section" role="region" aria-labelledby="secAlamat">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secAlamat"><span class="pst-icon" style="background:hsl(145 40% 93%);color:hsl(145 55% 35%);">\ud83d\udccd</span> Alamat</h3></div>'
+    + '<div>'
+    + row('Alamat Lengkap', vv(user.alamat))
+    + '<div class="profil-2col">'
+    + row('Provinsi', vv(user.provinsi))
+    + row('Kota / Kabupaten', vv(user.kota))
+    + row('Kecamatan', vv(user.kecamatan))
+    + row('Kelurahan', vv(user.kelurahan))
+    + '</div>'
+    + row('Kode Pos', vm(user.kode_pos))
+    + '</div></div>'
 
-      <!-- Asal Sekolah & Status -->
-      <div class="profil-section" style="grid-column:span 2;">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:hsl(280 40% 93%);color:hsl(280 55% 45%);">🏫</span>
-          Asal Sekolah & Akademik
-        </h3>
-        <div class="profil-grid">
-          ${field('Asal Sekolah', v(user.asal_sekolah))}
-          ${field('Program Studi', v(user.prodi))}
-          ${field('Jenjang', `<span class="profil-field-value">Strata 1 (S1)</span>`)}
-          ${field('Status Mahasiswa', `<span class="badge-sm success" style="font-size:0.75rem;padding:4px 12px;">✓ Aktif</span>`)}
-        </div>
-      </div>
+    // Data Orang Tua Section
+    + '<div class="profil-section" role="region" aria-labelledby="secKeluarga">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secKeluarga"><span class="pst-icon" style="background:hsl(38 50% 93%);color:hsl(38 70% 40%);">\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67</span> Data Orang Tua / Wali</h3></div>'
+    + '<div class="profil-2col">'
+    + row('Anak Ke', '<span class="profil-row-value">' + (user.anak_ke || '\u2014') + ' dari ' + (user.dari_jumlah || '\u2014') + ' bersaudara</span>')
+    + row('No. KK', vm(user.no_kk))
+    + row('Nama Ayah', vv(user.nama_ayah))
+    + row('Pekerjaan Ayah', vv(user.pekerjaan_ayah))
+    + row('NIK Ayah', vm(user.nik_ayah))
+    + row('Nama Ibu', vv(user.nama_ibu))
+    + row('Pekerjaan Ibu', vv(user.pekerjaan_ibu))
+    + row('NIK Ibu', vm(user.nik_ibu))
+    + '</div></div>'
 
-      <!-- Pengaturan Akun -->
-      <div class="profil-section" style="grid-column:span 2;">
-        <h3 class="profil-section-title">
-          <span class="pst-icon" style="background:hsl(0 0% 95%);color:var(--text-muted);">⚙️</span>
-          Pengaturan Akun
-        </h3>
-        <form id="profilForm" style="max-width:420px;" autocomplete="off">
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label" for="profOldPw">Password Lama</label>
-            <input type="password" id="profOldPw" class="form-input" placeholder="••••••••" autocomplete="current-password">
-          </div>
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label" for="profNewPw">Password Baru</label>
-            <input type="password" id="profNewPw" class="form-input" placeholder="Minimal 8 karakter" autocomplete="new-password" minlength="8">
-          </div>
-          <div class="form-group" style="margin-bottom:18px;">
-            <label class="form-label" for="profConfPw">Konfirmasi Password Baru</label>
-            <input type="password" id="profConfPw" class="form-input" placeholder="Ulangi password baru" autocomplete="new-password">
-          </div>
-          <button type="button" class="btn btn-primary btn-sm" style="border-radius:10px;padding:8px 20px;" onclick="alert('✅ Password berhasil diubah!')">🔐 Ubah Password</button>
-        </form>
-      </div>
-    </div>`;
+    // Asal Sekolah & Akademik Section
+    + '<div class="profil-section" role="region" aria-labelledby="secSekolah">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secSekolah"><span class="pst-icon" style="background:hsl(280 40% 93%);color:hsl(280 55% 45%);">\ud83c\udfeb</span> Asal Sekolah & Akademik</h3></div>'
+    + '<div class="profil-2col">'
+    + row('Asal Sekolah', vv(user.asal_sekolah))
+    + row('Program Studi', vv(user.prodi))
+    + row('Jenjang', '<span class="profil-row-value">Strata 1 (S1)</span>')
+    + row('Status', '<span class="profil-row-value"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">\u2713 Aktif</span></span>')
+    + '</div></div>'
+
+    // Pengaturan Akun Section
+    + '<div class="profil-section" role="region" aria-labelledby="secAkun">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secAkun"><span class="pst-icon" style="background:hsl(0 0% 94%);color:var(--text-muted);">\u2699\ufe0f</span> Pengaturan Akun</h3></div>'
+    + '<div style="padding:20px;">'
+    + '<form id="profilForm" style="max-width:380px;" autocomplete="off" aria-label="Ubah password">'
+    + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="profOldPw">Password Lama</label><input type="password" id="profOldPw" class="form-input" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" autocomplete="current-password"></div>'
+    + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="profNewPw">Password Baru</label><input type="password" id="profNewPw" class="form-input" placeholder="Minimal 8 karakter" autocomplete="new-password" minlength="8"></div>'
+    + '<div class="form-group" style="margin-bottom:16px;"><label class="form-label" for="profConfPw">Konfirmasi Password Baru</label><input type="password" id="profConfPw" class="form-input" placeholder="Ulangi password baru" autocomplete="new-password"></div>'
+    + '<button type="button" class="btn btn-primary btn-sm" style="border-radius:8px;" onclick="alert(\'\u2705 Password berhasil diubah!\')">\ud83d\udd10 Ubah Password</button>'
+    + '</form></div></div>';
 }
 
 
