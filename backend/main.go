@@ -64,6 +64,17 @@ func main() {
 		profile.PUT("/:nim/password", handlers.ChangePassword)
 	}
 
+	// Dosen Routes
+	dosen := r.Group("/api/dosen")
+	{
+		dosen.GET("", handlers.GetAllDosen)
+		dosen.GET("/:id", handlers.GetDosen)
+		dosen.POST("", handlers.CreateDosen)
+		dosen.PUT("/:id", handlers.UpdateDosen)
+		dosen.DELETE("/:id", handlers.DeleteDosen)
+		dosen.GET("/stats/summary", handlers.GetDosenStats)
+	}
+
 	// Serve uploaded files (avatars, documents)
 	r.Static("/uploads", "./uploads")
 
