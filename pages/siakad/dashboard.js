@@ -1357,11 +1357,12 @@ function showEditForm(regId) {
   const v = (val) => val || '';
 
   content.innerHTML = `
-    <form id="editRegForm" style="max-height:60vh;overflow-y:auto;padding-right:8px;">
+    <form id="editRegForm" style="max-height:65vh;overflow-y:auto;padding-right:8px;">
       <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 16px;">No. Daftar: <strong>${reg.no_pendaftaran}</strong></p>
 
+      <!-- Akademik -->
       <div class="off-section">
-        <h5 class="off-section-title">🎓 Akademik</h5>
+        <h5 class="off-section-title">🎓 Program Studi Pilihan</h5>
         <div class="off-row">
           <div class="form-group">
             <label class="form-label">Program Studi *</label>
@@ -1378,52 +1379,124 @@ function showEditForm(regId) {
         </div>
       </div>
 
+      <!-- Data Pribadi -->
       <div class="off-section">
         <h5 class="off-section-title">👤 Data Pribadi</h5>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Nama *</label><input type="text" name="nama" value="${v(reg.nama)}" required class="form-input"></div>
+          <div class="form-group"><label class="form-label">NISN</label><input type="text" name="nisn" value="${v(reg.nisn)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">KIP</label><input type="text" name="kip" value="${v(reg.kip)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">KKS</label><input type="text" name="kks" value="${v(reg.kks)}" class="form-input"></div>
           <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" value="${v(reg.nik)}" required class="form-input" pattern="[0-9]{16}" maxlength="16" minlength="16"></div>
         </div>
         <div class="off-row">
-           <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" value="${v(reg.email)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Telepon</label><input type="tel" name="telepon_1" value="${v(reg.telepon_1)}" class="form-input" maxlength="12"></div>
-        </div>
-        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama Lengkap *</label><input type="text" name="nama" value="${v(reg.nama)}" required class="form-input"></div>
           <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${v(reg.tempat_lahir)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${v(reg.tanggal_lahir)}" class="form-input"></div>
         </div>
         <div class="off-row">
+          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${v(reg.tanggal_lahir)}" class="form-input"></div>
           <div class="form-group"><label class="form-label">Gender</label>
-            <select name="gender" class="form-select">
-              <option value="">-</option>
-              <option value="Laki-laki" ${reg.gender === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
-              <option value="Perempuan" ${reg.gender === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
-            </select>
+            <div style="display:flex;gap:16px;padding-top:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-sm);cursor:pointer;"><input type="radio" name="gender" value="Laki-laki" ${reg.gender === 'Laki-laki' ? 'checked' : ''}> Laki-laki</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-sm);cursor:pointer;"><input type="radio" name="gender" value="Perempuan" ${reg.gender === 'Perempuan' ? 'checked' : ''}> Perempuan</label>
+            </div>
           </div>
+        </div>
+        <div class="off-row">
           <div class="form-group"><label class="form-label">Agama</label>
             <select name="agama" class="form-select">
               <option value="">-</option>
               ${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => `<option value="${a}" ${reg.agama === a ? 'selected' : ''}>${a}</option>`).join('')}
             </select>
           </div>
+          <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" value="${v(reg.email)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" value="${v(reg.telepon_1)}" class="form-input" maxlength="12"></div>
+          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" value="${v(reg.telepon_2)}" class="form-input" maxlength="12"></div>
         </div>
       </div>
 
+      <!-- Alamat -->
       <div class="off-section">
         <h5 class="off-section-title">📍 Alamat</h5>
         <div class="form-group" style="margin-bottom:14px;">
-          <label class="form-label">Alamat</label>
+          <label class="form-label">Alamat Lengkap</label>
           <textarea name="alamat" class="form-input" rows="2" style="resize:vertical;">${v(reg.alamat)}</textarea>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Kota</label><input type="text" name="kota" value="${v(reg.kota)}" class="form-input"></div>
           <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${v(reg.provinsi)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Kota/Kabupaten</label><input type="text" name="kota" value="${v(reg.kota)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kecamatan</label><input type="text" name="kecamatan" value="${v(reg.kecamatan)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Desa/Kelurahan</label><input type="text" name="kelurahan" value="${v(reg.kelurahan)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kode Pos</label><input type="text" name="kode_pos" value="${v(reg.kode_pos)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Anak Ke</label><input type="number" name="anak_ke" value="${reg.anak_ke || ''}" class="form-input"></div>
         </div>
       </div>
 
+      <!-- Data Orang Tua -->
       <div class="off-section">
-        <h5 class="off-section-title">🏫 Pendidikan</h5>
-        <div class="form-group"><label class="form-label">Asal Sekolah</label><input type="text" name="asal_sekolah" value="${v(reg.asal_sekolah)}" class="form-input"></div>
+        <h5 class="off-section-title">👨‍👩‍👧 Data Orang Tua / Wali</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Dari Jumlah Anak</label><input type="number" name="dari_jumlah" value="${reg.dari_jumlah || ''}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Nama Ayah</label><input type="text" name="nama_ayah" value="${v(reg.nama_ayah)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama Ibu</label><input type="text" name="nama_ibu" value="${v(reg.nama_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Pekerjaan Ayah</label><input type="text" name="pekerjaan_ayah" value="${v(reg.pekerjaan_ayah)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Pekerjaan Ibu</label><input type="text" name="pekerjaan_ibu" value="${v(reg.pekerjaan_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK Ayah</label><input type="text" name="nik_ayah" value="${v(reg.nik_ayah)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">NIK Ibu</label><input type="text" name="nik_ibu" value="${v(reg.nik_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">No. KK</label><input type="text" name="no_kk" value="${v(reg.no_kk)}" class="form-input"></div>
+        </div>
+      </div>
+
+      <!-- Asal Sekolah -->
+      <div class="off-section">
+        <h5 class="off-section-title">🏫 Asal Sekolah</h5>
+        <div class="form-group"><label class="form-label">Asal Sekolah *</label><input type="text" name="asal_sekolah" value="${v(reg.asal_sekolah)}" class="form-input"></div>
+      </div>
+
+      <!-- Upload Berkas -->
+      <div class="off-section">
+        <h5 class="off-section-title">📎 Upload Berkas Persyaratan</h5>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Upload ulang untuk mengganti file. Format: PDF, JPG, PNG (maks. 5MB)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:1.2rem;">📄</span><span style="font-size:0.75rem;font-weight:600;">Ijazah</span>
+            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_ijazah" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:1.2rem;">🪪</span><span style="font-size:0.75rem;font-weight:600;">KTP/KK</span>
+            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_ktp_kk" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:1.2rem;">📷</span><span style="font-size:0.75rem;font-weight:600;">Pas Foto</span>
+            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_pas_foto" accept=".jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:1.2rem;">📊</span><span style="font-size:0.75rem;font-weight:600;">Rapor</span>
+            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_rapor" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;grid-column:span 2;">
+            <span style="font-size:1.2rem;">🏥</span><span style="font-size:0.75rem;font-weight:600;">Surat Sehat</span>
+            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
+            <input type="file" name="file_surat_sehat" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
+          </label>
+        </div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:16px;">
@@ -1442,7 +1515,9 @@ function showEditForm(regId) {
 
     const formData = new FormData(e.target);
     const data = {};
-    formData.forEach((v, k) => { if (v) data[k] = v; });
+    const fileInputs = e.target.querySelectorAll('input[type="file"]');
+    const fileFieldNames = new Set([...fileInputs].map(f => f.name));
+    formData.forEach((v, k) => { if (v && !fileFieldNames.has(k)) data[k] = v; });
 
     try {
       const res = await fetch(`${PMB_API}/registration/${regId}`, {
@@ -1452,6 +1527,12 @@ function showEditForm(regId) {
       });
       const result = await res.json();
       if (res.ok) {
+        // Upload files if selected
+        const uploadData = new FormData();
+        let hasFiles = false;
+        fileInputs.forEach(fi => { if (fi.files.length > 0) { uploadData.append(fi.name, fi.files[0]); hasFiles = true; } });
+        if (hasFiles) { try { await fetch(`${PMB_API}/registration/${regId}/upload`, { method: 'POST', body: uploadData }); } catch {} }
+
         alert('✅ ' + result.message);
         modal.classList.remove('active');
         loadRegistrationList();
@@ -1467,6 +1548,7 @@ function showEditForm(regId) {
     }
   });
 }
+
 
 // ============================================
 // DATA MAHASISWA — Student Management
