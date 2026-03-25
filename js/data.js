@@ -120,7 +120,36 @@ export const USERS = {
     totalSks: 72,
     maxSks: 144,
     avatar: null,
-    role: 'mahasiswa'
+    role: 'mahasiswa',
+    // Data Pribadi
+    nik: '3574011205040001',
+    nisn: '0012345678',
+    telepon_1: '081234567890',
+    tempat_lahir: 'Probolinggo',
+    tanggal_lahir: '2004-05-12',
+    gender: 'Laki-laki',
+    agama: 'Islam',
+    kip: '',
+    kks: '',
+    // Alamat
+    alamat: 'Jl. Mawar No. 15, RT 03/RW 05',
+    provinsi: 'Jawa Timur',
+    kota: 'Probolinggo',
+    kecamatan: 'Mayangan',
+    kelurahan: 'Sukabumi',
+    kode_pos: '67211',
+    // Keluarga
+    anak_ke: 2,
+    dari_jumlah: 3,
+    no_kk: '3574011234560001',
+    nama_ayah: 'Ir. Bambang Pratama',
+    pekerjaan_ayah: 'PNS',
+    nik_ayah: '3574011012700001',
+    nama_ibu: 'Siti Aminah, S.Pd.',
+    pekerjaan_ibu: 'Guru',
+    nik_ibu: '3574014506750002',
+    // Sekolah
+    asal_sekolah: 'SMAN 1 Probolinggo'
   },
   dosen: {
     id: 'D001',

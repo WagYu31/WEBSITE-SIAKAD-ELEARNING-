@@ -1992,6 +1992,66 @@ function profilSayaContent(user) {
         </header>
 
         <div style="padding:24px 28px;">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+            <button class="btn btn-primary btn-sm" id="editProfilToggle" aria-label="Edit profil saya">✏️ Edit Profil</button>
+          </div>
+
+          <!-- Edit Form (hidden by default) -->
+          <div id="editProfilSection" style="display:none;margin-bottom:28px;" role="form" aria-label="Form edit profil">
+            <div class="dash-card" style="background:var(--gray-50);border:1px solid var(--gray-100);">
+              <div class="dash-card-body">
+                <h3 style="font-size:0.9rem;font-weight:700;margin:0 0 16px;">📝 Edit Profil</h3>
+                <form id="editProfilForm">
+                  <div class="off-section"><h5 class="off-section-title">👤 Data Pribadi</h5>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_nama">Nama Lengkap</label><input type="text" id="ep_nama" name="nama" value="${user.nama}" class="form-input" required></div>
+                      <div class="form-group"><label class="form-label" for="ep_nik">NIK</label><input type="text" id="ep_nik" name="nik" value="${user.nik || ''}" class="form-input" maxlength="16"></div>
+                    </div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_email">Email</label><input type="email" id="ep_email" name="email" value="${user.email}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_telepon">Telepon</label><input type="tel" id="ep_telepon" name="telepon_1" value="${user.telepon_1 || ''}" class="form-input" maxlength="13"></div>
+                    </div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_tempat">Tempat Lahir</label><input type="text" id="ep_tempat" name="tempat_lahir" value="${user.tempat_lahir || ''}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_tgl">Tanggal Lahir</label><input type="date" id="ep_tgl" name="tanggal_lahir" value="${user.tanggal_lahir || ''}" class="form-input"></div>
+                    </div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_gender">Gender</label><select id="ep_gender" name="gender" class="form-select"><option value="">—</option><option value="Laki-laki" ${user.gender==='Laki-laki'?'selected':''}>Laki-laki</option><option value="Perempuan" ${user.gender==='Perempuan'?'selected':''}>Perempuan</option></select></div>
+                      <div class="form-group"><label class="form-label" for="ep_agama">Agama</label><select id="ep_agama" name="agama" class="form-select"><option value="">—</option>${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a=>`<option value="${a}" ${user.agama===a?'selected':''}>${a}</option>`).join('')}</select></div>
+                    </div>
+                  </div>
+
+                  <div class="off-section"><h5 class="off-section-title">📍 Alamat</h5>
+                    <div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="ep_alamat">Alamat</label><textarea id="ep_alamat" name="alamat" class="form-input" rows="2">${user.alamat || ''}</textarea></div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_prov">Provinsi</label><input type="text" id="ep_prov" name="provinsi" value="${user.provinsi || ''}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_kota">Kota</label><input type="text" id="ep_kota" name="kota" value="${user.kota || ''}" class="form-input"></div>
+                    </div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_kec">Kecamatan</label><input type="text" id="ep_kec" name="kecamatan" value="${user.kecamatan || ''}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_kel">Kelurahan</label><input type="text" id="ep_kel" name="kelurahan" value="${user.kelurahan || ''}" class="form-input"></div>
+                    </div>
+                  </div>
+
+                  <div class="off-section"><h5 class="off-section-title">👨‍👩‍👧 Data Keluarga</h5>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_ayah">Nama Ayah</label><input type="text" id="ep_ayah" name="nama_ayah" value="${user.nama_ayah || ''}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_pkayah">Pekerjaan Ayah</label><input type="text" id="ep_pkayah" name="pekerjaan_ayah" value="${user.pekerjaan_ayah || ''}" class="form-input"></div>
+                    </div>
+                    <div class="off-row">
+                      <div class="form-group"><label class="form-label" for="ep_ibu">Nama Ibu</label><input type="text" id="ep_ibu" name="nama_ibu" value="${user.nama_ibu || ''}" class="form-input"></div>
+                      <div class="form-group"><label class="form-label" for="ep_pkibu">Pekerjaan Ibu</label><input type="text" id="ep_pkibu" name="pekerjaan_ibu" value="${user.pekerjaan_ibu || ''}" class="form-input"></div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;gap:8px;margin-top:16px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">💾 Simpan Perubahan</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditProfil">Batal</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
 
           <section aria-labelledby="sectionPribadi" style="margin-bottom:28px;">
             <h3 id="sectionPribadi" style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">👤 Data Pribadi</h3>
@@ -2147,6 +2207,31 @@ export function renderDashboard(container) {
         mainContent.innerHTML = contentFn(user) + isoFooter;
       } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
         mainContent.innerHTML = profilSayaContent(user) + isoFooter;
+        // Init edit profil handlers
+        const editToggle = document.getElementById('editProfilToggle');
+        const editSection = document.getElementById('editProfilSection');
+        const cancelBtn = document.getElementById('cancelEditProfil');
+        editToggle?.addEventListener('click', () => {
+          const showing = editSection.style.display !== 'none';
+          editSection.style.display = showing ? 'none' : 'block';
+          editToggle.textContent = showing ? '✏️ Edit Profil' : '❌ Tutup Form';
+        });
+        cancelBtn?.addEventListener('click', () => {
+          editSection.style.display = 'none';
+          editToggle.textContent = '✏️ Edit Profil';
+        });
+        document.getElementById('editProfilForm')?.addEventListener('submit', (ev) => {
+          ev.preventDefault();
+          const fd = new FormData(ev.target);
+          const updated = { ...user };
+          fd.forEach((val, key) => { updated[key] = val; });
+          // Persist to session
+          sessionStorage.setItem('user', JSON.stringify(updated));
+          // Also update appState
+          import('../../js/app.js').then(mod => { mod.setUser(updated); });
+          alert('✅ Profil berhasil diperbarui!');
+          mainContent.innerHTML = profilSayaContent(updated) + isoFooter;
+        });
       }
     });
   });
