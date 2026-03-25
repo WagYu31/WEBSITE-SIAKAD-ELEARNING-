@@ -45,6 +45,8 @@ type Registration struct {
 	// Akademik
 	AsalSekolah   string `json:"asal_sekolah" gorm:"size:100"`
 	ProdiPilihan  string `json:"prodi_pilihan" gorm:"size:50"`
+	Semester      int    `json:"semester" gorm:"default:1"`
+	Angkatan      int    `json:"angkatan"`
 
 	// Meta
 	RegisteredBy string     `json:"registered_by" gorm:"size:50"` // NULL=self, NIP BAP if offline

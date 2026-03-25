@@ -1144,6 +1144,20 @@ function showOfflineForm() {
             </select>
           </div>
         </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Angkatan *</label>
+            <select name="angkatan" required class="form-select">
+              ${Array.from({length:10}, (_,i) => 2026-i).map(y => `<option value="${y}">${y}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Semester *</label>
+            <select name="semester" required class="form-select">
+              ${Array.from({length:14}, (_,i) => i+1).map(s => `<option value="${s}">Semester ${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Data Pribadi -->
@@ -1299,7 +1313,8 @@ function showOfflineForm() {
     const data = {};
     const fileInputs = e.target.querySelectorAll('input[type="file"]');
     const fileFieldNames = new Set([...fileInputs].map(f => f.name));
-    formData.forEach((v, k) => { if (!fileFieldNames.has(k)) data[k] = v; });
+    const intFields = new Set(['anak_ke','dari_jumlah','semester','angkatan']);
+    formData.forEach((v, k) => { if (fileFieldNames.has(k)) return; data[k] = intFields.has(k) ? (parseInt(v) || 0) : v; });
 
     try {
       const res = await fetch(`${PMB_API}/register/offline`, {
@@ -1652,9 +1667,9 @@ async function loadMahasiswaList() {
       .map((r, idx) => ({
         ...r,
         nim: r.nim || `20260${String(idx + 1).padStart(4, '0')}`,
-        angkatan: r.created_at ? new Date(r.created_at).getFullYear() : 2026,
-        semester: 1,
-        status_mhs: 'aktif',
+        angkatan: r.angkatan || (r.created_at ? new Date(r.created_at).getFullYear() : 2026),
+        semester: r.semester || 1,
+        status_mhs: r.status_mhs || 'aktif',
       }));
 
     updateMhsStats();
