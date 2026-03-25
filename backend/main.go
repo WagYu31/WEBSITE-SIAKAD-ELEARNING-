@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"stia-bayuangga/backend/config"
 	"stia-bayuangga/backend/handlers"
@@ -66,8 +67,22 @@ func main() {
 	// Serve uploaded files (avatars, documents)
 	r.Static("/uploads", "./uploads")
 
-	log.Println("🚀 STIA Bayuangga PMB API running on :8080")
-	if err := r.Run(":8080"); err != nil {
+	// In production, serve the built frontend (./dist)
+	if os.Getenv("GIN_MODE") == "release" {
+		r.Static("/assets", "./dist/assets")
+		r.StaticFile("/", "./dist/index.html")
+		r.NoRoute(func(c *gin.Context) {
+			c.File("./dist/index.html")
+		})
+		log.Println("📦 Serving static frontend from ./dist")
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("🚀 STIA Bayuangga API running on :%s", port)
+	if err := r.Run(":" + port); err != nil {
 		log.Fatal("❌ Server failed:", err)
 	}
 }

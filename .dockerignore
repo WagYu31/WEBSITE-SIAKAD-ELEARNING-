@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.github
+*.md
+*.db
+.gemini
+.DS_Store
+uploads/
+backend/pmb.db

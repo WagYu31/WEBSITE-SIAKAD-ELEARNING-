@@ -1,0 +1,69 @@
+# ============================================
+# STIA Bayuangga — Docker Compose Production
+# ============================================
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: stia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stia_bayuangga
+      POSTGRES_USER: stia
+      POSTGRES_PASSWORD: stia_secure_2026
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stia -d stia_bayuangga"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Go Backend + Static Frontend
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stia-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: stia
+      DB_PASSWORD: stia_secure_2026
+      DB_NAME: stia_bayuangga
+      GIN_MODE: release
+      PORT: 8080
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8080:8080"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: stia-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./dist:/usr/share/nginx/html:ro
+      - uploads:/app/uploads:ro
+    #   - ./ssl:/etc/nginx/ssl:ro  # Uncomment for HTTPS
+
+volumes:
+  pgdata:
+    driver: local
+  uploads:
+    driver: local
