@@ -740,10 +740,12 @@ function renderPMBTable(registrations) {
           <td><span class="badge-sm ${r.metode === 'online' ? 'blue' : 'warning'}">${r.metode}</span></td>
           <td><span class="badge-sm ${r.status === 'diterima' ? 'success' : r.status === 'ditolak' ? 'danger' : r.status === 'proses' ? 'blue' : 'warning'}">${r.status}</span></td>
           <td onclick="event.stopPropagation();">
-            <div style="display:flex;gap:4px;white-space:nowrap;">
+            <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;">
               <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰 Bayar</button>
               <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅ Validasi</button>
               <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐 Akun</button>
+              <button class="mgmt-action-btn" data-action="edit" data-id="${r.id}" title="Edit" style="color:hsl(215 70% 50%);">✏️ Edit</button>
+              <button class="mgmt-action-btn" data-action="delete" data-id="${r.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️ Hapus</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -936,6 +938,24 @@ async function handleMgmtAction(action, data) {
           }
         }
         break;
+
+      case 'edit':
+        showEditForm(parseInt(data.id));
+        return; // don't reload list
+
+      case 'delete':
+        const regToDelete = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        if (!regToDelete) return;
+        if (!confirm(`⚠️ Hapus data pendaftaran?\n\n${regToDelete.nama} (${regToDelete.no_pendaftaran})\n\nSemua data terkait (akun, pembayaran) juga akan dihapus.`)) return;
+        res = await fetch(`${PMB_API}/registration/${data.id}`, { method: 'DELETE' });
+        result = await res.json();
+        if (res.ok) {
+          alert('✅ ' + result.message);
+          loadRegistrationList();
+        } else {
+          alert('❌ ' + (result.error || 'Gagal menghapus'));
+        }
+        break;
     }
   } catch (err) {
     alert('❌ Error: ' + err.message);
@@ -1117,6 +1137,133 @@ function showOfflineForm() {
       alert('❌ ' + err.message);
       btn.disabled = false;
       btn.textContent = '📝 Daftarkan & Buat Akun';
+    }
+  });
+}
+
+// ---- Edit Registration Form (Modal) ----
+function showEditForm(regId) {
+  const reg = _pmbRegistrations.find(r => r.id === regId);
+  if (!reg) return;
+
+  const modalOverlay = document.querySelector('.modal-overlay');
+  const modalBody = document.querySelector('.modal-body');
+  const modalTitle = document.querySelector('.modal-title');
+  if (!modalOverlay || !modalBody) return;
+
+  if (modalTitle) modalTitle.textContent = '✏️ Edit Data Pendaftaran';
+
+  const prodiOptions = ['S1 Administrasi Publik','S1 Administrasi Bisnis','S2 Administrasi Publik','D3 Ilmu Administrasi'];
+  const v = (val) => val || '';
+
+  modalBody.innerHTML = `
+    <form id="editRegForm" style="max-height:60vh;overflow-y:auto;padding-right:8px;">
+      <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 16px;">No. Daftar: <strong>${reg.no_pendaftaran}</strong></p>
+
+      <div class="off-section">
+        <h5 class="off-section-title">🎓 Akademik</h5>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Program Studi *</label>
+            <select name="prodi_pilihan" required class="form-select">
+              ${prodiOptions.map(p => `<option value="${p}" ${reg.prodi_pilihan === p ? 'selected' : ''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+              ${['menunggu','proses','diterima','ditolak'].map(s => `<option value="${s}" ${reg.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">👤 Data Pribadi</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama *</label><input type="text" name="nama" value="${v(reg.nama)}" required class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" value="${v(reg.nik)}" required class="form-input" pattern="[0-9]{16}" maxlength="16" minlength="16"></div>
+        </div>
+        <div class="off-row">
+           <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" value="${v(reg.email)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Telepon</label><input type="tel" name="telepon_1" value="${v(reg.telepon_1)}" class="form-input" maxlength="12"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${v(reg.tempat_lahir)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${v(reg.tanggal_lahir)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Gender</label>
+            <select name="gender" class="form-select">
+              <option value="">-</option>
+              <option value="Laki-laki" ${reg.gender === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
+              <option value="Perempuan" ${reg.gender === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Agama</label>
+            <select name="agama" class="form-select">
+              <option value="">-</option>
+              ${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => `<option value="${a}" ${reg.agama === a ? 'selected' : ''}>${a}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">📍 Alamat</h5>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Alamat</label>
+          <textarea name="alamat" class="form-input" rows="2" style="resize:vertical;">${v(reg.alamat)}</textarea>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kota</label><input type="text" name="kota" value="${v(reg.kota)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${v(reg.provinsi)}" class="form-input"></div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">🏫 Pendidikan</h5>
+        <div class="form-group"><label class="form-label">Asal Sekolah</label><input type="text" name="asal_sekolah" value="${v(reg.asal_sekolah)}" class="form-input"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
+        <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Batal</button>
+      </div>
+    </form>`;
+
+  modalOverlay.classList.add('active');
+
+  document.getElementById('editRegForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('editSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const formData = new FormData(e.target);
+    const data = {};
+    formData.forEach((v, k) => { if (v) data[k] = v; });
+
+    try {
+      const res = await fetch(`${PMB_API}/registration/${regId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        alert('✅ ' + result.message);
+        modalOverlay.classList.remove('active');
+        loadRegistrationList();
+      } else {
+        alert('❌ ' + (result.error || 'Gagal menyimpan'));
+        btn.disabled = false;
+        btn.textContent = '💾 Simpan Perubahan';
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+      btn.disabled = false;
+      btn.textContent = '💾 Simpan Perubahan';
     }
   });
 }

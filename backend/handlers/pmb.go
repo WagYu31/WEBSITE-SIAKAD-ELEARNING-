@@ -227,3 +227,55 @@ func UpdateStatus(c *gin.Context) {
 		"status":  reg.Status,
 	})
 }
+
+// UpdateRegistration updates registration data (BAP)
+func UpdateRegistration(c *gin.Context) {
+	id := c.Param("id")
+
+	var reg models.Registration
+	if result := config.DB.First(&reg, id); result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pendaftaran tidak ditemukan"})
+		return
+	}
+
+	var input map[string]interface{}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Data tidak valid"})
+		return
+	}
+
+	// Prevent updating protected fields
+	delete(input, "id")
+	delete(input, "no_pendaftaran")
+	delete(input, "created_at")
+	input["updated_at"] = time.Now()
+
+	if err := config.DB.Model(&reg).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupdate data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diupdate"})
+}
+
+// DeleteRegistration deletes a registration and its related data (BAP)
+func DeleteRegistration(c *gin.Context) {
+	id := c.Param("id")
+
+	var reg models.Registration
+	if result := config.DB.First(&reg, id); result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pendaftaran tidak ditemukan"})
+		return
+	}
+
+	// Delete related account
+	config.DB.Where("registration_id = ?", reg.ID).Delete(&models.Account{})
+	// Delete related payment
+	config.DB.Where("registration_id = ?", reg.ID).Delete(&models.Payment{})
+	// Delete related email logs
+	config.DB.Where("registration_id = ?", reg.ID).Delete(&models.EmailLog{})
+	// Delete registration
+	config.DB.Delete(&reg)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Data pendaftaran berhasil dihapus"})
+}
