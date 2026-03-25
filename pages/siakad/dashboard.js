@@ -1701,7 +1701,7 @@ function renderMhsTable(list) {
   container.innerHTML = `
     <table class="sch-table" style="font-size:0.82rem;">
       <thead><tr>
-        <th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Semester</th><th>Status</th>
+        <th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Semester</th><th>Status</th><th>Aksi</th>
       </tr></thead>
       <tbody>
         ${list.map(m => `<tr class="mhs-tr" data-id="${m.id}" style="cursor:pointer;">
@@ -1714,6 +1714,12 @@ function renderMhsTable(list) {
           <td style="text-align:center;">${m.angkatan}</td>
           <td style="text-align:center;">${m.semester}</td>
           <td><span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : m.status_mhs === 'lulus' ? 'blue' : 'danger'}">${m.status_mhs}</span></td>
+          <td onclick="event.stopPropagation();">
+            <div style="display:flex;gap:4px;">
+              <button class="mgmt-action-btn mhs-edit-btn" data-id="${m.id}" title="Edit">✏️</button>
+              <button class="mgmt-action-btn mhs-del-btn" data-id="${m.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
+            </div>
+          </td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -1726,6 +1732,30 @@ function renderMhsTable(list) {
       const id = parseInt(row.dataset.id);
       const mhs = _mahasiswaList.find(m => m.id === id);
       if (mhs) showMhsProfile(mhs);
+    });
+  });
+
+  // Edit buttons
+  container.querySelectorAll('.mhs-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.dataset.id);
+      const mhs = _mahasiswaList.find(m => m.id === id);
+      if (mhs) showMhsEditModal(mhs);
+    });
+  });
+
+  // Delete buttons
+  container.querySelectorAll('.mhs-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = parseInt(btn.dataset.id);
+      const mhs = _mahasiswaList.find(m => m.id === id);
+      if (!mhs) return;
+      if (!confirm(`⚠️ Hapus data mahasiswa ${mhs.nama}?\n\nAkun dan data terkait akan dihapus.`)) return;
+      try {
+        const res = await fetch(`${PMB_API}/registration/${id}`, { method: 'DELETE' });
+        if (res.ok) { alert('✅ Data mahasiswa berhasil dihapus'); loadMahasiswaList(); }
+        else { const r = await res.json(); alert('❌ ' + (r.error || 'Gagal menghapus')); }
+      } catch (err) { alert('❌ ' + err.message); }
     });
   });
 }
@@ -1785,6 +1815,126 @@ function showMhsProfile(m) {
   `;
 
   modalOverlay.classList.add('active');
+}
+
+function showMhsEditModal(m) {
+  const modalOverlay = document.querySelector('.modal-overlay');
+  const modalBody = document.querySelector('.modal-body');
+  const modalTitle = document.querySelector('.modal-title');
+  if (!modalOverlay || !modalBody) return;
+
+  if (modalTitle) modalTitle.textContent = 'Edit Data Mahasiswa';
+
+  const prodiOptions = ['S1 Administrasi Publik','S1 Administrasi Bisnis','S2 Administrasi Publik','D3 Ilmu Administrasi'];
+  const v = (val) => val || '';
+
+  modalBody.innerHTML = `
+    <form id="mhsEditForm" style="max-height:55vh;overflow-y:auto;padding-right:6px;">
+      <div class="off-section">
+        <h5 class="off-section-title">🎓 Akademik</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Program Studi</label>
+            <select name="prodi_pilihan" class="form-select">
+              ${prodiOptions.map(p => `<option value="${p}" ${m.prodi_pilihan === p ? 'selected' : ''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Status Mahasiswa</label>
+            <select name="status_mhs" class="form-select">
+              ${['aktif','cuti','lulus','do'].map(s => `<option value="${s}" ${m.status_mhs === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Semester</label><input type="number" name="semester" value="${m.semester || 1}" min="1" max="14" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIM</label><input type="text" name="nim" value="${v(m.nim)}" class="form-input" readonly style="opacity:.6;"></div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">👤 Data Pribadi</h5>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Nama *</label><input type="text" name="nama" value="${v(m.nama)}" required class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK</label><input type="text" name="nik" value="${v(m.nik)}" class="form-input" maxlength="16"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" value="${v(m.email)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Telepon</label><input type="tel" name="telepon_1" value="${v(m.telepon_1)}" class="form-input" maxlength="12"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${v(m.tempat_lahir)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${v(m.tanggal_lahir)}" class="form-input"></div>
+        </div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Gender</label>
+            <select name="gender" class="form-select">
+              <option value="">-</option>
+              <option value="Laki-laki" ${m.gender === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
+              <option value="Perempuan" ${m.gender === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Agama</label>
+            <select name="agama" class="form-select">
+              <option value="">-</option>
+              ${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => `<option value="${a}" ${m.agama === a ? 'selected' : ''}>${a}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">📍 Alamat</h5>
+        <div class="form-group" style="margin-bottom:12px;"><label class="form-label">Alamat</label><textarea name="alamat" class="form-input" rows="2">${v(m.alamat)}</textarea></div>
+        <div class="off-row">
+          <div class="form-group"><label class="form-label">Kota</label><input type="text" name="kota" value="${v(m.kota)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${v(m.provinsi)}" class="form-input"></div>
+        </div>
+      </div>
+
+      <div class="off-section">
+        <h5 class="off-section-title">🏫 Pendidikan</h5>
+        <div class="form-group"><label class="form-label">Asal Sekolah</label><input type="text" name="asal_sekolah" value="${v(m.asal_sekolah)}" class="form-input"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan</button>
+        <button type="button" class="btn btn-secondary" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Batal</button>
+      </div>
+    </form>`;
+
+  modalOverlay.classList.add('active');
+
+  document.getElementById('mhsEditForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('mhsEditSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const formData = new FormData(e.target);
+    const data = {};
+    formData.forEach((v, k) => { if (v) data[k] = v; });
+
+    try {
+      const res = await fetch(`${PMB_API}/registration/${m.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        alert('✅ Data berhasil diperbarui');
+        modalOverlay.classList.remove('active');
+        loadMahasiswaList();
+      } else {
+        alert('❌ ' + (result.error || 'Gagal'));
+        btn.disabled = false;
+        btn.textContent = '💾 Simpan';
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+      btn.disabled = false;
+      btn.textContent = '💾 Simpan';
+    }
+  });
 }
 
 // ---- Content Router ----
