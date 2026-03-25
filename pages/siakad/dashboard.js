@@ -1969,7 +1969,7 @@ function showMhsEditModal(m) {
 // ============================================
 function profilSayaContent(user) {
   const initials = (user.nama || '?').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-  const pct = Math.round((user.totalSks / user.maxSks) * 100);
+
   const v = (val) => val || '<span style="color:var(--text-muted);font-style:italic;">—</span>';
 
   return `
@@ -1992,41 +1992,7 @@ function profilSayaContent(user) {
         </header>
 
         <div style="padding:24px 28px;">
-          <!-- Informasi Akademik -->
-          <section aria-labelledby="sectionAkademik" style="margin-bottom:28px;">
-            <h3 id="sectionAkademik" style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">🎓 Informasi Akademik</h3>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px;" role="list" aria-label="Statistik akademik">
-              <div style="background:hsl(215 45% 97%);border-radius:12px;padding:16px;text-align:center;" role="listitem">
-                <div style="font-size:1.5rem;font-weight:800;color:var(--primary-600);" aria-label="IPK">${user.ipk}</div>
-                <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">IPK</div>
-              </div>
-              <div style="background:hsl(145 40% 96%);border-radius:12px;padding:16px;text-align:center;" role="listitem">
-                <div style="font-size:1.5rem;font-weight:800;color:hsl(145 55% 38%);" aria-label="SKS Ditempuh">${user.totalSks}</div>
-                <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">SKS Ditempuh</div>
-              </div>
-              <div style="background:hsl(38 50% 96%);border-radius:12px;padding:16px;text-align:center;" role="listitem">
-                <div style="font-size:1.5rem;font-weight:800;color:hsl(38 80% 45%);" aria-label="Total SKS">${user.maxSks}</div>
-                <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">Total SKS</div>
-              </div>
-              <div style="background:hsl(280 40% 96%);border-radius:12px;padding:16px;text-align:center;" role="listitem">
-                <div style="font-size:1.5rem;font-weight:800;color:hsl(280 55% 50%);" aria-label="Semester">${user.semester}</div>
-                <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">Semester</div>
-              </div>
-            </div>
-            <!-- Progress -->
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-size:0.78rem;font-weight:600;">Progress Studi</span>
-                <span style="font-size:0.78rem;font-weight:700;color:var(--primary-500);">${pct}%</span>
-              </div>
-              <div role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress studi ${pct} persen" style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;">
-                <div style="width:${pct}%;height:100%;background:var(--gradient-primary);border-radius:8px;transition:width .5s;"></div>
-              </div>
-              <p style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${user.totalSks} dari ${user.maxSks} SKS • Sisa ${user.maxSks - user.totalSks} SKS</p>
-            </div>
-          </section>
 
-          <!-- Data Pribadi -->
           <section aria-labelledby="sectionPribadi" style="margin-bottom:28px;">
             <h3 id="sectionPribadi" style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">👤 Data Pribadi</h3>
             <dl style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:0;" role="list">
