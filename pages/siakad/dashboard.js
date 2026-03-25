@@ -2016,7 +2016,7 @@ function profilSayaContent(user) {
             </div>
             <div class="off-row">
               <div class="form-group"><label class="form-label" for="ep_gender">Gender</label><select id="ep_gender" name="gender" class="form-select"><option value="">—</option><option value="Laki-laki" ${user.gender==='Laki-laki'?'selected':''}>Laki-laki</option><option value="Perempuan" ${user.gender==='Perempuan'?'selected':''}>Perempuan</option></select></div>
-              <div class="form-group"><label class="form-label" for="ep_agama">Agama</label><select id="ep_agama" name="agama" class="form-select"><option value="">—</option>${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a=>\`<option value="\${a}" \${user.agama===a?'selected':''}>\${a}</option>\`).join('')}</select></div>
+              <div class="form-group"><label class="form-label" for="ep_agama">Agama</label><select id="ep_agama" name="agama" class="form-select"><option value="">—</option>${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a=>'<option value="'+a+'" '+(user.agama===a?'selected':'')+'>'+a+'</option>').join('')}</select></div>
             </div>
           </div>
           <div class="off-section"><h5 class="off-section-title">📍 Alamat</h5>
