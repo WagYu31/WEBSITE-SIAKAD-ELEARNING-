@@ -1615,6 +1615,17 @@ function bapMahasiswaContent() {
         </div>
         <div id="mhsCount" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);"></div>
       </div>
+    </div>
+
+    <!-- Modal for Mahasiswa Profile/Edit -->
+    <div class="modal-overlay" id="mhsModal">
+      <div class="modal-container" style="max-width:580px;">
+        <div class="modal-header">
+          <h3 class="modal-title" id="mhsModalTitle">Detail</h3>
+          <button class="modal-close" onclick="document.getElementById('mhsModal').classList.remove('active')">&times;</button>
+        </div>
+        <div class="modal-body" id="mhsModalBody"></div>
+      </div>
     </div>`;
 }
 
@@ -1761,10 +1772,10 @@ function renderMhsTable(list) {
 }
 
 function showMhsProfile(m) {
-  const modalOverlay = document.querySelector('.modal-overlay');
-  const modalBody = document.querySelector('.modal-body');
-  const modalTitle = document.querySelector('.modal-title');
-  if (!modalOverlay || !modalBody) return;
+  const modal = document.getElementById('mhsModal');
+  const modalBody = document.getElementById('mhsModalBody');
+  const modalTitle = document.getElementById('mhsModalTitle');
+  if (!modal || !modalBody) return;
 
   if (modalTitle) modalTitle.textContent = 'Profil Mahasiswa';
 
@@ -1814,14 +1825,14 @@ function showMhsProfile(m) {
     ${row('Asal Sekolah', m.asal_sekolah)}
   `;
 
-  modalOverlay.classList.add('active');
+  modal.classList.add('active');
 }
 
 function showMhsEditModal(m) {
-  const modalOverlay = document.querySelector('.modal-overlay');
-  const modalBody = document.querySelector('.modal-body');
-  const modalTitle = document.querySelector('.modal-title');
-  if (!modalOverlay || !modalBody) return;
+  const modal = document.getElementById('mhsModal');
+  const modalBody = document.getElementById('mhsModalBody');
+  const modalTitle = document.getElementById('mhsModalTitle');
+  if (!modal || !modalBody) return;
 
   if (modalTitle) modalTitle.textContent = 'Edit Data Mahasiswa';
 
@@ -1897,11 +1908,11 @@ function showMhsEditModal(m) {
 
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan</button>
-        <button type="button" class="btn btn-secondary" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Batal</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('mhsModal').classList.remove('active')">Batal</button>
       </div>
     </form>`;
 
-  modalOverlay.classList.add('active');
+  modal.classList.add('active');
 
   document.getElementById('mhsEditForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1922,7 +1933,7 @@ function showMhsEditModal(m) {
       const result = await res.json();
       if (res.ok) {
         alert('✅ Data berhasil diperbarui');
-        modalOverlay.classList.remove('active');
+        modal.classList.remove('active');
         loadMahasiswaList();
       } else {
         alert('❌ ' + (result.error || 'Gagal'));
