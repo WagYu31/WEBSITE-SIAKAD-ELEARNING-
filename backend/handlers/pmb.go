@@ -134,7 +134,7 @@ func GetStats(c *gin.Context) {
 	var stats models.RegistrationStats
 
 	config.DB.Model(&models.Registration{}).Count(&stats.TotalPendaftar)
-	config.DB.Model(&models.Registration{}).Where("status = ?", "proses").Count(&stats.TotalProses)
+	config.DB.Model(&models.Registration{}).Where("status IN ?", []string{"menunggu", "proses"}).Count(&stats.TotalProses)
 	config.DB.Model(&models.Registration{}).Where("status = ?", "diterima").Count(&stats.TotalDiterima)
 	config.DB.Model(&models.Registration{}).Where("status = ?", "ditolak").Count(&stats.TotalDitolak)
 
