@@ -1964,6 +1964,99 @@ function showMhsEditModal(m) {
 }
 
 // ---- Content Router ----
+// ============================================
+// PROFIL SAYA — Student Profile Page
+// ============================================
+function profilSayaContent(user) {
+  const initials = (user.nama || '?').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+  const statusColor = 'hsl(145 60% 42%)';
+
+  return `
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;">
+        <!-- Profile Header -->
+        <div style="background:var(--gradient-primary);padding:32px 28px;border-radius:var(--radius-xl) var(--radius-xl) 0 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.6rem;border:3px solid rgba(255,255,255,.4);flex-shrink:0;">
+            ${initials}
+          </div>
+          <div style="flex:1;color:white;">
+            <h2 style="font-family:var(--font-heading);margin:0 0 4px;font-size:1.3rem;">${user.nama}</h2>
+            <p style="margin:0;opacity:.85;font-size:0.88rem;">${user.prodi}</p>
+            <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+              <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:0.75rem;font-family:var(--font-mono);">NIM: ${user.nim}</span>
+              <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:0.75rem;">Semester ${user.semester}</span>
+              <span style="background:${statusColor};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">Aktif</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:24px 28px;">
+          <!-- Informasi Akademik -->
+          <h3 style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">🎓 Informasi Akademik</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:28px;">
+            <div style="background:hsl(215 45% 97%);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;color:var(--primary-600);">${user.ipk}</div>
+              <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">IPK</div>
+            </div>
+            <div style="background:hsl(145 40% 96%);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;color:hsl(145 55% 38%);">${user.totalSks}</div>
+              <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">SKS Ditempuh</div>
+            </div>
+            <div style="background:hsl(38 50% 96%);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;color:hsl(38 80% 45%);">${user.maxSks}</div>
+              <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">Total SKS Kurikulum</div>
+            </div>
+            <div style="background:hsl(280 40% 96%);border-radius:12px;padding:16px;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;color:hsl(280 55% 50%);">${user.semester}</div>
+              <div style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">Semester</div>
+            </div>
+          </div>
+
+          <!-- Progress SKS -->
+          <div style="margin-bottom:28px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:600;">Progress Studi</span>
+              <span style="font-size:0.78rem;font-weight:700;color:var(--primary-500);">${Math.round((user.totalSks/user.maxSks)*100)}%</span>
+            </div>
+            <div style="background:var(--gray-100);border-radius:8px;height:8px;overflow:hidden;">
+              <div style="width:${Math.round((user.totalSks/user.maxSks)*100)}%;height:100%;background:var(--gradient-primary);border-radius:8px;transition:width .5s;"></div>
+            </div>
+            <p style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${user.totalSks} dari ${user.maxSks} SKS • Sisa ${user.maxSks - user.totalSks} SKS</p>
+          </div>
+
+          <!-- Data Pribadi -->
+          <h3 style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">👤 Data Pribadi</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:28px;">
+            <div><p class="dl">Nama Lengkap</p><p class="dv">${user.nama}</p></div>
+            <div><p class="dl">NIM</p><p class="dv" style="font-family:var(--font-mono);">${user.nim}</p></div>
+            <div><p class="dl">Email</p><p class="dv">${user.email}</p></div>
+            <div><p class="dl">Program Studi</p><p class="dv">${user.prodi}</p></div>
+            <div><p class="dl">Jenjang</p><p class="dv">Strata 1 (S1)</p></div>
+            <div><p class="dl">Status</p><p class="dv"><span class="badge badge-success" style="font-size:0.72rem;">Aktif</span></p></div>
+          </div>
+
+          <!-- Pengaturan Akun -->
+          <h3 style="font-size:0.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin:0 0 14px;">⚙️ Pengaturan Akun</h3>
+          <form id="profilForm" style="max-width:400px;">
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Password Lama</label>
+              <input type="password" class="form-input" placeholder="••••••••">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Password Baru</label>
+              <input type="password" class="form-input" placeholder="Minimal 8 karakter">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label">Konfirmasi Password Baru</label>
+              <input type="password" class="form-input" placeholder="Ulangi password baru">
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="alert('✅ Password berhasil diubah!')">🔐 Ubah Password</button>
+          </form>
+        </div>
+      </div>
+    </div>`;
+}
+
 const CONTENT_RENDERERS = { mahasiswa: mahasiswaContent, dosen: dosenContent, kaprodi: kaprodiContent, bap: bapContent };
 
 // ============================================
@@ -2034,6 +2127,8 @@ export function renderDashboard(container) {
         initMahasiswaPage();
       } else if (mainContent && page === 'home') {
         mainContent.innerHTML = contentFn(user) + isoFooter;
+      } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = profilSayaContent(user) + isoFooter;
       }
     });
   });
