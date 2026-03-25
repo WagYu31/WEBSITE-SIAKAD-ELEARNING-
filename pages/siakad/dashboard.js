@@ -1978,7 +1978,11 @@ function profilSayaContent(user) {
   return '<div style="background:var(--gradient-primary);border-radius:16px;padding:28px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;position:relative;overflow:hidden;" role="banner" aria-label="Profil mahasiswa">'
     + '<div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%;"></div>'
     + '<div style="position:absolute;bottom:-30px;left:30%;width:100px;height:100px;background:rgba(255,255,255,.03);border-radius:50%;"></div>'
-    + '<div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.5rem;border:2px solid rgba(255,255,255,.3);flex-shrink:0;" role="img" aria-label="Avatar">' + initials + '</div>'
+    + '<div id="avatarWrap" style="position:relative;width:72px;height:72px;flex-shrink:0;cursor:pointer;" title="Klik untuk ganti foto" aria-label="Ganti foto profil">'
+    + '<div id="avatarCircle" style="width:72px;height:72px;border-radius:50%;background:' + (user.avatar ? 'url('+user.avatar+') center/cover' : 'rgba(255,255,255,.15)') + ';backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.5rem;border:2px solid rgba(255,255,255,.3);overflow:hidden;">' + (user.avatar ? '' : initials) + '</div>'
+    + '<div style="position:absolute;bottom:0;right:0;width:24px;height:24px;background:var(--primary-500);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:0.65rem;">\u{1F4F7}</div>'
+    + '<input type="file" id="avatarInput" accept="image/*" style="display:none;" aria-label="Upload foto profil">'
+    + '</div>'
     + '<div style="flex:1;color:white;min-width:180px;">'
     + '<h2 style="font-family:var(--font-heading);margin:0 0 4px;font-size:1.25rem;font-weight:800;">' + user.nama + '</h2>'
     + '<p style="margin:0 0 8px;opacity:.8;font-size:0.82rem;">' + user.prodi + '</p>'
@@ -2187,6 +2191,36 @@ export function renderDashboard(container) {
           import('../../js/app.js').then(mod => { mod.setUser(updated); });
           alert('✅ Profil berhasil diperbarui!');
           mainContent.innerHTML = profilSayaContent(updated) + isoFooter;
+        });
+        // Avatar upload handler
+        const avatarWrap = document.getElementById('avatarWrap');
+        const avatarInput = document.getElementById('avatarInput');
+        avatarWrap?.addEventListener('click', () => avatarInput?.click());
+        avatarInput?.addEventListener('change', (ev) => {
+          const file = ev.target.files[0];
+          if (!file || !file.type.startsWith('image/')) return;
+          if (file.size > 2 * 1024 * 1024) { alert('⚠️ Ukuran foto maksimal 2MB'); return; }
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const circle = document.getElementById('avatarCircle');
+            if (circle) {
+              circle.style.background = 'url(' + dataUrl + ') center/cover';
+              circle.textContent = '';
+            }
+            // Also update sidebar avatar
+            const sidebarAvatar = document.querySelector('.sidebar-avatar');
+            if (sidebarAvatar) {
+              sidebarAvatar.style.background = 'url(' + dataUrl + ') center/cover';
+              sidebarAvatar.textContent = '';
+            }
+            // Persist
+            user.avatar = dataUrl;
+            sessionStorage.setItem('user', JSON.stringify(user));
+            import('../../js/app.js').then(mod => { mod.setUser(user); });
+            alert('✅ Foto profil berhasil diperbarui!');
+          };
+          reader.readAsDataURL(file);
         });
       }
     });
