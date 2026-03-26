@@ -494,3 +494,155 @@ export function getDeadlineStatus(deadlineStr) {
   if (days <= 3) return { text: `${days} hari lagi`, class: 'warning' };
   return { text: `${days} hari lagi`, class: 'info' };
 }
+
+
+// ============================================
+// KURIKULUM DATA — Administrasi Niaga & Negara
+// ============================================
+
+export const KURIKULUM_DATA = {
+  niaga: {
+    nama: 'Administrasi Niaga',
+    totalSKS: 145,
+    semester: [
+      { no: 1, sks: 21, mk: [
+        { kode: 'MDU 101', nama: 'Agama', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 2 },
+        { kode: 'MDU 107', nama: 'Bahasa Inggris I', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Ely Retnowulan, M.Pd.', sks: 2 },
+        { kode: 'MDU 103', nama: 'Pendidikan Pancasila', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Ely Retnowulan, M.Pd.', sks: 3 },
+        { kode: 'MDK 111', nama: 'Matematika', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 2 },
+        { kode: 'MDK 112', nama: 'Sistem Hukum Indonesia', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 114', nama: 'Pengantar Sosiologi', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Moh. Khoirul Anam, M.Pd.', sks: 3 },
+        { kode: 'ANI 134', nama: 'Pengantar Ilmu Adm', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 137', nama: 'Pengantar Ilmu Politik', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 }
+      ]},
+      { no: 2, sks: 20, mk: [
+        { kode: 'MDU 105', nama: 'Ilmu Alamiah Dasar', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 2 },
+        { kode: 'MDU 207', nama: 'Bahasa Inggris 2', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP.', sks: 2 },
+        { kode: 'MDK 130', nama: 'Bahasa Indonesia', dosen: 'Ely Retnowulan, M.Pd.', sks: 3 },
+        { kode: 'MDK 216', nama: 'Statistik', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 3 },
+        { kode: 'MDK 122', nama: 'Demografi', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP.', sks: 2 },
+        { kode: 'MDK 115', nama: 'Asas-Asas Manajemen', dosen: 'Sandy Irawan, S.Kom., M.Kom.', sks: 3 },
+        { kode: 'MDK 119', nama: 'Sistem Sosial Budaya Indonesia', dosen: 'Marsinem, S.Sos., M.Si.', sks: 2 },
+        { kode: 'MDK 200', nama: 'Dasar-Dasar Logika', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 3 }
+      ]},
+      { no: 3, sks: 23, mk: [
+        { kode: 'MDK 117', nama: 'Organisasi dan Manajemen', dosen: 'Imam Suliyono, S.Sos., M.M.', sks: 3 },
+        { kode: 'MDK 128', nama: 'Hubungan Masyarakat', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 217', nama: 'Pengantar Antropologi', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 123', nama: 'Adm Perpajakan', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 113', nama: 'Sistem Ekonomi Indonesia', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'ANA 140', nama: 'Sistem Politik Indonesia', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 },
+        { kode: 'ANI 131', nama: 'Akuntansi I', dosen: 'Nur Aini, S.E., M.M.', sks: 2 },
+        { kode: 'MDK 220', nama: 'Pengantar Sistem Informasi Manajemen', dosen: 'Eko Wicaksono, S.E., M.Si./Sandy Irawan, S.Kom., M.Kom.', sks: 3 }
+      ]},
+      { no: 4, sks: 21, mk: [
+        { kode: 'ANI 132', nama: 'Akuntansi II', dosen: 'Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'ANI 165', nama: 'Manajemen Pembelian dan Pemasaran', dosen: 'Nur Aini, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 120', nama: 'Perilaku Organisasi', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 126', nama: 'Kepemimpinan', dosen: 'Nur Aini, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 145', nama: 'Perdagangan Internasional', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 169', nama: 'Manajemen Industrial', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 174', nama: 'Perkoperasian', dosen: 'Eko Wicaksono, S.E., M.Si.', sks: 3 }
+      ]},
+      { no: 5, sks: 18, mk: [
+        { kode: 'ANI 148', nama: 'Kebijakan dan Strategi Pemasaran', dosen: 'Imam Suliyono, S.Sos., M.M.', sks: 3 },
+        { kode: 'MDK 124', nama: 'Metode Penelitian Adm', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M./Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'MDK 125', nama: 'Manajemen Sumber Daya Manusia', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 121', nama: 'Sistem Informasi Manajemen', dosen: 'Eko Wicaksono, S.E., M.Si./Sandy Irawan, S.Kom., M.Kom.', sks: 3 },
+        { kode: 'ANI 149', nama: 'Akuntansi Biaya 1', dosen: 'Nur Aini, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 170', nama: 'Evaluasi Proyek', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sks: 3 }
+      ]},
+      { no: 6, sks: 21, mk: [
+        { kode: 'MDK 129', nama: 'Kuliah Kerja Nyata', dosen: '-', sks: 3 },
+        { kode: 'MDK 127', nama: 'Organisasi dan Metode', dosen: 'Imam Suliyono, S.Sos., M.M.', sks: 3 },
+        { kode: 'ANI 249', nama: 'Akuntansi Biaya 2', dosen: 'Dr. Edy Susanto, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 173', nama: 'Manajemen Resiko', dosen: 'Imam Suliyono, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 213', nama: 'Hukum Perdata Dagang', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 171', nama: 'Akuntansi Manajerial', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 },
+        { kode: 'MDK 135', nama: 'Kewirausahaan', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si./Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 }
+      ]},
+      { no: 7, sks: 15, mk: [
+        { kode: 'ANI 153', nama: 'Kebijakan dan Strategi Produksi', dosen: 'Dr. Edy Susanto, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 144', nama: 'Perbankan', dosen: 'Nur Aini, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 267', nama: 'Manajemen Keuangan', dosen: 'Dr. Edy Susanto, S.E., M.M.', sks: 3 },
+        { kode: 'ANI 141', nama: 'Etika Profesi', dosen: 'Noor Farid, S.Sos., M.Si./Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'ANI 172', nama: 'Seminar Skripsi', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 }
+      ]},
+      { no: 8, sks: 6, mk: [
+        { kode: 'ANI 180', nama: 'Skripsi', dosen: '-', sks: 6 }
+      ]}
+    ]
+  },
+  negara: {
+    nama: 'Administrasi Negara',
+    totalSKS: 146,
+    semester: [
+      { no: 1, sks: 21, mk: [
+        { kode: 'MDU 101', nama: 'Agama', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 2 },
+        { kode: 'MDU 107', nama: 'Bahasa Inggris I', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Ely Retnowulan, M.Pd.', sks: 2 },
+        { kode: 'MDU 202', nama: 'Pendidikan Pancasila', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Ely Retnowulan, M.Pd.', sks: 3 },
+        { kode: 'MDK 111', nama: 'Matematika', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 2 },
+        { kode: 'MDK 112', nama: 'Sistem Hukum Indonesia', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 114', nama: 'Pengantar Sosiologi', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Moh. Khoirul Anam, M.Pd.', sks: 3 },
+        { kode: 'ANI 134', nama: 'Pengantar Ilmu Adm', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 137', nama: 'Pengantar Ilmu Politik', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 }
+      ]},
+      { no: 2, sks: 21, mk: [
+        { kode: 'MDU 105', nama: 'Ilmu Alamiah Dasar', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 2 },
+        { kode: 'MDU 207', nama: 'Bahasa Inggris 2', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP.', sks: 2 },
+        { kode: 'MDK 130', nama: 'Bahasa Indonesia', dosen: 'Ely Retnowulan, M.Pd.', sks: 3 },
+        { kode: 'MDK 116', nama: 'Statistik', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 3 },
+        { kode: 'MDK 122', nama: 'Demografi', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP.', sks: 2 },
+        { kode: 'MDK 115', nama: 'Asas-Asas Manajemen', dosen: 'Sandy Irawan, S.Kom., M.Kom.', sks: 3 },
+        { kode: 'MDK 119', nama: 'Sistem Sosial Budaya Indonesia', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 200', nama: 'Dasar-Dasar Logika', dosen: 'Moh. Khoirul Anam, M.Pd.', sks: 3 }
+      ]},
+      { no: 3, sks: 23, mk: [
+        { kode: 'MDK 117', nama: 'Organisasi dan Manajemen', dosen: 'Imam Suliyono, S.Sos., M.M.', sks: 3 },
+        { kode: 'MDK 128', nama: 'Hubungan Masyarakat', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 217', nama: 'Pengantar Antropologi', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 123', nama: 'Adm Perpajakan', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 113', nama: 'Sistem Ekonomi Indonesia', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 },
+        { kode: 'ANA 140', nama: 'Sistem Politik Indonesia', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 },
+        { kode: 'MDK 136', nama: 'Hukum Adm Negara', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 2 },
+        { kode: 'MDK 220', nama: 'Pengantar Sistem Informasi Manajemen', dosen: 'Eko Wicaksono, S.E., M.Si./Sandy Irawan, S.Kom., M.Kom.', sks: 3 }
+      ]},
+      { no: 4, sks: 21, mk: [
+        { kode: 'ANA 146', nama: 'Geopolitik', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 },
+        { kode: 'ANA 131', nama: 'Teori Adm Negara', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 120', nama: 'Perilaku Organisasi', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 126', nama: 'Kepemimpinan', dosen: 'Nur Aini, S.E., M.M.', sks: 3 },
+        { kode: 'ANA 158', nama: 'Adm Pembangunan', dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sks: 3 },
+        { kode: 'ANA 151', nama: 'Sosiologi Masyarakat Kota dan Desa', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'ANA 142', nama: 'Teori Komunikasi', dosen: 'Bambang Lasmono, S.E., M.M.', sks: 3 }
+      ]},
+      { no: 5, sks: 18, mk: [
+        { kode: 'ANA 155', nama: 'Adm Perusahaan Negara', dosen: 'Dr. Edy Susanto, S.E., M.M.', sks: 3 },
+        { kode: 'MDK 124', nama: 'Metode Penelitian Adm', dosen: 'Dr. Moch. Anton Maulana, S.E., M.M./Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'MDK 125', nama: 'Manajemen Sumber Daya Manusia', dosen: 'Marsinem, S.Sos., M.Si.', sks: 3 },
+        { kode: 'MDK 121', nama: 'Sistem Informasi Manajemen', dosen: 'Eko Wicaksono, S.E., M.Si./Sandy Irawan, S.Kom., M.Kom.', sks: 3 },
+        { kode: 'MDK 118', nama: 'Adm Keuangan Negara', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'ANA 152', nama: 'Pemberdayaan Masyarakat', dosen: 'Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 }
+      ]},
+      { no: 6, sks: 21, mk: [
+        { kode: 'MDK 129', nama: 'Kuliah Kerja Nyata', dosen: '-', sks: 3 },
+        { kode: 'MDK 127', nama: 'Organisasi dan Metode', dosen: 'Imam Suliyono, S.Sos., M.M.', sks: 3 },
+        { kode: 'ANA 157', nama: 'Organisasi Adm Internasional', dosen: 'Dr. Edy Susanto, S.E., M.M.', sks: 3 },
+        { kode: 'ANA 147', nama: 'Komunikasi Pembangunan', dosen: 'Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 },
+        { kode: 'ANA 159', nama: 'Perencanaan Pembangunan', dosen: 'Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'ANA 160', nama: 'Perbandingan Adm Negara', dosen: 'Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 },
+        { kode: 'MDK 135', nama: 'Kewirausahaan', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si./Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 }
+      ]},
+      { no: 7, sks: 15, mk: [
+        { kode: 'ANA 161', nama: 'Kebijakan Publik', dosen: 'Dr. Novi Sri Sandyawati, S.Sos., M.Si.', sks: 3 },
+        { kode: 'ANA 156', nama: 'Pengembangan Organisasi', dosen: 'Dr. Agung Subagyo, S.STP., M.Si.', sks: 3 },
+        { kode: 'ANA 154', nama: 'Net Work Planning', dosen: 'Farasandya Amalia Hapsari, S.Kom., M.AP./Sandy Irawan, S.Kom., M.Kom.', sks: 3 },
+        { kode: 'ANA 141', nama: 'Etika Profesi', dosen: 'Noor Farid, S.Sos., M.Si./Eko Wicaksono, S.E., M.Si.', sks: 3 },
+        { kode: 'ANA 163', nama: 'Seminar Skripsi', dosen: 'Noor Farid, S.Sos., M.Si.', sks: 3 }
+      ]},
+      { no: 8, sks: 6, mk: [
+        { kode: 'ANA 180', nama: 'Skripsi', dosen: '-', sks: 6 }
+      ]}
+    ]
+  }
+};

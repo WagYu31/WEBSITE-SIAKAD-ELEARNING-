@@ -3,7 +3,7 @@
 // Shared layout with role-specific content
 // ============================================
 
-import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST} from '../../js/data.js';
+import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST, KURIKULUM_DATA} from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 
 // ---- SVG Icons ----
@@ -71,6 +71,7 @@ const MENUS = {
       { icon: I.users, text: 'Data Dosen', id: 'dosen' },
       { icon: I.barChart, text: 'Statistik Akademik', id: 'statistik' },
       { icon: I.clipboard, text: 'Transkrip', id: 'transkrip' },
+      { icon: I.fileText, text: 'Kurikulum', id: 'kurikulum' },
     ]},
     { label: 'Administrasi', items: [
       { icon: I.fileText, text: 'Surat Menyurat', id: 'surat' },
@@ -2097,6 +2098,153 @@ function profilSayaContent(user) {
 
 
 // ============================================
+// KURIKULUM — Content Renderer
+// ============================================
+
+function kurikulumContent() {
+  const programs = [
+    { key: 'niaga', color: 'hsl(210 70% 50%)', light: 'hsl(210 70% 95%)', label: 'Niaga' },
+    { key: 'negara', color: 'hsl(145 55% 45%)', light: 'hsl(145 55% 93%)', label: 'Negara' }
+  ];
+
+  let html = '<div style="padding:16px;">'
+    + '<h2 style="font-size:1.15rem;font-weight:700;margin:0 0 4px;">\ud83d\udcda Kurikulum Program Studi</h2>'
+    + '<p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 16px;">Struktur kurikulum Administrasi Niaga & Negara \u2014 STIA Bayuangga</p>'
+
+    // Tab buttons
+    + '<div id="kurikulumTabs" style="display:flex;gap:8px;margin-bottom:16px;">'
+    + '<button class="kur-tab active" data-prodi="niaga" style="padding:8px 20px;border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;background:hsl(210 70% 50%);color:white;transition:all .2s;">\ud83c\udfea Adm. Niaga (145 SKS)</button>'
+    + '<button class="kur-tab" data-prodi="negara" style="padding:8px 20px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;background:white;color:var(--text-primary);transition:all .2s;">\ud83c\udfe6 Adm. Negara (146 SKS)</button>'
+    + '</div>'
+
+    // Content area
+    + '<div id="kurikulumContent"></div>'
+    + '</div>';
+
+  return html;
+}
+
+function renderKurikulumProdi(prodiKey) {
+  const data = KURIKULUM_DATA[prodiKey];
+  if (!data) return '';
+  const isNiaga = prodiKey === 'niaga';
+  const accent = isNiaga ? 'hsl(210 70% 50%)' : 'hsl(145 55% 45%)';
+  const accentLight = isNiaga ? 'hsl(210 70% 95%)' : 'hsl(145 55% 93%)';
+  const totalMK = data.semester.reduce((s, sem) => s + sem.mk.length, 0);
+
+  let html = '';
+
+  // Stats cards
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;">';
+  html += `<div style="background:linear-gradient(135deg,${accent},${isNiaga ? 'hsl(230 60% 55%)' : 'hsl(160 50% 40%)'});border-radius:12px;padding:14px;color:white;"><div style="font-size:1.6rem;font-weight:800;">${data.totalSKS}</div><div style="font-size:0.72rem;opacity:.85;">Total SKS</div></div>`;
+  html += `<div style="background:linear-gradient(135deg,hsl(35 80% 55%),hsl(25 75% 50%));border-radius:12px;padding:14px;color:white;"><div style="font-size:1.6rem;font-weight:800;">8</div><div style="font-size:0.72rem;opacity:.85;">Semester</div></div>`;
+  html += `<div style="background:linear-gradient(135deg,hsl(270 55% 55%),hsl(280 50% 45%));border-radius:12px;padding:14px;color:white;"><div style="font-size:1.6rem;font-weight:800;">${totalMK}</div><div style="font-size:0.72rem;opacity:.85;">Mata Kuliah</div></div>`;
+  html += `<div style="background:linear-gradient(135deg,hsl(340 60% 55%),hsl(350 55% 45%));border-radius:12px;padding:14px;color:white;"><div style="font-size:1.6rem;font-weight:800;">S1</div><div style="font-size:0.72rem;opacity:.85;">Jenjang</div></div>`;
+  html += '</div>';
+
+  // Semester filter
+  html += '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">';
+  html += `<button class="sem-filter active" data-sem="all" style="padding:5px 14px;border:1px solid ${accent};border-radius:20px;font-size:0.72rem;font-weight:600;cursor:pointer;background:${accent};color:white;transition:all .2s;">Semua</button>`;
+  for (let i = 1; i <= 8; i++) {
+    html += `<button class="sem-filter" data-sem="${i}" style="padding:5px 14px;border:1px solid var(--gray-200);border-radius:20px;font-size:0.72rem;font-weight:600;cursor:pointer;background:white;color:var(--text-primary);transition:all .2s;">Smt ${i}</button>`;
+  }
+  html += '</div>';
+
+  // Semesters
+  data.semester.forEach(sem => {
+    html += `<div class="sem-section" data-semester="${sem.no}" style="margin-bottom:16px;">`;
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">`;
+    html += `<h3 style="font-size:0.88rem;font-weight:700;margin:0;"><span style="display:inline-block;background:${accent};color:white;padding:2px 10px;border-radius:6px;font-size:0.72rem;margin-right:6px;">Semester ${sem.no}</span></h3>`;
+    html += `<span style="font-size:0.72rem;font-weight:600;color:${accent};background:${accentLight};padding:2px 10px;border-radius:10px;">${sem.sks} SKS</span>`;
+    html += '</div>';
+    html += '<div style="background:white;border-radius:12px;border:1px solid var(--gray-100);overflow:hidden;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:0.78rem;">';
+    html += '<thead><tr style="background:var(--gray-50);">'
+      + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);width:30px;">No</th>'
+      + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);width:85px;">Kode MK</th>'
+      + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Mata Kuliah</th>'
+      + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Dosen</th>'
+      + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:45px;">SKS</th>'
+      + '</tr></thead><tbody>';
+    sem.mk.forEach((mk, idx) => {
+      const bgRow = idx % 2 === 0 ? 'white' : 'var(--gray-50)';
+      html += `<tr style="background:${bgRow};border-top:1px solid var(--gray-100);">`;
+      html += `<td style="padding:7px 10px;color:var(--text-muted);">${idx + 1}</td>`;
+      html += `<td style="padding:7px 10px;"><code style="background:${accentLight};color:${accent};padding:1px 6px;border-radius:4px;font-size:0.72rem;font-weight:600;">${mk.kode}</code></td>`;
+      html += `<td style="padding:7px 10px;font-weight:500;">${mk.nama}</td>`;
+      html += `<td style="padding:7px 10px;color:var(--text-secondary);font-size:0.72rem;">${mk.dosen === '-' ? '<em style="opacity:.5">-</em>' : mk.dosen}</td>`;
+      html += `<td style="padding:7px 10px;text-align:center;font-weight:700;color:${accent};">${mk.sks}</td>`;
+      html += '</tr>';
+    });
+    html += `<tr style="background:${accentLight};border-top:2px solid ${accent};">`;
+    html += `<td colspan="4" style="padding:7px 10px;font-weight:700;text-align:right;font-size:0.75rem;">Total SKS Semester ${sem.no}</td>`;
+    html += `<td style="padding:7px 10px;text-align:center;font-weight:800;color:${accent};">${sem.sks}</td></tr>`;
+    html += '</tbody></table></div></div>';
+  });
+
+  // Grand total
+  html += `<div style="background:${accent};color:white;padding:12px 16px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">`;
+  html += `<span style="font-weight:700;font-size:0.88rem;">\ud83c\udf93 Total SKS ${data.nama}</span>`;
+  html += `<span style="font-size:1.3rem;font-weight:800;">${data.totalSKS} SKS</span>`;
+  html += '</div>';
+
+  return html;
+}
+
+function initKurikulumPage() {
+  const contentArea = document.getElementById('kurikulumContent');
+  if (!contentArea) return;
+
+  // Initial render
+  contentArea.innerHTML = renderKurikulumProdi('niaga');
+  attachSemesterFilters();
+
+  // Tab switching
+  document.querySelectorAll('.kur-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.kur-tab').forEach(t => {
+        t.classList.remove('active');
+        t.style.background = 'white';
+        t.style.color = 'var(--text-primary)';
+        t.style.border = '1px solid var(--gray-200)';
+      });
+      tab.classList.add('active');
+      const prodi = tab.dataset.prodi;
+      const color = prodi === 'niaga' ? 'hsl(210 70% 50%)' : 'hsl(145 55% 45%)';
+      tab.style.background = color;
+      tab.style.color = 'white';
+      tab.style.border = 'none';
+      contentArea.innerHTML = renderKurikulumProdi(prodi);
+      attachSemesterFilters();
+    });
+  });
+}
+
+function attachSemesterFilters() {
+  document.querySelectorAll('.sem-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const activeTab = document.querySelector('.kur-tab.active');
+      const accent = activeTab?.dataset.prodi === 'negara' ? 'hsl(145 55% 45%)' : 'hsl(210 70% 50%)';
+      document.querySelectorAll('.sem-filter').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'white';
+        b.style.color = 'var(--text-primary)';
+        b.style.border = '1px solid var(--gray-200)';
+      });
+      btn.classList.add('active');
+      btn.style.background = accent;
+      btn.style.color = 'white';
+      btn.style.border = `1px solid ${accent}`;
+      const sem = btn.dataset.sem;
+      document.querySelectorAll('.sem-section').forEach(sec => {
+        sec.style.display = (sem === 'all' || sec.dataset.semester === sem) ? 'block' : 'none';
+      });
+    });
+  });
+}
+
+
+// ============================================
 // DATA DOSEN — Content Renderer
 // ============================================
 
@@ -2468,6 +2616,9 @@ export function renderDashboard(container) {
       } else if (mainContent && page === 'mahasiswa' && user.role === 'bap') {
         mainContent.innerHTML = bapMahasiswaContent() + isoFooter;
         initMahasiswaPage();
+      } else if (mainContent && page === 'kurikulum' && (user.role === 'bap' || user.role === 'kaprodi')) {
+        mainContent.innerHTML = kurikulumContent() + isoFooter;
+        initKurikulumPage();
       } else if (mainContent && page === 'dosen' && (user.role === 'bap' || user.role === 'kaprodi')) {
         mainContent.innerHTML = dataDosenContent() + isoFooter;
         initDosenPage(mainContent, isoFooter);
