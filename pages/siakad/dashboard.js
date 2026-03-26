@@ -2440,6 +2440,7 @@ function dataDosenContent() {
     + '<thead><tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-100);">'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Dosen</th>'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">NIP / NIDN</th>'
+    + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Akun Login</th>'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Jabatan</th>'
     + '<th style="padding:10px 14px;text-align:left;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Golongan</th>'
     + '<th style="padding:10px 14px;text-align:center;font-weight:700;font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);">Status</th>'
@@ -2457,6 +2458,7 @@ function dataDosenContent() {
           + '<div><div style="font-weight:600;font-size:0.82rem;">' + d.nama + '</div>'
           + '<div style="font-size:0.7rem;color:var(--text-muted);">' + d.email + '</div></div></div></td>'
           + '<td style="padding:10px 14px;font-family:var(--font-mono);font-size:0.75rem;"><div>' + d.nip + '</div><div style="color:var(--text-muted);font-size:0.7rem;">NIDN: ' + d.nidn + '</div></td>'
+          + '<td style="padding:10px 14px;"><div style="font-size:0.72rem;"><span style="color:var(--text-muted);">\ud83d\udc64</span> <strong>' + (d.username || '-') + '</strong></div><div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;">\ud83d\udd11 ' + (d.password ? '\u2022'.repeat(d.password.length) : '-') + '</div></td>'
           + '<td style="padding:10px 14px;"><span style="background:' + jColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">' + d.jabatanFungsional + '</span></td>'
           + '<td style="padding:10px 14px;font-size:0.8rem;font-weight:600;">' + d.golongan + '</td>'
           + '<td style="padding:10px 14px;text-align:center;"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:600;">\u2713 ' + d.status + '</span></td>'
@@ -2492,6 +2494,12 @@ function dataDosenContent() {
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Pendidikan Terakhir</label><input name="pendidikan" id="dfPendidikan" placeholder="cth: S3 Ilmu Administrasi \u2014 Universitas Brawijaya" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Bidang Keahlian</label><input name="bidang_keahlian" id="dfBidang" placeholder="pisahkan dengan koma" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '</div>'
+    + '<div style="margin-top:14px;padding:14px;background:hsl(38 60% 97%);border-radius:10px;border:1px solid hsl(38 60% 88%);">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span style="font-size:0.9rem;">\ud83d\udd11</span><span style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);">Akun Login</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Username *</label><input name="username" id="dfUsername" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Password *</label><input name="password" id="dfPassword" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '</div></div>'
     + '<div id="dosenPwSection" style="display:none;margin-top:14px;padding:14px;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-100);">'
     + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span style="font-size:0.9rem;">\ud83d\udd10</span><span style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);">Ubah Password (opsional)</span></div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
@@ -2552,6 +2560,10 @@ function initDosenPage(mainContent, isoFooter) {
         + '<div class="profil-row"><div class="profil-row-label">Bidang Keahlian</div><span class="profil-row-value">' + d.bidangKeahlian.join(', ') + '</span></div>'
         + '<div class="profil-row"><div class="profil-row-label">Mata Kuliah</div><span class="profil-row-value">' + d.mataKuliah.join(', ') + '</span></div>'
         + '</div>'
+        + '<div class="profil-section" style="margin-bottom:12px;"><div class="profil-section-header"><h3 class="profil-section-title"><span class="pst-icon" style="background:hsl(38 60% 92%);color:hsl(38 60% 40%);">\ud83d\udd11</span> Akun Login</h3></div>'
+        + '<div class="profil-row"><div class="profil-row-label">Username</div><span class="profil-row-value mono" style="font-weight:700;">' + (d.username || '-') + '</span></div>'
+        + '<div class="profil-row"><div class="profil-row-label">Password</div><span class="profil-row-value mono">' + (d.password || '-') + '</span></div>'
+        + '</div>'
         + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">'
         + '<div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:10px;"><div style="font-size:1.3rem;font-weight:800;color:var(--primary-600);">' + d.totalPublikasi + '</div><div style="font-size:0.68rem;color:var(--text-muted);">Publikasi</div></div>'
         + '<div style="text-align:center;padding:12px;background:var(--gray-50);border-radius:10px;"><div style="font-size:1.3rem;font-weight:800;color:var(--primary-600);">' + d.totalPenelitian + '</div><div style="font-size:0.68rem;color:var(--text-muted);">Penelitian</div></div>'
@@ -2609,7 +2621,9 @@ function initDosenPage(mainContent, isoFooter) {
       totalPenelitian: 0,
       totalPengabdian: 0,
       status: 'Aktif',
-      avatar: null
+      avatar: null,
+      username: document.getElementById('dfUsername').value.trim(),
+      password: document.getElementById('dfPassword').value.trim()
     };
     if (editId) {
       // Check password fields
@@ -2652,6 +2666,8 @@ function initDosenPage(mainContent, isoFooter) {
       document.getElementById('dfGolongan').value = d.golongan;
       document.getElementById('dfPendidikan').value = d.pendidikan || '';
       document.getElementById('dfBidang').value = (d.bidangKeahlian || []).join(', ');
+      document.getElementById('dfUsername').value = d.username || '';
+      document.getElementById('dfPassword').value = d.password || '';
       // Show password section for edit
       const pwSec = document.getElementById('dosenPwSection');
       if (pwSec) { pwSec.style.display = 'block'; }
