@@ -73,7 +73,11 @@ func main() {
 		dosen.PUT("/:id", handlers.UpdateDosen)
 		dosen.DELETE("/:id", handlers.DeleteDosen)
 		dosen.GET("/stats/summary", handlers.GetDosenStats)
+		dosen.POST("/login", handlers.LoginDosen)
 	}
+
+	// Seed Routes (dev only)
+	r.POST("/api/seed/dosen", handlers.SeedDosen)
 
 	// Serve uploaded files (avatars, documents)
 	r.Static("/uploads", "./uploads")
