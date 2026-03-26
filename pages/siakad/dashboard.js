@@ -2210,6 +2210,14 @@ function dataDosenContent() {
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Pendidikan Terakhir</label><input name="pendidikan" id="dfPendidikan" placeholder="cth: S3 Ilmu Administrasi \u2014 Universitas Brawijaya" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="grid-column:span 2"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Bidang Keahlian</label><input name="bidang_keahlian" id="dfBidang" placeholder="pisahkan dengan koma" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '</div>'
+    + '<div id="dosenPwSection" style="display:none;margin-top:14px;padding:14px;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-100);">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;"><span style="font-size:0.9rem;">\ud83d\udd10</span><span style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);">Ubah Password (opsional)</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Password Baru</label><input type="password" id="dfNewPw" placeholder="Kosongkan jika tidak diubah" autocomplete="new-password" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;">Konfirmasi Password</label><input type="password" id="dfConfPw" placeholder="Ulangi password baru" autocomplete="new-password" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '</div>'
+    + '<div id="dfPwMatch" style="margin-top:6px;font-size:0.7rem;"></div>'
+    + '</div>'
     + '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">'
     + '<button type="button" id="cancelDosenForm" style="padding:8px 18px;border:1px solid var(--gray-200);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;">Batal</button>'
     + '<button type="submit" id="submitDosenForm" style="padding:8px 18px;border:none;background:var(--primary-500);color:white;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">Simpan</button>'
@@ -2280,11 +2288,23 @@ function initDosenPage(mainContent, isoFooter) {
     document.getElementById('dosenFormTitle').textContent = '\u2795 Tambah Dosen Baru';
     document.getElementById('dosenCrudForm')?.reset();
     document.getElementById('dosenFormId').value = '';
+    const pwSec = document.getElementById('dosenPwSection');
+    if (pwSec) pwSec.style.display = 'none';
     formModal.style.display = 'flex';
   });
   document.getElementById('closeDosenForm')?.addEventListener('click', closeFormBtns);
   document.getElementById('cancelDosenForm')?.addEventListener('click', closeFormBtns);
   formModal?.addEventListener('click', (e) => { if (e.target === formModal) closeFormBtns(); });
+
+  // Confirm password match indicator for edit
+  document.getElementById('dfConfPw')?.addEventListener('input', (e) => {
+    const el = document.getElementById('dfPwMatch');
+    if (!el) return;
+    const nv = document.getElementById('dfNewPw')?.value || '';
+    if (!e.target.value) { el.textContent = ''; return; }
+    el.textContent = nv === e.target.value ? '\u2705 Password cocok' : '\u274c Tidak cocok';
+    el.style.color = nv === e.target.value ? 'hsl(145 60% 40%)' : 'hsl(0 70% 50%)';
+  });
 
   // Submit Create / Edit
   document.getElementById('dosenCrudForm')?.addEventListener('submit', (ev) => {
@@ -2310,8 +2330,19 @@ function initDosenPage(mainContent, isoFooter) {
       avatar: null
     };
     if (editId) {
+      // Check password fields
+      const newPw = document.getElementById('dfNewPw')?.value;
+      const confPw = document.getElementById('dfConfPw')?.value;
+      if (newPw) {
+        if (newPw.length < 8) { alert('\u26a0\ufe0f Password baru minimal 8 karakter'); return; }
+        if (newPw !== confPw) { alert('\u26a0\ufe0f Konfirmasi password tidak cocok'); return; }
+      }
       const idx = DOSEN_LIST.findIndex(d => d.id === editId);
-      if (idx >= 0) { Object.assign(DOSEN_LIST[idx], formData); alert('\u2705 Data dosen berhasil diperbarui!'); }
+      if (idx >= 0) {
+        Object.assign(DOSEN_LIST[idx], formData);
+        const msg = newPw ? '\u2705 Data dosen & password berhasil diperbarui!' : '\u2705 Data dosen berhasil diperbarui!';
+        alert(msg);
+      }
     } else {
       formData.id = 'DSN' + String(DOSEN_LIST.length + 1).padStart(3, '0');
       DOSEN_LIST.push(formData);
@@ -2339,6 +2370,15 @@ function initDosenPage(mainContent, isoFooter) {
       document.getElementById('dfGolongan').value = d.golongan;
       document.getElementById('dfPendidikan').value = d.pendidikan || '';
       document.getElementById('dfBidang').value = (d.bidangKeahlian || []).join(', ');
+      // Show password section for edit
+      const pwSec = document.getElementById('dosenPwSection');
+      if (pwSec) { pwSec.style.display = 'block'; }
+      const dfNewPw = document.getElementById('dfNewPw');
+      const dfConfPw = document.getElementById('dfConfPw');
+      if (dfNewPw) dfNewPw.value = '';
+      if (dfConfPw) dfConfPw.value = '';
+      const dfPwMatch = document.getElementById('dfPwMatch');
+      if (dfPwMatch) dfPwMatch.textContent = '';
       formModal.style.display = 'flex';
     });
   });
