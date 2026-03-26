@@ -2,7 +2,7 @@
 // STIA BAYUANGGA - Login Page
 // ============================================
 
-import { CAMPUS, USERS } from '../js/data.js';
+import { CAMPUS, USERS, DOSEN_LIST } from '../js/data.js';
 import { setUser } from '../js/app.js';
 import { navigate } from '../js/router.js';
 
@@ -81,6 +81,18 @@ export function renderLogin(container) {
                 </div>
               </div>
 
+              <!-- Dosen Account Selector -->
+              <div class="form-group" id="dosenSelectorGroup" style="display:none;">
+                <label class="form-label" for="dosenSelect">
+                  <span>Pilih Akun Dosen</span>
+                </label>
+                <div class="input-icon-wrapper">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <select id="dosenSelect" class="form-input" style="appearance:auto;cursor:pointer;">
+                  </select>
+                </div>
+              </div>
+
               <div class="form-group">
                 <label class="form-label" for="loginId">
                   <span id="loginIdLabel">NIM</span>
@@ -156,7 +168,7 @@ function initLoginInteractions() {
       // Update label and placeholder
       const labels = {
         mahasiswa: { label: 'NIM', placeholder: 'Masukkan NIM', value: '2024101001' },
-        dosen: { label: 'NIP', placeholder: 'Masukkan NIP', value: '198501012010011001' },
+        dosen: { label: 'NIP', placeholder: 'Masukkan NIP', value: '' },
         kaprodi: { label: 'NIP', placeholder: 'Masukkan NIP', value: '197809152005011001' },
         bap: { label: 'NIP', placeholder: 'Masukkan NIP', value: '198203202008012001' }
       };
@@ -165,6 +177,27 @@ function initLoginInteractions() {
       loginIdLabel.textContent = l.label;
       loginIdInput.placeholder = l.placeholder;
       loginIdInput.value = l.value;
+
+      // Show/hide dosen selector
+      const dosenGroup = document.getElementById('dosenSelectorGroup');
+      if (selectedRole === 'dosen') {
+        dosenGroup.style.display = 'block';
+        // Populate dropdown
+        const dosenSelect = document.getElementById('dosenSelect');
+        dosenSelect.innerHTML = DOSEN_LIST.map(d =>
+          `<option value="${d.id}">${d.nama} — ${d.jabatanFungsional}</option>`
+        ).join('');
+        // Auto-fill NIP from first dosen
+        if (DOSEN_LIST.length > 0) {
+          loginIdInput.value = DOSEN_LIST[0].nip;
+        }
+        dosenSelect.addEventListener('change', () => {
+          const dsn = DOSEN_LIST.find(d => d.id === dosenSelect.value);
+          if (dsn) loginIdInput.value = dsn.nip;
+        });
+      } else {
+        dosenGroup.style.display = 'none';
+      }
     });
   });
 
@@ -193,7 +226,24 @@ function initLoginInteractions() {
     
     // Simulate login delay
     setTimeout(() => {
-      const user = USERS[selectedRole];
+      let user;
+      if (selectedRole === 'dosen') {
+        const dosenSelect = document.getElementById('dosenSelect');
+        const dsn = DOSEN_LIST.find(d => d.id === dosenSelect?.value) || DOSEN_LIST[0];
+        user = {
+          id: dsn.id,
+          nip: dsn.nip,
+          nama: dsn.nama,
+          email: dsn.email,
+          jabatan: dsn.jabatanFungsional,
+          totalMK: dsn.totalMK,
+          totalMahasiswa: dsn.totalMahasiswaBimbingan,
+          avatar: dsn.avatar,
+          role: 'dosen'
+        };
+      } else {
+        user = USERS[selectedRole];
+      }
       setUser(user);
       navigate('#/portal');
     }, 800);
