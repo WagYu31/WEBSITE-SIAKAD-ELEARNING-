@@ -2102,11 +2102,6 @@ function profilSayaContent(user) {
 // ============================================
 
 function kurikulumContent() {
-  const programs = [
-    { key: 'niaga', color: 'hsl(210 70% 50%)', light: 'hsl(210 70% 95%)', label: 'Niaga' },
-    { key: 'negara', color: 'hsl(145 55% 45%)', light: 'hsl(145 55% 93%)', label: 'Negara' }
-  ];
-
   let html = '<div style="padding:16px;">'
     + '<h2 style="font-size:1.15rem;font-weight:700;margin:0 0 4px;">\ud83d\udcda Kurikulum Program Studi</h2>'
     + '<p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 16px;">Struktur kurikulum Administrasi Niaga & Negara \u2014 STIA Bayuangga</p>'
@@ -2119,6 +2114,27 @@ function kurikulumContent() {
 
     // Content area
     + '<div id="kurikulumContent"></div>'
+
+    // Edit Modal
+    + '<div id="mkEditModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">'
+    + '<div style="background:white;border-radius:16px;width:500px;max-width:92vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);">'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;">'
+    + '<h3 style="margin:0;font-size:0.95rem;font-weight:700;">\u270f\ufe0f Edit Mata Kuliah</h3>'
+    + '<button id="closeMkEdit" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">&times;</button>'
+    + '</div>'
+    + '<form id="mkEditForm" style="padding:20px;">'
+    + '<input type="hidden" id="mkEditProdi">'
+    + '<input type="hidden" id="mkEditSem">'
+    + '<input type="hidden" id="mkEditIdx">'
+    + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Kode MK</label><input id="mkEditKode" readonly style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;background:var(--gray-50);color:var(--text-muted);"></div>'
+    + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Mata Kuliah *</label><input id="mkEditNama" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Dosen</label><input id="mkEditDosen" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="margin-bottom:14px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">SKS</label><input id="mkEditSks" type="number" min="1" max="10" required style="width:100px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="display:flex;justify-content:flex-end;gap:8px;">'
+    + '<button type="button" id="cancelMkEdit" style="padding:8px 18px;border:1px solid var(--gray-200);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;">Batal</button>'
+    + '<button type="submit" style="padding:8px 18px;border:none;background:var(--primary-500);color:white;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">Simpan</button>'
+    + '</div>'
+    + '</form></div></div>'
     + '</div>';
 
   return html;
@@ -2165,6 +2181,7 @@ function renderKurikulumProdi(prodiKey) {
       + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Mata Kuliah</th>'
       + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Dosen</th>'
       + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:45px;">SKS</th>'
+      + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:40px;">Aksi</th>'
       + '</tr></thead><tbody>';
     sem.mk.forEach((mk, idx) => {
       const bgRow = idx % 2 === 0 ? 'white' : 'var(--gray-50)';
@@ -2174,10 +2191,11 @@ function renderKurikulumProdi(prodiKey) {
       html += `<td style="padding:7px 10px;font-weight:500;">${mk.nama}</td>`;
       html += `<td style="padding:7px 10px;color:var(--text-secondary);font-size:0.72rem;">${mk.dosen === '-' ? '<em style="opacity:.5">-</em>' : mk.dosen}</td>`;
       html += `<td style="padding:7px 10px;text-align:center;font-weight:700;color:${accent};">${mk.sks}</td>`;
+      html += `<td style="padding:7px 10px;text-align:center;"><button class="btn-mk-edit" data-sem="${sem.no}" data-idx="${idx}" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;" title="Edit">\u270f\ufe0f</button></td>`;
       html += '</tr>';
     });
     html += `<tr style="background:${accentLight};border-top:2px solid ${accent};">`;
-    html += `<td colspan="4" style="padding:7px 10px;font-weight:700;text-align:right;font-size:0.75rem;">Total SKS Semester ${sem.no}</td>`;
+    html += `<td colspan="5" style="padding:7px 10px;font-weight:700;text-align:right;font-size:0.75rem;">Total SKS Semester ${sem.no}</td>`;
     html += `<td style="padding:7px 10px;text-align:center;font-weight:800;color:${accent};">${sem.sks}</td></tr>`;
     html += '</tbody></table></div></div>';
   });
@@ -2195,9 +2213,18 @@ function initKurikulumPage() {
   const contentArea = document.getElementById('kurikulumContent');
   if (!contentArea) return;
 
+  function getCurrentProdi() {
+    return document.querySelector('.kur-tab.active')?.dataset.prodi || 'niaga';
+  }
+
+  function renderAndBind(prodi) {
+    contentArea.innerHTML = renderKurikulumProdi(prodi);
+    attachSemesterFilters();
+    attachMkEditButtons();
+  }
+
   // Initial render
-  contentArea.innerHTML = renderKurikulumProdi('niaga');
-  attachSemesterFilters();
+  renderAndBind('niaga');
 
   // Tab switching
   document.querySelectorAll('.kur-tab').forEach(tab => {
@@ -2214,10 +2241,67 @@ function initKurikulumPage() {
       tab.style.background = color;
       tab.style.color = 'white';
       tab.style.border = 'none';
-      contentArea.innerHTML = renderKurikulumProdi(prodi);
-      attachSemesterFilters();
+      renderAndBind(prodi);
     });
   });
+
+  // Edit modal logic
+  const modal = document.getElementById('mkEditModal');
+  const closeModal = () => { if (modal) modal.style.display = 'none'; };
+  document.getElementById('closeMkEdit')?.addEventListener('click', closeModal);
+  document.getElementById('cancelMkEdit')?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  // Save handler
+  document.getElementById('mkEditForm')?.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const prodi = document.getElementById('mkEditProdi').value;
+    const semNo = parseInt(document.getElementById('mkEditSem').value);
+    const mkIdx = parseInt(document.getElementById('mkEditIdx').value);
+    const sem = KURIKULUM_DATA[prodi]?.semester.find(s => s.no === semNo);
+    if (!sem || !sem.mk[mkIdx]) return;
+
+    const newNama = document.getElementById('mkEditNama').value.trim();
+    const newDosen = document.getElementById('mkEditDosen').value.trim();
+    const newSks = parseInt(document.getElementById('mkEditSks').value);
+    if (!newNama) { alert('\u26a0\ufe0f Nama mata kuliah harus diisi'); return; }
+
+    const oldSks = sem.mk[mkIdx].sks;
+    sem.mk[mkIdx].nama = newNama;
+    sem.mk[mkIdx].dosen = newDosen || '-';
+    sem.mk[mkIdx].sks = newSks;
+
+    // Recalc semester SKS
+    sem.sks = sem.mk.reduce((t, m) => t + m.sks, 0);
+    // Recalc total SKS
+    KURIKULUM_DATA[prodi].totalSKS = KURIKULUM_DATA[prodi].semester.reduce((t, s) => t + s.sks, 0);
+
+    closeModal();
+    alert('\u2705 Mata kuliah berhasil diperbarui!');
+    renderAndBind(prodi);
+  });
+
+  function attachMkEditButtons() {
+    document.querySelectorAll('.btn-mk-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prodi = getCurrentProdi();
+        const semNo = parseInt(btn.dataset.sem);
+        const mkIdx = parseInt(btn.dataset.idx);
+        const sem = KURIKULUM_DATA[prodi]?.semester.find(s => s.no === semNo);
+        if (!sem || !sem.mk[mkIdx]) return;
+        const mk = sem.mk[mkIdx];
+
+        document.getElementById('mkEditProdi').value = prodi;
+        document.getElementById('mkEditSem').value = semNo;
+        document.getElementById('mkEditIdx').value = mkIdx;
+        document.getElementById('mkEditKode').value = mk.kode;
+        document.getElementById('mkEditNama').value = mk.nama;
+        document.getElementById('mkEditDosen').value = mk.dosen === '-' ? '' : mk.dosen;
+        document.getElementById('mkEditSks').value = mk.sks;
+        modal.style.display = 'flex';
+      });
+    });
+  }
 }
 
 function attachSemesterFilters() {
