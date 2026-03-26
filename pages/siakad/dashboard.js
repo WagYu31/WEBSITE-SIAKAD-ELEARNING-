@@ -2170,7 +2170,8 @@ function renderKurikulumProdi(prodiKey) {
   data.semester.forEach(sem => {
     html += `<div class="sem-section" data-semester="${sem.no}" style="margin-bottom:16px;">`;
     html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">`;
-    html += `<h3 style="font-size:0.88rem;font-weight:700;margin:0;"><span style="display:inline-block;background:${accent};color:white;padding:2px 10px;border-radius:6px;font-size:0.72rem;margin-right:6px;">Semester ${sem.no}</span></h3>`;
+    html += `<div style="display:flex;align-items:center;gap:8px;"><h3 style="font-size:0.88rem;font-weight:700;margin:0;"><span style="display:inline-block;background:${accent};color:white;padding:2px 10px;border-radius:6px;font-size:0.72rem;">Semester ${sem.no}</span></h3>`;
+    html += `<button class="btn-mk-add" data-sem="${sem.no}" style="padding:3px 10px;border:1px dashed ${accent};border-radius:6px;background:${accentLight};color:${accent};font-size:0.68rem;font-weight:600;cursor:pointer;transition:all .2s;" title="Tambah MK">+ Tambah MK</button></div>`;
     html += `<span style="font-size:0.72rem;font-weight:600;color:${accent};background:${accentLight};padding:2px 10px;border-radius:10px;">${sem.sks} SKS</span>`;
     html += '</div>';
     html += '<div style="background:white;border-radius:12px;border:1px solid var(--gray-100);overflow:hidden;">';
@@ -2181,7 +2182,7 @@ function renderKurikulumProdi(prodiKey) {
       + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Mata Kuliah</th>'
       + '<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);">Dosen</th>'
       + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:45px;">SKS</th>'
-      + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:40px;">Aksi</th>'
+      + '<th style="padding:8px 10px;text-align:center;font-weight:600;color:var(--text-secondary);width:65px;">Aksi</th>'
       + '</tr></thead><tbody>';
     sem.mk.forEach((mk, idx) => {
       const bgRow = idx % 2 === 0 ? 'white' : 'var(--gray-50)';
@@ -2191,7 +2192,7 @@ function renderKurikulumProdi(prodiKey) {
       html += `<td style="padding:7px 10px;font-weight:500;">${mk.nama}</td>`;
       html += `<td style="padding:7px 10px;color:var(--text-secondary);font-size:0.72rem;">${mk.dosen === '-' ? '<em style="opacity:.5">-</em>' : mk.dosen}</td>`;
       html += `<td style="padding:7px 10px;text-align:center;font-weight:700;color:${accent};">${mk.sks}</td>`;
-      html += `<td style="padding:7px 10px;text-align:center;"><button class="btn-mk-edit" data-sem="${sem.no}" data-idx="${idx}" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;" title="Edit">\u270f\ufe0f</button></td>`;
+      html += `<td style="padding:7px 10px;text-align:center;white-space:nowrap;"><button class="btn-mk-edit" data-sem="${sem.no}" data-idx="${idx}" style="background:none;border:none;cursor:pointer;font-size:0.8rem;padding:2px 3px;" title="Edit">\u270f\ufe0f</button><button class="btn-mk-del" data-sem="${sem.no}" data-idx="${idx}" style="background:none;border:none;cursor:pointer;font-size:0.8rem;padding:2px 3px;" title="Hapus">\ud83d\uddd1\ufe0f</button></td>`;
       html += '</tr>';
     });
     html += `<tr style="background:${accentLight};border-top:2px solid ${accent};">`;
@@ -2217,10 +2218,18 @@ function initKurikulumPage() {
     return document.querySelector('.kur-tab.active')?.dataset.prodi || 'niaga';
   }
 
+  function recalcSKS(prodi) {
+    const d = KURIKULUM_DATA[prodi];
+    d.semester.forEach(s => { s.sks = s.mk.reduce((t, m) => t + m.sks, 0); });
+    d.totalSKS = d.semester.reduce((t, s) => t + s.sks, 0);
+  }
+
   function renderAndBind(prodi) {
     contentArea.innerHTML = renderKurikulumProdi(prodi);
     attachSemesterFilters();
     attachMkEditButtons();
+    attachMkAddButtons();
+    attachMkDeleteButtons();
   }
 
   // Initial render
@@ -2252,34 +2261,56 @@ function initKurikulumPage() {
   document.getElementById('cancelMkEdit')?.addEventListener('click', closeModal);
   modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-  // Save handler
+  // Save handler (Add + Edit)
   document.getElementById('mkEditForm')?.addEventListener('submit', (ev) => {
     ev.preventDefault();
     const prodi = document.getElementById('mkEditProdi').value;
     const semNo = parseInt(document.getElementById('mkEditSem').value);
-    const mkIdx = parseInt(document.getElementById('mkEditIdx').value);
+    const mkIdx = document.getElementById('mkEditIdx').value;
+    const isAdd = mkIdx === '-1';
     const sem = KURIKULUM_DATA[prodi]?.semester.find(s => s.no === semNo);
-    if (!sem || !sem.mk[mkIdx]) return;
+    if (!sem) return;
 
+    const newKode = document.getElementById('mkEditKode').value.trim();
     const newNama = document.getElementById('mkEditNama').value.trim();
     const newDosen = document.getElementById('mkEditDosen').value.trim();
     const newSks = parseInt(document.getElementById('mkEditSks').value);
+    if (!newKode) { alert('\u26a0\ufe0f Kode MK harus diisi'); return; }
     if (!newNama) { alert('\u26a0\ufe0f Nama mata kuliah harus diisi'); return; }
 
-    const oldSks = sem.mk[mkIdx].sks;
-    sem.mk[mkIdx].nama = newNama;
-    sem.mk[mkIdx].dosen = newDosen || '-';
-    sem.mk[mkIdx].sks = newSks;
+    if (isAdd) {
+      sem.mk.push({ kode: newKode, nama: newNama, dosen: newDosen || '-', sks: newSks || 3 });
+    } else {
+      const idx = parseInt(mkIdx);
+      if (!sem.mk[idx]) return;
+      sem.mk[idx].kode = newKode;
+      sem.mk[idx].nama = newNama;
+      sem.mk[idx].dosen = newDosen || '-';
+      sem.mk[idx].sks = newSks;
+    }
 
-    // Recalc semester SKS
-    sem.sks = sem.mk.reduce((t, m) => t + m.sks, 0);
-    // Recalc total SKS
-    KURIKULUM_DATA[prodi].totalSKS = KURIKULUM_DATA[prodi].semester.reduce((t, s) => t + s.sks, 0);
-
+    recalcSKS(prodi);
     closeModal();
-    alert('\u2705 Mata kuliah berhasil diperbarui!');
+    alert(isAdd ? '\u2705 Mata kuliah berhasil ditambahkan!' : '\u2705 Mata kuliah berhasil diperbarui!');
     renderAndBind(prodi);
   });
+
+  function openModal(prodi, semNo, idx, mk) {
+    const isAdd = idx === -1;
+    document.querySelector('#mkEditModal h3').textContent = isAdd ? '\u2795 Tambah Mata Kuliah' : '\u270f\ufe0f Edit Mata Kuliah';
+    document.getElementById('mkEditProdi').value = prodi;
+    document.getElementById('mkEditSem').value = semNo;
+    document.getElementById('mkEditIdx').value = idx;
+    const kodeField = document.getElementById('mkEditKode');
+    kodeField.value = mk.kode;
+    kodeField.readOnly = !isAdd;
+    kodeField.style.background = isAdd ? 'white' : 'var(--gray-50)';
+    kodeField.style.color = isAdd ? 'var(--text-primary)' : 'var(--text-muted)';
+    document.getElementById('mkEditNama').value = mk.nama;
+    document.getElementById('mkEditDosen').value = mk.dosen === '-' ? '' : mk.dosen;
+    document.getElementById('mkEditSks').value = mk.sks;
+    modal.style.display = 'flex';
+  }
 
   function attachMkEditButtons() {
     document.querySelectorAll('.btn-mk-edit').forEach(btn => {
@@ -2289,16 +2320,35 @@ function initKurikulumPage() {
         const mkIdx = parseInt(btn.dataset.idx);
         const sem = KURIKULUM_DATA[prodi]?.semester.find(s => s.no === semNo);
         if (!sem || !sem.mk[mkIdx]) return;
-        const mk = sem.mk[mkIdx];
+        openModal(prodi, semNo, mkIdx, sem.mk[mkIdx]);
+      });
+    });
+  }
 
-        document.getElementById('mkEditProdi').value = prodi;
-        document.getElementById('mkEditSem').value = semNo;
-        document.getElementById('mkEditIdx').value = mkIdx;
-        document.getElementById('mkEditKode').value = mk.kode;
-        document.getElementById('mkEditNama').value = mk.nama;
-        document.getElementById('mkEditDosen').value = mk.dosen === '-' ? '' : mk.dosen;
-        document.getElementById('mkEditSks').value = mk.sks;
-        modal.style.display = 'flex';
+  function attachMkAddButtons() {
+    document.querySelectorAll('.btn-mk-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prodi = getCurrentProdi();
+        const semNo = parseInt(btn.dataset.sem);
+        openModal(prodi, semNo, -1, { kode: '', nama: '', dosen: '', sks: 3 });
+      });
+    });
+  }
+
+  function attachMkDeleteButtons() {
+    document.querySelectorAll('.btn-mk-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prodi = getCurrentProdi();
+        const semNo = parseInt(btn.dataset.sem);
+        const mkIdx = parseInt(btn.dataset.idx);
+        const sem = KURIKULUM_DATA[prodi]?.semester.find(s => s.no === semNo);
+        if (!sem || !sem.mk[mkIdx]) return;
+        const mk = sem.mk[mkIdx];
+        if (!confirm(`\ud83d\uddd1\ufe0f Hapus mata kuliah "${mk.nama}" (${mk.kode})?\n\nAksi ini tidak dapat dibatalkan.`)) return;
+        sem.mk.splice(mkIdx, 1);
+        recalcSKS(prodi);
+        alert('\u2705 Mata kuliah berhasil dihapus!');
+        renderAndBind(prodi);
       });
     });
   }
