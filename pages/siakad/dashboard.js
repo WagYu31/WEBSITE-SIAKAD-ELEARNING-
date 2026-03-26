@@ -2590,6 +2590,119 @@ export function renderDashboard(container) {
           });
         }
 
+      } else if (mainContent && page === 'settings') {
+        // ---- Settings Page: Ubah Sandi ----
+        mainContent.innerHTML = `
+          <div style="padding:24px;max-width:640px;">
+            <h2 style="font-size:1.2rem;font-weight:700;margin:0 0 4px;">\u2699\ufe0f Pengaturan Akun</h2>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin:0 0 24px;">Kelola keamanan akun Anda</p>
+
+            <div class="profil-section" role="region" aria-labelledby="secPwd" style="background:white;border-radius:16px;border:1px solid var(--gray-100);overflow:hidden;">
+              <div class="profil-section-header"><h3 class="profil-section-title" id="secPwd"><span class="pst-icon" style="background:hsl(45 90% 92%);color:hsl(35 80% 45%);">\ud83d\udd10</span> Ubah Sandi</h3></div>
+              <div style="padding:20px;">
+                <form id="settingsPwForm" autocomplete="off" aria-label="Form ubah sandi" style="max-width:400px;">
+                  <div style="margin-bottom:14px;">
+                    <label for="setPwOld" style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:4px;color:var(--text-secondary);">Password Lama</label>
+                    <div style="position:relative;">
+                      <input type="password" id="setPwOld" required autocomplete="current-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" style="width:100%;padding:10px 40px 10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.85rem;box-sizing:border-box;transition:border-color .2s;">
+                      <button type="button" class="toggle-pw-btn" data-target="setPwOld" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);">\ud83d\udc41\ufe0f</button>
+                    </div>
+                  </div>
+                  <div style="margin-bottom:14px;">
+                    <label for="setPwNew" style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:4px;color:var(--text-secondary);">Password Baru</label>
+                    <div style="position:relative;">
+                      <input type="password" id="setPwNew" required autocomplete="new-password" placeholder="Minimal 8 karakter" minlength="8" style="width:100%;padding:10px 40px 10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.85rem;box-sizing:border-box;transition:border-color .2s;">
+                      <button type="button" class="toggle-pw-btn" data-target="setPwNew" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);">\ud83d\udc41\ufe0f</button>
+                    </div>
+                    <div id="pwStrength" style="margin-top:6px;font-size:0.7rem;color:var(--text-muted);"></div>
+                  </div>
+                  <div style="margin-bottom:18px;">
+                    <label for="setPwConf" style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:4px;color:var(--text-secondary);">Konfirmasi Password Baru</label>
+                    <div style="position:relative;">
+                      <input type="password" id="setPwConf" required autocomplete="new-password" placeholder="Ulangi password baru" style="width:100%;padding:10px 40px 10px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.85rem;box-sizing:border-box;transition:border-color .2s;">
+                      <button type="button" class="toggle-pw-btn" data-target="setPwConf" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);">\ud83d\udc41\ufe0f</button>
+                    </div>
+                    <div id="pwMatch" style="margin-top:6px;font-size:0.7rem;"></div>
+                  </div>
+                  <button type="submit" id="submitPwChange" style="padding:10px 24px;border:none;background:var(--primary-500);color:white;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:opacity .2s;">\ud83d\udd11 Simpan Sandi Baru</button>
+                </form>
+              </div>
+            </div>
+          </div>` + isoFooter;
+
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-pw-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.dataset.target);
+            if (input) {
+              const isPassword = input.type === 'password';
+              input.type = isPassword ? 'text' : 'password';
+              btn.textContent = isPassword ? '\ud83d\ude48' : '\ud83d\udc41\ufe0f';
+            }
+          });
+        });
+
+        // Password strength indicator
+        document.getElementById('setPwNew')?.addEventListener('input', (e) => {
+          const val = e.target.value;
+          const el = document.getElementById('pwStrength');
+          if (!el) return;
+          let s = 0;
+          if (val.length >= 8) s++;
+          if (/[A-Z]/.test(val)) s++;
+          if (/[0-9]/.test(val)) s++;
+          if (/[^A-Za-z0-9]/.test(val)) s++;
+          const labels = ['', '\ud83d\udd34 Lemah', '\ud83d\udfe0 Sedang', '\ud83d\udfe1 Baik', '\ud83d\udfe2 Kuat'];
+          const colors = ['', 'hsl(0 70% 50%)', 'hsl(30 80% 50%)', 'hsl(50 80% 45%)', 'hsl(145 60% 40%)'];
+          el.textContent = val.length > 0 ? labels[s] : '';
+          el.style.color = colors[s] || '';
+        });
+
+        // Confirm password match
+        document.getElementById('setPwConf')?.addEventListener('input', (e) => {
+          const el = document.getElementById('pwMatch');
+          if (!el) return;
+          const nv = document.getElementById('setPwNew')?.value || '';
+          if (!e.target.value) { el.textContent = ''; return; }
+          el.textContent = nv === e.target.value ? '\u2705 Password cocok' : '\u274c Tidak cocok';
+          el.style.color = nv === e.target.value ? 'hsl(145 60% 40%)' : 'hsl(0 70% 50%)';
+        });
+
+        // Submit
+        document.getElementById('settingsPwForm')?.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          const oldPw = document.getElementById('setPwOld')?.value;
+          const newPw = document.getElementById('setPwNew')?.value;
+          const confPw = document.getElementById('setPwConf')?.value;
+          if (!oldPw || !newPw || !confPw) { alert('\u26a0\ufe0f Semua field harus diisi'); return; }
+          if (newPw.length < 8) { alert('\u26a0\ufe0f Password baru minimal 8 karakter'); return; }
+          if (newPw !== confPw) { alert('\u26a0\ufe0f Konfirmasi password tidak cocok'); return; }
+          const btn = document.getElementById('submitPwChange');
+          btn.textContent = '\u23f3 Memproses...';
+          btn.disabled = true;
+          try {
+            const id = user.nim || user.nip || 'admin';
+            const res = await fetch('http://localhost:8080/api/profile/' + id + '/password', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ old_password: oldPw, new_password: newPw, confirm_password: confPw })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              alert('\u2705 ' + (data.message || 'Password berhasil diubah!'));
+              document.getElementById('settingsPwForm')?.reset();
+              document.getElementById('pwStrength').textContent = '';
+              document.getElementById('pwMatch').textContent = '';
+            } else {
+              alert('\u274c ' + (data.error || 'Gagal mengubah password'));
+            }
+          } catch (e) {
+            alert('\u26a0\ufe0f Server offline \u2014 tidak bisa mengubah password saat ini');
+          }
+          btn.textContent = '\ud83d\udd11 Simpan Sandi Baru';
+          btn.disabled = false;
+        });
+
       }
     });
   });
