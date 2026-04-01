@@ -49,7 +49,7 @@ func InitDatabase() {
 	}
 
 	// Auto migrate
-	err = DB.AutoMigrate(&models.Registration{}, &models.Payment{}, &models.Account{}, &models.EmailLog{}, &models.Dosen{})
+	err = DB.AutoMigrate(&models.Registration{}, &models.Payment{}, &models.Account{}, &models.EmailLog{}, &models.Dosen{}, &models.MataKuliah{}, &models.KRS{}, &models.Nilai{}, &models.JadwalUjian{}, &models.Absensi{}, &models.JadwalPertemuan{})
 	if err != nil {
 		log.Fatal("❌ Failed to migrate database:", err)
 	}

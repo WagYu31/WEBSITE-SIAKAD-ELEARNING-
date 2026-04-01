@@ -74,10 +74,44 @@ func main() {
 		dosen.DELETE("/:id", handlers.DeleteDosen)
 		dosen.GET("/stats/summary", handlers.GetDosenStats)
 		dosen.POST("/login", handlers.LoginDosen)
+
+		// Jadwal Mengajar
+		dosen.GET("/jadwal-mengajar/:nip", handlers.GetJadwalMengajar)
+
+		// Absensi
+		dosen.GET("/absensi/:mata_kuliah_id", handlers.GetAbsensi)
+		dosen.POST("/absensi", handlers.SaveAbsensi)
+		dosen.POST("/absensi/bulk", handlers.BulkSaveAbsensi)
+
+		// Input Nilai
+		dosen.GET("/nilai/:mata_kuliah_id", handlers.GetNilaiKelas)
+		dosen.POST("/nilai", handlers.SaveNilaiMahasiswa)
+		dosen.POST("/nilai/bulk", handlers.BulkSaveNilai)
+		dosen.GET("/rekap-nilai/:nip", handlers.GetRekapNilai)
+	}
+
+	// Akademik Routes (KRS, KHS, Jadwal)
+	akademik := r.Group("/api/akademik")
+	{
+		akademik.GET("/krs/:nim", handlers.GetKRS)
+		akademik.GET("/khs/:nim", handlers.GetKHS)
+		akademik.GET("/jadwal/:nim", handlers.GetJadwal)
+		akademik.GET("/ujian/:nim", handlers.GetJadwalUjian)
+		akademik.GET("/matakuliah", handlers.GetAllMataKuliah)
+	}
+
+	// Jadwal Pertemuan Routes (scheduling per meeting)
+	jadwalPrt := r.Group("/api/jadwal-pertemuan")
+	{
+		jadwalPrt.GET("/:mata_kuliah_id", handlers.GetJadwalPertemuan)
+		jadwalPrt.GET("/all", handlers.GetAllJadwalPertemuan)
+		jadwalPrt.POST("", handlers.SaveJadwalPertemuan)
+		jadwalPrt.POST("/bulk", handlers.BulkSaveJadwalPertemuan)
 	}
 
 	// Seed Routes (dev only)
 	r.POST("/api/seed/dosen", handlers.SeedDosen)
+	r.POST("/api/seed/akademik", handlers.SeedAkademik)
 
 	// Serve uploaded files (avatars, documents)
 	r.Static("/uploads", "./uploads")

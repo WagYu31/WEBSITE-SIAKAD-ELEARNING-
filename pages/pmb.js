@@ -6,7 +6,7 @@
 import { getUser } from '../js/app.js';
 import { CAMPUS, getInitials } from '../js/data.js';
 
-const API = 'http://localhost:8080/api/pmb';
+const API = '/api/pmb';
 
 // ---- SVG Icons ----
 const I = {

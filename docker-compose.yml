@@ -1,5 +1,6 @@
 # ============================================
 # STIA Bayuangga — Docker Compose Production
+# Domain: stiabayuanggajobs.online
 # ============================================
 
 services:
@@ -14,8 +15,6 @@ services:
       POSTGRES_PASSWORD: stia_secure_2026
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stia -d stia_bayuangga"]
       interval: 5s
@@ -43,10 +42,8 @@ services:
       PORT: 8080
     volumes:
       - uploads:/app/uploads
-    ports:
-      - "8080:8080"
 
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy + SSL
   nginx:
     image: nginx:alpine
     container_name: stia-nginx
@@ -60,10 +57,23 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./dist:/usr/share/nginx/html:ro
       - uploads:/app/uploads:ro
-    #   - ./ssl:/etc/nginx/ssl:ro  # Uncomment for HTTPS
+      - certbot-www:/var/www/certbot:ro
+      - certbot-conf:/etc/letsencrypt:ro
+
+  # Certbot (SSL auto-renew)
+  certbot:
+    image: certbot/certbot
+    container_name: stia-certbot
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
 
 volumes:
   pgdata:
     driver: local
   uploads:
+    driver: local
+  certbot-www:
+    driver: local
+  certbot-conf:
     driver: local

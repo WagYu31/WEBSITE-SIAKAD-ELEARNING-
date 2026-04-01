@@ -3,8 +3,131 @@
 // Shared layout with role-specific content
 // ============================================
 
-import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST, KURIKULUM_DATA} from '../../js/data.js';
+import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST, KURIKULUM_DATA, KRS_DATA, ABSENSI_DATA, EVALUASI_DATA, JADWAL_UTS_UAS, DOSEN_KELAS_MAHASISWA, DOSEN_BIMBINGAN, KALENDER_AKADEMIK, WISUDA_DATA, SURAT_TEMPLATES, generatePertemuanDates, formatTanggalShort, formatTanggalFull} from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
+import { bulkSaveAbsensi, bulkSaveNilai, fetchAbsensi, fetchKHS } from '../../js/api.js';
+
+// ---- Global JADWAL_DUMMY initialization (shared by BAP & Mahasiswa) ----
+function initJadwalDummy() {
+  if (window.JADWAL_DUMMY && window.JADWAL_DUMMY.length > 0) return; // Already initialized
+
+  const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const timeSlots = [
+    { mulai:'07:30', selesai:'09:10' },
+    { mulai:'09:20', selesai:'11:00' },
+    { mulai:'11:10', selesai:'12:50' },
+    { mulai:'13:00', selesai:'14:40' },
+    { mulai:'14:50', selesai:'16:30' }
+  ];
+  const niagaRooms = ['RN-101','RN-102','RN-103','RN-104','RN-105'];
+  const negaraRooms = ['RA-201','RA-202','RA-203','RA-204','RA-205'];
+  const labRooms = ['LAB-K1','LAB-K2'];
+  const onlineCodes = ['MDK 121','MDK 220','MDK 200','ANA 154'];
+  const hybridCodes = ['ANA 140','MDK 135','MDK 124','MDK 127','ANA 147','ANA 159','ANA 160','MDK 129'];
+  const labCodes = ['ANI 131','ANI 132','ANI 249','MDK 220','ANA 154'];
+  const skipCodes = ['ANI 180','ANA 180','MDK 129'];
+
+  window.JADWAL_DUMMY = [];
+  let idCounter = 1;
+
+  ['niaga','negara'].forEach(prodi => {
+    const d = KURIKULUM_DATA[prodi];
+    if (!d) return;
+    const rooms = prodi === 'niaga' ? niagaRooms : negaraRooms;
+    let dayIdx = 0;
+    let slotIdx = 0;
+    let roomIdx = 0;
+
+    d.semester.forEach(sem => {
+      const kelas = sem.no <= 2 ? 'A' : sem.no <= 4 ? 'B' : sem.no <= 6 ? 'C' : 'D';
+      sem.mk.forEach(mk => {
+        if (skipCodes.includes(mk.kode)) return;
+        const isOnline = onlineCodes.includes(mk.kode);
+        const isHybrid = hybridCodes.includes(mk.kode);
+        const isLab = labCodes.includes(mk.kode);
+        const tipe = isOnline ? 'Online' : isHybrid ? 'Hybrid' : 'Offline';
+        let ruang;
+        if (isOnline) ruang = '\u2014';
+        else if (isLab) ruang = labRooms[roomIdx % labRooms.length];
+        else ruang = rooms[roomIdx % rooms.length];
+        const dosenName = mk.dosen === '-' ? '-' : mk.dosen.split('/')[0].trim();
+        JADWAL_DUMMY.push({
+          id: idCounter++,
+          prodi,
+          semester: sem.no,
+          kodeMK: mk.kode,
+          namaMK: mk.nama,
+          dosen: dosenName,
+          hari: days[dayIdx % days.length],
+          jamMulai: timeSlots[slotIdx % timeSlots.length].mulai,
+          jamSelesai: timeSlots[slotIdx % timeSlots.length].selesai,
+          ruang,
+          tipeKelas: tipe,
+          kelas,
+          sks: mk.sks,
+          modePertemuan: Array.from({length:14}, (_,pi) => {
+            if (isOnline) return 'online';
+            if (isHybrid) return pi % 2 === 0 ? 'offline' : 'online';
+            return [3,6,10].includes(pi) ? 'online' : 'offline';
+          })
+        });
+        slotIdx++;
+        if (slotIdx % timeSlots.length === 0) dayIdx++;
+        roomIdx++;
+      });
+    });
+  });
+}
+// Initialize immediately so JADWAL_DUMMY is ready for all roles
+initJadwalDummy();
+
+// Load persisted jadwal pertemuan from backend and merge into JADWAL_DUMMY
+async function loadSavedJadwalPertemuan() {
+  try {
+    const resp = await fetch('/api/jadwal-pertemuan/all');
+    if (!resp.ok) return;
+    const json = await resp.json();
+    if (!json.data || json.data.length === 0) return;
+
+    // Group by kodeMK (from kode_mk direct field OR mata_kuliah.kode) + kelas
+    json.data.forEach(jp => {
+      const kodeMK = jp.kode_mk || jp.mata_kuliah?.kode || '';
+      if (!kodeMK) return;
+
+      // Find matching JADWAL_DUMMY entry — try exact prodi+kelas match first, then fallback
+      const entry = JADWAL_DUMMY.find(j =>
+        (j.kodeMK === kodeMK || j.kodeMK.replace(/\s+/g,'') === kodeMK.replace(/\s+/g,''))
+        && j.kelas === (jp.kelas || 'B')
+      ) || JADWAL_DUMMY.find(j =>
+        j.kodeMK === kodeMK || j.kodeMK.replace(/\s+/g,'') === kodeMK.replace(/\s+/g,'')
+      );
+
+      if (!entry) return;
+
+      const pi = jp.pertemuan - 1; // Convert 1-based to 0-based
+      if (pi < 0 || pi >= 14) return;
+
+      // Merge mode
+      if (jp.mode) entry.modePertemuan[pi] = jp.mode;
+
+      // Merge customSchedule
+      if (!entry.customSchedule) entry.customSchedule = {};
+      entry.customSchedule[pi] = {
+        date: jp.tanggal,
+        start: jp.jam_mulai,
+        end: jp.jam_selesai,
+        note: jp.catatan || '',
+        mode: jp.mode || 'offline'
+      };
+    });
+
+    console.log(`✅ Loaded ${json.data.length} saved jadwal pertemuan from database`);
+  } catch (err) {
+    console.warn('⚠️ Could not load saved jadwal from backend:', err.message);
+  }
+}
+// Load on startup
+loadSavedJadwalPertemuan();
 
 // ---- SVG Icons ----
 const I = {
@@ -35,19 +158,27 @@ const MENUS = {
   mahasiswa: [
     { label: 'SIAKAD', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
+      { icon: I.clipboard, text: 'KRS', id: 'krs' },
+      { icon: I.award, text: 'KHS', id: 'khs' },
       { icon: I.calendar, text: 'Jadwal Kuliah', id: 'jadwal' },
-      { icon: I.clipboard, text: 'KRS / KHS', id: 'krs' },
-      { icon: I.award, text: 'Nilai', id: 'nilai' },
+      { icon: I.checkCircle, text: 'Absensi', id: 'absensi' },
+      { icon: I.barChart, text: 'Nilai', id: 'nilai' },
+    ]},
+    { label: 'Lainnya', items: [
+      { icon: I.fileText, text: 'Evaluasi Kuliah', id: 'evaluasi' },
+      { icon: I.trendUp, text: 'Perkembangan', id: 'perkembangan' },
       { icon: I.users, text: 'Profil Saya', id: 'data' },
     ]},
   ],
   dosen: [
     { label: 'SIAKAD', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
-      { icon: I.calendar, text: 'Jadwal Mengajar', id: 'jadwal' },
-      { icon: I.users, text: 'Data Mahasiswa', id: 'mahasiswa' },
-      { icon: I.clipboard, text: 'Input Nilai', id: 'input-nilai' },
-      { icon: I.barChart, text: 'Rekap Nilai', id: 'rekap' },
+      { icon: I.calendar, text: 'Jadwal Mengajar', id: 'jadwal-dosen' },
+      { icon: I.barChart, text: 'Rekap Nilai', id: 'rekap-nilai' },
+    ]},
+    { label: 'Lainnya', items: [
+      { icon: I.fileText, text: 'Bimbingan PA', id: 'bimbingan' },
+      { icon: I.users, text: 'Profil Saya', id: 'profil-dosen' },
     ]},
   ],
   kaprodi: [
@@ -74,6 +205,9 @@ const MENUS = {
       { icon: I.fileText, text: 'Kurikulum', id: 'kurikulum' },
     ]},
     { label: 'Administrasi', items: [
+      { icon: I.calendar, text: 'Manajemen Jadwal', id: 'jadwal-manage' },
+      { icon: I.checkCircle, text: 'Validasi KRS', id: 'validasi-krs' },
+      { icon: I.checkCircle, text: 'Rekap Absensi', id: 'rekap-absensi' },
       { icon: I.fileText, text: 'Surat Menyurat', id: 'surat' },
       { icon: I.calendar, text: 'Kalender Akademik', id: 'kalender' },
       { icon: I.award, text: 'Wisuda', id: 'wisuda' },
@@ -144,7 +278,7 @@ function buildTopbar(user) {
       <button class="dash-hamburger" id="dashHamburger" aria-label="Buka/tutup menu navigasi" aria-expanded="false" aria-controls="dashSidebar">${I.menu}</button>
       <div>
         <h1>${getGreeting()}, ${user.nama.split(' ')[0]}!</h1>
-        <p>Semester Genap 2025/2026 — ${ROLE_LABELS[user.role]}</p>
+        <p>Semester Genap ${new Date().getFullYear()} — ${ROLE_LABELS[user.role]}</p>
       </div>
     </div>
     <div class="dash-topbar-right">
@@ -160,9 +294,12 @@ function buildTopbar(user) {
 
 function mahasiswaContent(user) {
   const totalSks = NILAI.reduce((a, n) => a + n.sks, 0);
-  const todaySchedule = JADWAL.filter(j => {
-    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    return j.hari === days[new Date().getDay()];
+  // Derive today's schedule from KRS data
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const todayName = dayNames[new Date().getDay()];
+  const todaySchedule = KRS_DATA.mataKuliah.filter(m => m.waktu.startsWith(todayName)).map(m => {
+    const jam = m.waktu.split(', ')[1] || m.waktu;
+    return { jam, mk: m.nama, ruang: m.ruang || 'TBA', dosen: m.dosen };
   });
   const pendingTasks = TUGAS_LIST.filter(t => t.status === 'Belum');
 
@@ -223,7 +360,7 @@ function mahasiswaContent(user) {
           </div>
         </div>
 
-        <!-- Jadwal Hari Ini -->
+        <!-- Jadwal Hari Ini — derived from KRS -->
         <div class="dash-card">
           <div class="dash-card-head"><h3>Jadwal Hari Ini</h3></div>
           <div class="dash-card-body">
@@ -283,6 +420,854 @@ function mahasiswaContent(user) {
             </table>
           </div>
         </div>
+      </div>
+    </div>`;
+}
+
+// ============================================
+// MAHASISWA SUB-PAGES
+// ============================================
+
+function mhsInfoHeader(user) {
+  return `
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div style="padding:20px;display:flex;flex-wrap:wrap;gap:24px;background:linear-gradient(135deg,hsl(152 60% 96%),hsl(180 40% 96%));border-radius:12px;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:0.72rem;color:hsl(215 15% 55%);font-weight:600;margin-bottom:2px;">Mahasiswa</div>
+          <div style="font-size:0.95rem;font-weight:700;">${user.nim} — ${user.nama}</div>
+          <div style="margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:0.78rem;">
+            <span style="font-weight:600;">Fakultas</span><span>: Ilmu Administrasi</span>
+            <span style="font-weight:600;">Jurusan</span><span>: ${user.prodi}</span>
+            <span style="font-weight:600;">Semester</span><span>: ${user.semester}</span>
+            <span style="font-weight:600;">Basis</span><span>: ${KRS_DATA.basis}</span>
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:0.78rem;margin-top:20px;">
+            <span style="font-weight:600;">Dosen PA</span><span>: ${KRS_DATA.dosenPA}</span>
+            <span style="font-weight:600;">NIP Dosen</span><span>: ${KRS_DATA.nipDosenPA}</span>
+            <span style="font-weight:600;">Periode Masuk</span><span>: ${KRS_DATA.periodeMasuk}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---------- KRS Page ----------
+function krsContent(user) {
+  const totalSks = KRS_DATA.mataKuliah.reduce((a,m) => a + m.sks, 0);
+  return mhsInfoHeader(user) + `
+    ${KRS_DATA.statusKRS === 'Divalidasi' ? `
+      <div style="background:hsl(0 70% 95%);border:1px solid hsl(0 50% 85%);border-radius:10px;padding:14px 18px;margin-bottom:18px;text-align:center;">
+        <div style="font-size:0.82rem;font-weight:600;color:hsl(0 60% 40%);">KRS telah divalidasi oleh ${KRS_DATA.validatedBy} pada tanggal ${KRS_DATA.validatedAt}</div>
+        <div style="font-size:0.72rem;color:hsl(0 40% 50%);margin-top:4px;">Untuk membuka validasi/kunci silahkan hubungi Dosen PA (Pembimbing Akademik) / Ka Prodi</div>
+      </div>` : ''}
+    <div class="dash-card">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="margin:0;font-size:0.9rem;">📋 Kartu Rencana Studi (KRS) — Semester ${KRS_DATA.semester}</h3>
+        <button style="background:white;border:none;border-radius:6px;padding:4px 10px;font-size:0.72rem;cursor:pointer;">🖨️ Cetak</button>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="sch-table" style="width:100%;">
+            <thead><tr style="background:hsl(215 20% 95%);">
+              <th style="width:40px;">No.</th><th>Kode</th><th>Nama Matakuliah</th><th>Seksi</th><th>SKS</th><th>Waktu</th><th>Dosen</th><th>Jenis Kelas</th>
+            </tr></thead>
+            <tbody>
+              ${KRS_DATA.mataKuliah.map((m,i) => `<tr>
+                <td>${i+1}.</td><td><strong>${m.kode}</strong></td><td>${m.nama}</td><td>${m.seksi}</td>
+                <td style="text-align:center;">${m.sks}</td><td style="font-size:0.76rem;">${m.waktu}</td><td style="font-size:0.76rem;">${m.dosen}</td><td>${m.jenisKelas}</td>
+              </tr>`).join('')}
+              <tr style="background:hsl(215 20% 95%);font-weight:700;"><td colspan="4" style="text-align:center;">Total SKS</td><td style="text-align:center;">${totalSks}</td><td colspan="3"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---------- KHS Page ----------
+function khsContent(user, selectedSem) {
+  // Map semester data
+  const pastSemesters = [...new Set(NILAI.map(n => n.semester))].sort();
+  const krsSemester = user.semester || 4;
+  const krsCourses = KRS_DATA.mataKuliah.map(m => ({
+    kode: m.kode, nama: m.nama, sks: m.sks, nilai: '—', bobot: 0, semester: krsSemester, kelas: m.seksi, pending: true
+  }));
+  const allSemesters = [...new Set([...pastSemesters, krsSemester])].sort();
+  const activeSem = selectedSem || allSemesters[allSemesters.length - 1];
+  const semNilai = activeSem === krsSemester ? krsCourses : NILAI.filter(n => n.semester === activeSem);
+  const gradedItems = semNilai.filter(n => !n.pending);
+  const totalSks = semNilai.reduce((a,n) => a + n.sks, 0);
+  const totalBobot = gradedItems.reduce((a,n) => a + n.sks * n.bobot, 0);
+  const gradedSks = gradedItems.reduce((a,n) => a + n.sks, 0);
+  const ips = gradedSks > 0 ? (totalBobot / gradedSks).toFixed(2) : '—';
+
+  // Year/Semester mapping
+  const startYear = parseInt(KRS_DATA.periodeMasuk) || 2023;
+  const uniqueTahun = [];
+  const nowYear = new Date().getFullYear();
+  for (let y = startYear; y <= nowYear; y++) {
+    uniqueTahun.push(`${y}`);
+  }
+  const yearIdx = Math.floor((activeSem - 1) / 2);
+  const activeTahun = `${startYear + yearIdx}`;
+  const activeJenis = activeSem % 2 === 1 ? 'Ganjil' : 'Genap';
+
+  const selectStyle = `appearance:none;-webkit-appearance:none;padding:7px 32px 7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.8rem;font-weight:600;color:hsl(215 20% 30%);background:white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;cursor:pointer;min-width:140px;`;
+
+  const emptyRow = semNilai.length === 0
+    ? `<tr><td colspan="8" style="text-align:center;padding:28px;color:hsl(215 15% 55%);font-size:0.85rem;">Tidak ada data KHS untuk periode ini</td></tr>` : '';
+
+  return mhsInfoHeader(user) + `
+    <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:0.75rem;font-weight:600;color:hsl(215 15% 50%);">Tahun</label>
+        <select id="khsTahun" style="${selectStyle}">
+          ${uniqueTahun.map(t => `<option value="${t}"${t === activeTahun ? ' selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:0.75rem;font-weight:600;color:hsl(215 15% 50%);">Semester</label>
+        <select id="khsSemester" style="${selectStyle}">
+          <option value="Ganjil"${activeJenis === 'Ganjil' ? ' selected' : ''}>Ganjil</option>
+          <option value="Genap"${activeJenis === 'Genap' ? ' selected' : ''}>Genap</option>
+        </select>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="margin:0;font-size:0.9rem;">✅ Kartu Hasil Studi — ${activeJenis} ${activeTahun}</h3>
+        <button style="background:white;border:none;border-radius:6px;padding:4px 10px;font-size:0.72rem;cursor:pointer;">🖨️ Cetak</button>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="sch-table" style="width:100%;">
+            <thead><tr style="background:hsl(215 20% 95%);">
+              <th style="width:40px;">No.</th><th>Kode</th><th>Nama Matakuliah</th><th>Kelas</th><th>SKS</th><th>Nilai</th><th>Lulus</th><th>Detail</th>
+            </tr></thead>
+            <tbody>
+              ${emptyRow || semNilai.map((n,i) => {
+                const isPending = n.pending;
+                const badgeClass = isPending ? '' : (n.nilai.startsWith('A') ? 'success' : n.nilai.startsWith('B') ? 'blue' : 'warning');
+                const lulusText = isPending ? '<span style="color:hsl(30 70% 50%);font-size:0.72rem;">Belum</span>' : (n.bobot >= 2.0 ? 'L' : 'TL');
+                return `<tr${isPending ? ' style="background:hsl(45 80% 97%);"' : ''}>
+                <td>${i+1}.</td><td><strong>${n.kode}</strong></td><td>${n.nama}${isPending ? ' <span style="font-size:0.65rem;color:hsl(30 70% 50%);font-weight:600;">📋 KRS</span>' : ''}</td><td>${n.kelas || 'EU101'}</td>
+                <td style="text-align:center;">${n.sks}</td>
+                <td style="text-align:center;">${isPending ? '<span style="color:hsl(215 15% 60%);font-size:0.78rem;">—</span>' : `<span class="badge-sm ${badgeClass}">${n.nilai}</span>`}</td>
+                <td style="text-align:center;">${lulusText}</td>
+                <td style="text-align:center;"><button class="khs-detail-btn" data-kode="${n.kode}" data-nama="${n.nama}" data-nilai="${n.nilai || ''}" data-sks="${n.sks}" data-pending="${isPending}" style="font-size:0.65rem;padding:3px 10px;border-radius:4px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;white-space:nowrap;">📊 Detail</button></td>
+              </tr>`;
+              }).join('')}
+              ${semNilai.length ? `<tr style="background:hsl(215 20% 95%);font-weight:700;"><td colspan="4" style="text-align:center;">Total</td><td style="text-align:center;">${totalSks}</td><td style="text-align:center;">${gradedSks > 0 ? totalBobot.toFixed(1) : '—'}</td><td></td><td></td></tr>` : ''}
+            </tbody>
+          </table>
+        </div>
+        ${semNilai.length ? `<div style="text-align:center;padding:16px;font-weight:700;font-size:1rem;background:hsl(215 20% 97%);border-top:1px solid hsl(215 20% 90%);">
+          Indeks Prestasi Semester = ${ips}${ips === '—' ? ' <span style="font-size:0.78rem;font-weight:500;color:hsl(215 15% 55%);">(nilai belum diinput dosen)</span>' : ''}
+        </div>` : ''}
+      </div>
+    </div>
+    <div id="khsDetailPanel" style="display:none;margin-top:16px;"></div>
+
+    <div class="dash-card" style="margin-top:20px;">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">📊 Capaian Akademik Mahasiswa</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th colspan="2">SKS</th><th rowspan="2" style="vertical-align:middle;">IPK</th></tr>
+          <tr style="background:hsl(215 20% 95%);"><th>Jumlah</th><th>Lulus</th></tr></thead>
+          <tbody><tr style="text-align:center;font-size:1.1rem;font-weight:600;">
+            <td>${user.totalSks + totalSks}</td><td>${user.totalSks}</td><td style="color:hsl(200 70% 40%);">${user.ipk}</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// Wire up KHS filter dropdowns
+function initKHSPage(user, mainContent, isoFooter) {
+  const startYear = parseInt(KRS_DATA.periodeMasuk) || 2023;
+  function getSelectedSem() {
+    const tahunEl = document.getElementById('khsTahun');
+    const jenisEl = document.getElementById('khsSemester');
+    if (!tahunEl || !jenisEl) return null;
+    const yearOffset = parseInt(tahunEl.value) - startYear;
+    return jenisEl.value === 'Ganjil' ? yearOffset * 2 + 1 : yearOffset * 2 + 2;
+  }
+  const handler = () => {
+    const sem = getSelectedSem();
+    if (sem && mainContent) {
+      mainContent.innerHTML = khsContent(user, sem) + isoFooter;
+      initKHSPage(user, mainContent, isoFooter);
+    }
+  };
+  const t = document.getElementById('khsTahun');
+  const s = document.getElementById('khsSemester');
+  if (t) t.addEventListener('change', handler);
+  if (s) s.addEventListener('change', handler);
+
+  // KHS Detail button handlers
+  document.querySelectorAll('.khs-detail-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById('khsDetailPanel');
+      if (!panel) return;
+      const kode = btn.dataset.kode;
+      const nama = btn.dataset.nama;
+      const nilai = btn.dataset.nilai;
+      const sks = btn.dataset.sks;
+      const isPending = btn.dataset.pending === 'true';
+
+      // Generate component scores based on final grade
+      let absensi = 0, tugas = 0, quiz = 0, uts = 0, uas = 0;
+      if (!isPending && nilai) {
+        const base = nilai === 'A' ? 90 : nilai === 'A-' ? 83 : nilai === 'B+' ? 78 : nilai === 'B' ? 72 : nilai === 'B-' ? 67 : nilai === 'C+' ? 62 : nilai === 'C' ? 57 : 45;
+        absensi = Math.min(100, base + Math.floor(Math.random()*8));
+        tugas = Math.min(100, base + Math.floor(Math.random()*10) - 3);
+        quiz = Math.min(100, base + Math.floor(Math.random()*10) - 5);
+        uts = Math.min(100, base + Math.floor(Math.random()*8) - 2);
+        uas = Math.min(100, base + Math.floor(Math.random()*10) - 3);
+      }
+
+      function scoreColor(v) { return v >= 85 ? 'hsl(150 60% 45%)' : v >= 70 ? 'hsl(200 55% 50%)' : v >= 55 ? 'hsl(40 80% 50%)' : 'hsl(0 55% 52%)'; }
+      function scoreBar(label, emoji, value, weight) {
+        const color = scoreColor(value);
+        return `<div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:0.8rem;font-weight:600;">${emoji} ${label} <span style="font-size:0.68rem;color:hsl(215 15% 55%);">(${weight})</span></span>
+            <span style="font-size:0.85rem;font-weight:800;color:${color};">${isPending ? '\u2014' : value}</span>
+          </div>
+          <div style="height:8px;background:hsl(215 20% 92%);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${isPending ? 0 : value}%;background:${color};border-radius:4px;transition:width 0.5s ease;"></div>
+          </div>
+        </div>`;
+      }
+
+      const nilaiAkhir = isPending ? '\u2014' : Math.round(uts * 0.3 + uas * 0.4 + tugas * 0.3);
+      const nilaiColor = isPending ? 'hsl(215 15% 60%)' : scoreColor(nilaiAkhir);
+      const hurufColor = !isPending && nilai ? (nilai.startsWith('A') ? 'hsl(150 60% 45%)' : nilai.startsWith('B') ? 'hsl(200 55% 50%)' : 'hsl(40 80% 50%)') : 'hsl(215 15% 60%)';
+
+      panel.style.display = 'block';
+      panel.innerHTML = `
+        <div class="dash-card" style="overflow:hidden;border:1px solid hsl(215 20% 88%);">
+          <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);">${kode} \u00b7 ${sks} SKS</div>
+              <div style="font-size:1.1rem;font-weight:700;color:white;">\ud83d\udcca Detail Nilai \u2014 ${nama}</div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 16px;color:white;text-align:center;backdrop-filter:blur(4px);">
+                <div style="font-size:0.55rem;opacity:0.7;">Nilai Akhir</div>
+                <div style="font-size:1.2rem;font-weight:800;">${nilaiAkhir}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 16px;color:white;text-align:center;backdrop-filter:blur(4px);">
+                <div style="font-size:0.55rem;opacity:0.7;">Grade</div>
+                <div style="font-size:1.2rem;font-weight:800;">${isPending ? '\u2014' : nilai}</div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-card-body" style="padding:20px 24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
+              <div>
+                <div style="font-size:0.82rem;font-weight:700;margin-bottom:14px;color:hsl(215 20% 25%);">\ud83d\udccb Komponen Penilaian</div>
+                ${scoreBar('Absensi / Kehadiran', '\u2705', absensi, '10%')}
+                ${scoreBar('Tugas', '\ud83d\udcdd', tugas, '15%')}
+                ${scoreBar('Quiz', '\u2753', quiz, '5%')}
+                ${scoreBar('UTS (Ujian Tengah Semester)', '\ud83d\udcd6', uts, '30%')}
+                ${scoreBar('UAS (Ujian Akhir Semester)', '\ud83d\udcda', uas, '40%')}
+              </div>
+              <div>
+                <div style="font-size:0.82rem;font-weight:700;margin-bottom:14px;color:hsl(215 20% 25%);">\ud83d\udcca Ringkasan</div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+                  <div style="text-align:center;padding:14px;background:hsl(210 50% 96%);border-radius:8px;">
+                    <div style="font-size:0.65rem;color:hsl(215 15% 50%);">Nilai Akhir</div>
+                    <div style="font-size:1.4rem;font-weight:800;color:${nilaiColor};">${nilaiAkhir}</div>
+                  </div>
+                  <div style="text-align:center;padding:14px;background:hsl(150 50% 95%);border-radius:8px;">
+                    <div style="font-size:0.65rem;color:hsl(150 40% 40%);">Grade</div>
+                    <div style="font-size:1.4rem;font-weight:800;color:${hurufColor};">${isPending ? '\u2014' : nilai}</div>
+                  </div>
+                  <div style="text-align:center;padding:14px;background:hsl(200 50% 95%);border-radius:8px;">
+                    <div style="font-size:0.65rem;color:hsl(200 40% 40%);">SKS</div>
+                    <div style="font-size:1.4rem;font-weight:800;color:hsl(200 50% 40%);">${sks}</div>
+                  </div>
+                  <div style="text-align:center;padding:14px;background:${isPending ? 'hsl(40 50% 95%)' : 'hsl(150 50% 95%)'};border-radius:8px;">
+                    <div style="font-size:0.65rem;color:hsl(215 15% 50%);">Status</div>
+                    <div style="font-size:0.85rem;font-weight:800;color:${isPending ? 'hsl(40 80% 45%)' : 'hsl(150 60% 40%)'};">${isPending ? 'Belum Dinilai' : 'Lulus'}</div>
+                  </div>
+                </div>
+                ${isPending ? '<div style="margin-top:14px;padding:12px 16px;background:hsl(45 80% 94%);border-left:4px solid hsl(40 80% 50%);border-radius:0 8px 8px 0;font-size:0.78rem;color:hsl(40 60% 35%);">\u26a0\ufe0f Nilai belum diinput oleh dosen. Komponen penilaian akan muncul setelah dosen menyelesaikan input nilai.</div>' : ''}
+              </div>
+            </div>
+            <div style="margin-top:16px;text-align:right;">
+              <button id="closeKhsDetail" style="font-size:0.78rem;padding:7px 20px;border-radius:6px;cursor:pointer;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;">\u2716 Tutup</button>
+            </div>
+          </div>
+        </div>`;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('closeKhsDetail')?.addEventListener('click', () => {
+        panel.style.display = 'none';
+        panel.innerHTML = '';
+      });
+    });
+  });
+}
+
+// ---------- Jadwal Full Page ----------
+function jadwalContent(user) {
+  const totalPertemuan = 14;
+  const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+  // Build per-day grouped data with P1-P14 detail
+  const grouped = {};
+  days.forEach(d => { grouped[d] = []; });
+
+  const mhsProdi = (user.prodi || '').toLowerCase().includes('niaga') ? 'niaga' : 'negara';
+  const mhsSemester = user.semester || 4;
+
+  KRS_DATA.mataKuliah.forEach(m => {
+    // Match by kodeMK + prodi + semester to find the exact JADWAL_DUMMY entry
+    // (some MDK codes appear in both niaga and negara kurikulum)
+    const jadwalEntry = JADWAL_DUMMY.find(j =>
+      (j.kodeMK === m.kode || j.kodeMK.replace(/\s+/g,'') === m.kode.replace(/\s+/g,''))
+      && j.prodi === mhsProdi && j.semester === mhsSemester
+    ) || JADWAL_DUMMY.find(j => j.kodeMK === m.kode || j.kodeMK.replace(/\s+/g,'') === m.kode.replace(/\s+/g,''));
+
+    // Use JADWAL_DUMMY's hari/jam (source of truth, same as BAP) 
+    // Fallback to KRS_DATA if no JADWAL_DUMMY entry
+    const hari = (jadwalEntry && jadwalEntry.hari) || m.waktu.split(', ')[0];
+    const jam = jadwalEntry ? (jadwalEntry.jamMulai + '-' + jadwalEntry.jamSelesai) : (m.waktu.split(', ')[1] || m.waktu);
+    const ruang = (jadwalEntry && jadwalEntry.ruang) || m.ruang || 'TBA';
+    const dates = generatePertemuanDates(hari, totalPertemuan);
+
+    const modes = (jadwalEntry && jadwalEntry.modePertemuan) || m.modePertemuan || Array(14).fill('offline');
+    const customSchedule = (jadwalEntry && jadwalEntry.customSchedule) || {};
+    const onlineCount = modes.filter(x => x === 'online').length;
+    const offlineCount = modes.filter(x => x === 'offline').length;
+
+    if (grouped[hari]) {
+      grouped[hari].push({
+        kode: m.kode, nama: m.nama, jam, seksi: m.seksi, ruang,
+        dosen: m.dosen, sks: m.sks, onlineCount, offlineCount, modes, dates, customSchedule
+      });
+    }
+  });
+
+  // Render BAP-style P1-P14 card grid
+  function renderPertemuanGrid(mk, mkIdx) {
+    return mk.dates.map((d, pi) => {
+      const mode = mk.modes[pi] || 'offline';
+      const isOnline = mode === 'online';
+      const custom = mk.customSchedule[pi];
+      const origISO = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      const isRescheduled = custom && custom.date && custom.date !== origISO;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const displayDate = isRescheduled ? new Date(custom.date + 'T00:00:00') : d;
+      const isPast = displayDate < today;
+      const isToday = displayDate.getDate() === today.getDate() && displayDate.getMonth() === today.getMonth() && displayDate.getFullYear() === today.getFullYear();
+
+      const bg = isRescheduled ? 'linear-gradient(135deg,hsl(40 65% 92%),hsl(40 60% 88%))'
+        : isToday ? 'linear-gradient(135deg,hsl(45 85% 90%),hsl(45 80% 85%))'
+        : isOnline ? 'linear-gradient(135deg,hsl(150 50% 92%),hsl(150 45% 88%))'
+        : isPast ? 'linear-gradient(135deg,hsl(215 15% 95%),hsl(215 12% 92%))'
+        : 'linear-gradient(135deg,hsl(210 40% 95%),hsl(210 35% 91%))';
+      const borderColor = isRescheduled ? 'hsl(40 65% 65%)' : isToday ? 'hsl(45 80% 55%)' : isOnline ? 'hsl(150 55% 70%)' : isPast ? 'hsl(215 15% 85%)' : 'hsl(210 40% 82%)';
+      const icon = isRescheduled ? '🔄' : isOnline ? '🌐' : '🏫';
+      const label = isRescheduled ? 'Pengganti' : isOnline ? 'Online' : 'Offline';
+      const labelColor = isRescheduled ? 'hsl(40 65% 35%)' : isOnline ? 'hsl(150 55% 35%)' : isPast ? 'hsl(215 10% 55%)' : 'hsl(210 45% 40%)';
+      const dateColor = isRescheduled ? 'hsl(40 60% 30%)' : isOnline ? 'hsl(150 50% 32%)' : isPast ? 'hsl(215 10% 55%)' : 'hsl(210 40% 38%)';
+      const timeStr = custom && custom.start ? custom.start + '-' + custom.end : mk.jam;
+      const noteStr = custom && custom.note ? custom.note : '';
+      const todayBorder = isToday ? 'box-shadow:0 0 0 2px hsl(45 80% 50%);' : '';
+      const tooltipParts = [formatTanggalFull(displayDate), isOnline ? 'Online (E-Learning)' : 'Offline (Tatap Muka)', 'Jam: ' + timeStr];
+      if (isRescheduled) tooltipParts.push('🔄 Kelas Pengganti');
+      if (noteStr) tooltipParts.push('📝 ' + noteStr);
+
+      return `<div style="background:${bg};border:1px solid ${borderColor};border-radius:8px;padding:5px 3px;text-align:center;position:relative;transition:all 0.2s ease;${todayBorder}" title="${tooltipParts.join(' — ')}">
+        <div style="font-size:0.5rem;font-weight:800;color:hsl(210 30% 45%);">P${pi+1}</div>
+        <div style="font-size:0.6rem;font-weight:700;color:${dateColor};margin:1px 0;">${formatTanggalShort(displayDate)}</div>
+        <div style="font-size:0.48rem;color:hsl(215 20% 50%);margin-bottom:1px;">${timeStr}</div>
+        <div style="font-size:0.65rem;">${icon}</div>
+        <div style="font-size:0.46rem;font-weight:700;color:${labelColor};margin-top:1px;">${label}</div>
+        ${noteStr ? '<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:hsl(40 85% 55%);font-size:0.42rem;line-height:14px;color:white;font-weight:800;" title="📝 ' + noteStr + '">📝</div>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  const totalMK = Object.values(grouped).reduce((a, arr) => a + arr.length, 0);
+
+  return mhsInfoHeader(user) + `
+    <div class="dash-card">
+      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">📅 Jadwal Perkuliahan — ${KRS_DATA.semester}</h3>
+        <div style="display:flex;gap:10px;align-items:center;font-size:0.72rem;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:4px;background:hsl(215 20% 94%);padding:3px 10px;border-radius:12px;font-weight:600;">📚 ${totalMK} MK</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:hsl(210 55% 50%);"></span> Offline</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:hsl(150 60% 45%);"></span> Online</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:hsl(40 85% 55%);"></span> Pengganti</span>
+        </div>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        ${days.map(d => grouped[d].length ? `
+          <div style="padding:10px 18px 6px;font-weight:700;font-size:0.88rem;background:linear-gradient(135deg,hsl(215 25% 94%),hsl(215 20% 97%));border-bottom:1px solid hsl(215 20% 90%);display:flex;align-items:center;gap:8px;">
+            <span style="background:hsl(210 55% 50%);color:white;padding:2px 10px;border-radius:6px;font-size:0.7rem;">${d}</span>
+            <span style="font-size:0.68rem;font-weight:400;color:hsl(215 15% 55%);">${grouped[d].length} mata kuliah</span>
+          </div>
+          ${grouped[d].map((mk, mkIdx) => {
+            const [start,end] = mk.jam.split('-');
+            const rowId = 'mhs-jadwal-' + d + '-' + mkIdx;
+            return `
+            <div style="border-bottom:1px solid hsl(215 20% 92%);">
+              <div class="mhs-jadwal-row" data-target="${rowId}" style="display:grid;grid-template-columns:75px 1fr 40px 80px 55px 70px 1fr 32px;align-items:center;padding:10px 18px;gap:8px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='hsl(215 20% 97%)'" onmouseout="this.style.background=''" onclick="const el=document.getElementById('${rowId}');if(el){el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.expand-icon').textContent=el.style.display==='none'?'▶':'▼'}">
+                <span style="font-weight:700;font-size:0.76rem;color:hsl(210 55% 40%);">${mk.kode}</span>
+                <span style="font-size:0.76rem;font-weight:500;">${mk.nama}</span>
+                <span style="text-align:center;font-size:0.72rem;">${mk.sks}</span>
+                <span style="font-size:0.72rem;color:hsl(215 20% 40%);">${start}-${end}</span>
+                <span style="font-size:0.68rem;color:hsl(215 15% 50%);">${mk.ruang}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;">
+                  <span style="background:hsl(210 55% 92%);color:hsl(210 55% 38%);padding:1px 6px;border-radius:6px;font-size:0.58rem;font-weight:700;">🏫${mk.offlineCount}</span>
+                  ${mk.onlineCount > 0 ? `<span style="background:hsl(150 55% 92%);color:hsl(150 55% 35%);padding:1px 6px;border-radius:6px;font-size:0.58rem;font-weight:700;">🌐${mk.onlineCount}</span>` : ''}
+                </span>
+                <span style="font-size:0.68rem;color:hsl(215 15% 45%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${mk.dosen}</span>
+                <span class="expand-icon" style="font-size:0.6rem;color:hsl(215 20% 55%);text-align:center;">▶</span>
+              </div>
+              <div id="${rowId}" style="display:none;padding:8px 18px 14px;background:hsl(215 18% 98%);border-top:1px solid hsl(215 20% 92%);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <span style="font-size:0.68rem;font-weight:600;color:hsl(210 30% 45%);">📆 Detail ${totalPertemuan} Pertemuan — ${mk.kode} ${mk.nama}</span>
+                  <span style="display:inline-flex;gap:8px;font-size:0.62rem;">
+                    <span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:2px;background:hsl(210 55% 50%);display:inline-block;"></span> Offline (🏫 ${mk.offlineCount})</span>
+                    <span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:2px;background:hsl(150 60% 45%);display:inline-block;"></span> Online (🌐 ${mk.onlineCount})</span>
+                  </span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(14,1fr);gap:4px;">
+                  ${renderPertemuanGrid(mk, mkIdx)}
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        ` : '').join('')}
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-top:20px;">
+      <div class="dash-card-head"><h3>📝 Jadwal UTS / UAS</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <p style="padding:12px 18px 0;font-size:0.76rem;color:hsl(0 60% 45%);margin:0;">*)Pastikan tagihan yang berhubungan dengan ujian telah lunas dan presensi diatas 75%</p>
+        ${JADWAL_UTS_UAS.map(j => `
+          <div style="padding:10px 18px 2px;font-weight:700;font-size:0.82rem;background:hsl(215 20% 96%);border-bottom:1px solid hsl(215 20% 90%);">${j.tanggal}</div>
+          <div style="overflow-x:auto;">
+            <table class="sch-table" style="width:100%;">
+              <thead><tr><th>Mulai</th><th>Selesai</th><th>Kode MK</th><th>Mata Kuliah</th><th>Sesi</th><th>Jenis Ujian</th><th>Kelompok</th></tr></thead>
+              <tbody><tr><td>${j.mulai}</td><td>${j.selesai}</td><td style="font-weight:600;">${j.kode}</td><td>${j.nama}</td><td>${j.sesi}</td><td><span class="badge-sm ${j.jenis==='UTS'?'warning':'blue'}">${j.jenis}</span></td><td>${j.kelompok}</td></tr></tbody>
+            </table>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ---------- Absensi Page ----------
+function absensiContent(user) {
+  // Build dynamic absensi from DOSEN_KELAS_MAHASISWA (single source of truth)
+  const totalPertemuan = 14;
+  const mhsNIM = user.nim || USERS.mahasiswa.nim;
+  
+  // Map KRS courses and cross-reference with DOSEN_KELAS_MAHASISWA for live kehadiran
+  const absensiRows = KRS_DATA.mataKuliah.map(krs => {
+    // Find matching dosen kelas entry
+    let kehadiran = null;
+    let tidakHadirPertemuan = [];
+    
+    for (const dk of DOSEN_KELAS_MAHASISWA) {
+      const mhs = dk.mahasiswa.find(m => m.nim === mhsNIM);
+      if (mhs && dk.kode.replace(/\s+/g,'') === krs.kode.replace(/\s+/g,'')) {
+        kehadiran = mhs.kehadiran;
+        break;
+      }
+      // Also match by nama matakuliah
+      if (mhs && dk.nama.toLowerCase() === krs.nama.toLowerCase()) {
+        kehadiran = mhs.kehadiran;
+        break;
+      }
+    }
+    
+    // Fallback to ABSENSI_DATA if not found in DOSEN_KELAS_MAHASISWA
+    if (kehadiran === null) {
+      const absensiEntry = ABSENSI_DATA.find(a => a.kode === krs.kode);
+      kehadiran = absensiEntry ? absensiEntry.presensiMhs : totalPertemuan;
+      tidakHadirPertemuan = absensiEntry && absensiEntry.tidakHadirKe !== '-' 
+        ? absensiEntry.tidakHadirKe.split(',').map(s => s.trim()) : [];
+    } else {
+      // Compute "tidak hadir ke" from kehadiran count using deterministic pattern
+      const attendance = Array.from({length:totalPertemuan}, (_,j) => j < kehadiran ? '✓' : '✗');
+      const nimCode = mhsNIM;
+      for (let k = attendance.length - 1; k > 0; k--) {
+        const j2 = Math.floor((nimCode.charCodeAt(nimCode.length-1) + k) % (k + 1));
+        [attendance[k], attendance[j2]] = [attendance[j2], attendance[k]];
+      }
+      tidakHadirPertemuan = attendance.map((a, idx) => a === '✗' ? (idx+1).toString() : null).filter(Boolean);
+    }
+    
+    const pct = Math.round(kehadiran / totalPertemuan * 100);
+    const tidakHadirStr = tidakHadirPertemuan.length > 0 ? tidakHadirPertemuan.join(', ') : '-';
+    
+    return {
+      kode: krs.kode,
+      nama: krs.nama,
+      kelas: krs.seksi || 'EU101',
+      jenisKuliah: krs.nama.toLowerCase().includes('sistem informasi') ? 'Praktikum' : 'Teori',
+      kel: 1,
+      presensiMhs: kehadiran,
+      presensiDosen: totalPertemuan,
+      pctPresensi: pct,
+      tidakHadirKe: tidakHadirStr
+    };
+  });
+
+  return mhsInfoHeader(user) + `
+    <div class="dash-card">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">📋 Absensi Mahasiswa</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="sch-table" style="width:100%;">
+            <thead><tr style="background:hsl(215 20% 95%);">
+              <th style="width:40px;">No.</th><th>Kode</th><th>Nama Matakuliah</th><th>Kelas</th><th>Jenis Kuliah</th><th>Kel</th><th>Presensi Mhs</th><th>Presensi Dosen</th><th>% Presensi Mhs</th><th>Tidak Hadir Ke</th>
+            </tr></thead>
+            <tbody>
+              ${absensiRows.map((a,i) => `<tr>
+                <td>${i+1}.</td><td><strong>${a.kode}</strong></td><td>${a.nama}</td><td>${a.kelas}</td>
+                <td>${a.jenisKuliah}</td><td>${a.kel}</td>
+                <td style="text-align:center;font-weight:600;">${a.presensiMhs}</td>
+                <td style="text-align:center;">${a.presensiDosen}</td>
+                <td style="text-align:center;"><span class="badge-sm ${a.pctPresensi >= 100 ? 'success' : a.pctPresensi >= 85 ? 'blue' : 'warning'}">${a.pctPresensi} %</span></td>
+                <td style="text-align:center;color:${a.tidakHadirKe === '-' ? 'hsl(150 60% 40%)' : 'hsl(0 60% 50%)'};font-weight:600;">${a.tidakHadirKe}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:14px 18px;background:hsl(215 20% 97%);border-top:1px solid hsl(215 20% 90%);font-size:0.76rem;">
+          <strong>Keterangan:</strong> Presensi mahasiswa dihitung secara real-time dari data kehadiran yang diinput dosen
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---------- Evaluasi Kuliah Page ----------
+function evaluasiContent(user) {
+  return mhsInfoHeader(user) + `
+    <div class="dash-card">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">✅ Evaluasi Pelaksanaan Kuliah</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="sch-table" style="width:100%;">
+            <thead><tr style="background:hsl(215 20% 95%);">
+              <th style="width:40px;">No.</th><th>Kode</th><th>Nama Matakuliah</th><th>Kelas</th><th>SKS</th><th>Dosen</th><th>Status</th>
+            </tr></thead>
+            <tbody>
+              ${EVALUASI_DATA.map((e,i) => `<tr>
+                <td>${i+1}.</td><td><strong>${e.kode}</strong></td><td>${e.nama}</td><td>${e.kelas}</td>
+                <td style="text-align:center;">${e.sks}</td><td style="font-size:0.78rem;">${e.dosen}</td>
+                <td style="text-align:center;">${e.sudahEvaluasi ? '<span style="color:hsl(150 70% 35%);font-size:1.1rem;">✅</span>' : '<button class="btn-eval" style="background:hsl(200 70% 50%);color:white;border:none;border-radius:6px;padding:4px 12px;font-size:0.72rem;cursor:pointer;">📝 Isi Evaluasi</button>'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ---------- Nilai / Daftar Nilai Page ----------
+function nilaiContent(user) {
+  const startYear = parseInt(KRS_DATA.periodeMasuk) || 2023;
+  const krsSemester = user.semester || 4;
+  // Combine past NILAI + current KRS courses
+  const krsCourses = KRS_DATA.mataKuliah.map(m => ({
+    kode: m.kode, nama: m.nama, sks: m.sks, nilai: '—', bobot: 0, semester: krsSemester, pending: true
+  }));
+  const allCourses = [...NILAI, ...krsCourses];
+  const gradedCourses = allCourses.filter(n => !n.pending);
+  const allSks = allCourses.reduce((a,n) => a + n.sks, 0);
+  const gradedSks = gradedCourses.reduce((a,n) => a + n.sks, 0);
+  const allBobot = gradedCourses.reduce((a,n) => a + n.sks * n.bobot, 0);
+  const ipk = gradedSks > 0 ? (allBobot / gradedSks).toFixed(2) : '—';
+
+  // Map semester number to academic year string
+  function semToYear(sem) {
+    const yr = startYear + Math.floor((sem - 1) / 2);
+    return `${yr}`;
+  }
+  function semToCode(sem) {
+    const yr = startYear + Math.floor((sem - 1) / 2);
+    const jenis = sem % 2 === 1 ? '1' : '2';
+    return `${jenis}${yr.toString().slice(-2)}${(yr+1).toString().slice(-2)}`;
+  }
+
+  return mhsInfoHeader(user) + `
+    <div class="dash-card">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">📊 Mata Kuliah yang Sudah Diambil</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="sch-table" style="width:100%;">
+            <thead><tr style="background:hsl(215 20% 95%);">
+              <th>No.</th><th>Kurikulum</th><th>Kode</th><th>Nama MataKuliah</th><th>Nilai</th><th>SKS</th><th>NK</th><th>SMT</th>
+            </tr></thead>
+            <tbody>
+              ${allCourses.map((n,i) => {
+                const isPending = n.pending;
+                const nk = isPending ? '—' : (n.sks * n.bobot).toFixed(1);
+                const badgeClass = isPending ? '' : (n.nilai.startsWith('A') ? 'success' : n.nilai.startsWith('B') ? 'blue' : 'warning');
+                return `<tr${isPending ? ' style="background:hsl(45 80% 97%);"' : ''}>
+                  <td>${i+1}.</td><td>${semToYear(n.semester)}</td><td><strong>${n.kode}</strong></td><td>${n.nama}${isPending ? ' <span style="font-size:0.65rem;color:hsl(30 70% 50%);font-weight:600;">📋 KRS</span>' : ''}</td>
+                  <td style="text-align:center;">${isPending ? '<span style="color:hsl(215 15% 60%);">—</span>' : `<span class="badge-sm ${badgeClass}">${n.nilai}</span>`}</td>
+                  <td style="text-align:center;">${n.sks}</td><td style="text-align:center;">${nk}</td><td>${semToCode(n.semester)}</td>
+                </tr>`;
+              }).join('')}
+              <tr style="background:hsl(215 20% 95%);font-weight:700;text-align:center;"><td colspan="4">J U M L A H</td><td></td><td>${allSks}</td><td>${allBobot.toFixed(1)}</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-top:20px;">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">🎓 Capaian Akademik Mahasiswa</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th colspan="2">SKS</th><th rowspan="2" style="vertical-align:middle;">IPK</th></tr>
+          <tr style="background:hsl(215 20% 95%);"><th>Jumlah</th><th>Lulus</th></tr></thead>
+          <tbody><tr style="text-align:center;font-size:1.2rem;font-weight:700;">
+            <td>${allSks}</td><td>${gradedSks}</td><td style="color:hsl(200 70% 40%);">${ipk}</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ---------- Perkembangan Page ----------
+function perkembanganContent(user) {
+  const semesters = [...new Set(NILAI.map(n => n.semester))].sort();
+  const semData = semesters.map(sem => {
+    const nilaiSem = NILAI.filter(n => n.semester === sem);
+    const sks = nilaiSem.reduce((a,n) => a + n.sks, 0);
+    const bobot = nilaiSem.reduce((a,n) => a + n.sks * n.bobot, 0);
+    return { sem, sks, ips: (bobot / sks).toFixed(2), count: nilaiSem.length };
+  });
+  const totalSks = NILAI.reduce((a,n) => a + n.sks, 0);
+  const totalBobot = NILAI.reduce((a,n) => a + n.sks * n.bobot, 0);
+  const ipk = (totalBobot / totalSks).toFixed(2);
+  const gradeCount = {};
+  NILAI.forEach(n => { gradeCount[n.nilai] = (gradeCount[n.nilai] || 0) + 1; });
+  // cumulative IPK
+  const ipkData = [];
+  let cumSks = 0, cumBobot = 0;
+  semesters.forEach(sem => {
+    const ns = NILAI.filter(n => n.semester === sem);
+    cumSks += ns.reduce((a,n) => a + n.sks, 0);
+    cumBobot += ns.reduce((a,n) => a + n.sks * n.bobot, 0);
+    ipkData.push((cumBobot / cumSks).toFixed(2));
+  });
+
+  // SVG line chart builder
+  function buildLineChart(title, yLabel, dataPoints, maxY, color, id) {
+    const W = 340, H = 200, pad = { t: 25, r: 25, b: 40, l: 40 };
+    const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+    const n = dataPoints.length;
+    const pts = dataPoints.map((v, i) => ({
+      x: pad.l + (n > 1 ? (i / (n-1)) * cW : cW/2),
+      y: pad.t + cH - (parseFloat(v) / maxY) * cH,
+      v
+    }));
+    const path = pts.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const gridLines = [0, maxY*0.25, maxY*0.5, maxY*0.75, maxY].map(v => {
+      const y = pad.t + cH - (v / maxY) * cH;
+      return `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="hsl(215 20% 88%)" stroke-width="0.5"/>
+              <text x="${pad.l-6}" y="${y+3}" text-anchor="end" fill="hsl(215 15% 55%)" font-size="9">${Number.isInteger(v)?v:v.toFixed(1)}</text>`;
+    }).join('');
+    const xLabels = pts.map((p,i) => `<text x="${p.x}" y="${H-8}" text-anchor="middle" fill="hsl(215 15% 55%)" font-size="9">${i+1}</text>`).join('');
+    const dots = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${color}" stroke="white" stroke-width="2"/>
+      <text x="${p.x}" y="${p.y - 10}" text-anchor="middle" fill="hsl(215 15% 35%)" font-size="9.5" font-weight="600">${p.v}</text>`).join('');
+    const area = `M${pts[0].x},${pad.t+cH} ${path.replace('M','')} L${pts[pts.length-1].x},${pad.t+cH} Z`;
+    return `
+      <div class="dash-card" style="flex:1;min-width:280px;">
+        <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;font-size:0.88rem;">${title}</h3>
+        </div>
+        <div class="dash-card-body" style="padding:12px;">
+          <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" id="${id}">
+            ${gridLines}
+            <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+cH}" stroke="hsl(215 20% 85%)" stroke-width="1"/>
+            <line x1="${pad.l}" y1="${pad.t+cH}" x2="${W-pad.r}" y2="${pad.t+cH}" stroke="hsl(215 20% 85%)" stroke-width="1"/>
+            <path d="${area}" fill="${color}" opacity="0.08"/>
+            <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            ${dots}
+            ${xLabels}
+            <text x="${pad.l + cW/2}" y="${H}" text-anchor="middle" fill="hsl(215 15% 50%)" font-size="10" font-weight="600">Semester</text>
+            <text x="8" y="${pad.t + cH/2}" text-anchor="middle" fill="hsl(215 15% 50%)" font-size="10" font-weight="600" transform="rotate(-90, 8, ${pad.t + cH/2})">${yLabel}</text>
+          </svg>
+        </div>
+      </div>`;
+  }
+
+  // SVG bar chart builder
+  function buildBarChart(title, yLabel, dataPoints, maxY, color, id) {
+    const W = 340, H = 200, pad = { t: 25, r: 20, b: 40, l: 40 };
+    const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+    const n = dataPoints.length;
+    const barW = Math.min(30, (cW / n) * 0.6);
+    const gap = cW / n;
+    const gridLines = [0, maxY*0.25, maxY*0.5, maxY*0.75, maxY].map(v => {
+      const y = pad.t + cH - (v / maxY) * cH;
+      return `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="hsl(215 20% 88%)" stroke-width="0.5"/>
+              <text x="${pad.l-6}" y="${y+3}" text-anchor="end" fill="hsl(215 15% 55%)" font-size="9">${Math.round(v)}</text>`;
+    }).join('');
+    const bars = dataPoints.map((v, i) => {
+      const x = pad.l + gap * i + gap/2 - barW/2;
+      const h = (parseInt(v) / maxY) * cH;
+      const y = pad.t + cH - h;
+      return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.85"/>
+              <text x="${x + barW/2}" y="${y - 6}" text-anchor="middle" fill="hsl(215 15% 35%)" font-size="9.5" font-weight="600">${v}</text>
+              <text x="${x + barW/2}" y="${H-8}" text-anchor="middle" fill="hsl(215 15% 55%)" font-size="9">${i+1}</text>`;
+    }).join('');
+    return `
+      <div class="dash-card" style="flex:1;min-width:280px;">
+        <div class="dash-card-head"><h3 style="margin:0;font-size:0.88rem;">${title}</h3></div>
+        <div class="dash-card-body" style="padding:12px;">
+          <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" id="${id}">
+            ${gridLines}
+            <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+cH}" stroke="hsl(215 20% 85%)" stroke-width="1"/>
+            <line x1="${pad.l}" y1="${pad.t+cH}" x2="${W-pad.r}" y2="${pad.t+cH}" stroke="hsl(215 20% 85%)" stroke-width="1"/>
+            ${bars}
+            <text x="${pad.l + cW/2}" y="${H}" text-anchor="middle" fill="hsl(215 15% 50%)" font-size="10" font-weight="600">Semester</text>
+            <text x="8" y="${pad.t + cH/2}" text-anchor="middle" fill="hsl(215 15% 50%)" font-size="10" font-weight="600" transform="rotate(-90, 8, ${pad.t + cH/2})">${yLabel}</text>
+          </svg>
+        </div>
+      </div>`;
+  }
+
+  // Donut chart
+  function buildDonutChart(title, data) {
+    const entries = Object.entries(data).sort((a,b) => b[1] - a[1]);
+    const total = entries.reduce((a,[,c]) => a + c, 0);
+    const colors = ['hsl(210 65% 55%)','hsl(150 55% 50%)','hsl(35 80% 55%)','hsl(280 45% 55%)','hsl(0 60% 55%)','hsl(180 50% 45%)','hsl(45 70% 50%)'];
+    const cx = 100, cy = 100, r = 70, ir = 40;
+    let cum = 0;
+    const slices = entries.map(([grade, count], i) => {
+      const pct = count / total;
+      const startAngle = cum * 2 * Math.PI - Math.PI/2;
+      cum += pct;
+      const endAngle = cum * 2 * Math.PI - Math.PI/2;
+      const large = pct > 0.5 ? 1 : 0;
+      const x1o = cx + r * Math.cos(startAngle), y1o = cy + r * Math.sin(startAngle);
+      const x2o = cx + r * Math.cos(endAngle), y2o = cy + r * Math.sin(endAngle);
+      const x1i = cx + ir * Math.cos(endAngle), y1i = cy + ir * Math.sin(endAngle);
+      const x2i = cx + ir * Math.cos(startAngle), y2i = cy + ir * Math.sin(startAngle);
+      const midAngle = (startAngle + endAngle) / 2;
+      const lx = cx + (r + 22) * Math.cos(midAngle), ly = cy + (r + 22) * Math.sin(midAngle);
+      return `<path d="M${x1o},${y1o} A${r},${r} 0 ${large} 1 ${x2o},${y2o} L${x1i},${y1i} A${ir},${ir} 0 ${large} 0 ${x2i},${y2i} Z" fill="${colors[i % colors.length]}" stroke="white" stroke-width="1.5"/>
+        <text x="${lx}" y="${ly+4}" text-anchor="middle" fill="hsl(215 15% 35%)" font-size="8" font-weight="600">${grade}: ${(pct*100).toFixed(1)}%</text>`;
+    }).join('');
+    return `
+      <div class="dash-card" style="flex:1;min-width:280px;">
+        <div class="dash-card-head"><h3 style="margin:0;font-size:0.88rem;">${title}</h3></div>
+        <div class="dash-card-body" style="padding:12px;">
+          <svg viewBox="0 0 200 200" style="width:100%;max-width:260px;height:auto;margin:0 auto;display:block;">
+            ${slices}
+          </svg>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:10px;">
+            ${entries.map(([grade, count], i) => `
+              <div style="display:flex;align-items:center;gap:4px;font-size:0.7rem;">
+                <span style="width:10px;height:10px;border-radius:2px;background:${colors[i % colors.length]};display:inline-block;"></span>
+                <span>${grade} (${count})</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const totalMax = 8;
+  const done = semesters.length;
+  const cur = 1;
+  const left = totalMax - done - cur;
+  const donePct = (done / totalMax * 100).toFixed(0);
+  const curPct = (cur / totalMax * 100).toFixed(0);
+  const leftPct = (left / totalMax * 100).toFixed(0);
+
+  return `
+    <!-- Student Profile Card -->
+    <div class="dash-card" style="margin-bottom:20px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,hsl(200 55% 30%),hsl(180 45% 40%));padding:24px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
+        <div style="width:90px;height:90px;border-radius:12px;background:linear-gradient(135deg,hsl(200 40% 60%),hsl(180 40% 70%));border:3px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          <span style="font-size:2rem;color:white;font-weight:700;">${getInitials(user.nama)}</span>
+        </div>
+        <div style="color:white;">
+          <div style="font-size:1.15rem;font-weight:700;letter-spacing:0.3px;">${user.nim} — ${user.nama}</div>
+          <div style="font-size:0.85rem;opacity:0.85;margin-top:4px;">Ilmu Administrasi / ${user.prodi}</div>
+          <div style="font-size:0.82rem;opacity:0.8;margin-top:6px;">Angkatan: 2023, Semester: ${user.semester}</div>
+          <div style="display:flex;gap:20px;margin-top:10px;">
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;backdrop-filter:blur(4px);">
+              <div style="font-size:0.65rem;opacity:0.7;">IPK</div>
+              <div style="font-size:1.1rem;font-weight:800;">${ipk}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;backdrop-filter:blur(4px);">
+              <div style="font-size:0.65rem;opacity:0.7;">SKS Lulus</div>
+              <div style="font-size:1.1rem;font-weight:800;">${totalSks}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;backdrop-filter:blur(4px);">
+              <div style="font-size:0.65rem;opacity:0.7;">Semester</div>
+              <div style="font-size:1.1rem;font-weight:800;">${user.semester} / 8</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perkuliahan Progress Bar -->
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div class="dash-card-head"><h3>📘 Perkuliahan Mahasiswa</h3></div>
+      <div class="dash-card-body">
+        <div style="display:flex;height:32px;border-radius:8px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);">
+          <div style="width:${donePct}%;background:linear-gradient(90deg,hsl(90 55% 50%),hsl(120 50% 55%));display:flex;align-items:center;justify-content:center;color:white;font-size:0.72rem;font-weight:700;transition:width 0.5s;"></div>
+          <div style="width:${curPct}%;background:linear-gradient(90deg,hsl(30 80% 55%),hsl(35 80% 60%));display:flex;align-items:center;justify-content:center;color:white;font-size:0.72rem;font-weight:700;"></div>
+          <div style="width:${leftPct}%;background:linear-gradient(90deg,hsl(220 55% 55%),hsl(220 60% 60%));display:flex;align-items:center;justify-content:center;color:white;font-size:0.72rem;font-weight:700;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:0.68rem;color:hsl(215 15% 55%);">
+          ${Array.from({length:totalMax+1},(_,i)=>`<span>${i}</span>`).join('')}
+        </div>
+        <div style="text-align:center;font-size:0.72rem;color:hsl(215 15% 50%);margin-top:6px;font-weight:600;">Semester</div>
+        <div style="display:flex;justify-content:center;gap:20px;margin-top:14px;font-size:0.75rem;">
+          <div style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:3px;background:hsl(100 55% 50%);display:inline-block;"></span> Sudah diselesaikan</div>
+          <div style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:3px;background:hsl(30 80% 55%);display:inline-block;"></span> Sedang ditempuh</div>
+          <div style="display:flex;align-items:center;gap:5px;"><span style="width:14px;height:14px;border-radius:3px;background:hsl(220 55% 55%);display:inline-block;"></span> Belum ditempuh</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+      ${buildLineChart('IPK Mahasiswa', 'IPK', ipkData, 4, 'hsl(210 60% 50%)', 'chartIPK')}
+      ${buildLineChart('IPS Mahasiswa', 'IPS', semData.map(s => s.ips), 4, 'hsl(150 55% 45%)', 'chartIPS')}
+      ${buildBarChart('SKS Mahasiswa', 'SKS', semData.map(s => s.sks), 30, 'hsl(210 55% 50%)', 'chartSKS')}
+      ${buildDonutChart('Perbandingan Nilai', gradeCount)}
+    </div>
+
+    <!-- Mengulang Matakuliah Section -->
+    <div class="dash-card" style="margin-top:20px;">
+      <div class="dash-card-head" style="background:linear-gradient(135deg,hsl(200 60% 25%),hsl(180 50% 35%));color:white;border-radius:10px 10px 0 0;padding:12px 18px;">
+        <h3 style="margin:0;font-size:0.9rem;">🔄 Mengulang Matakuliah</h3>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>Kode</th><th>Matakuliah</th><th>SKS</th><th>Sem.</th><th>Nilai</th><th>Ulang</th></tr></thead>
+          <tbody><tr><td colspan="7" style="text-align:center;padding:20px;color:hsl(215 15% 60%);font-size:0.85rem;">Data kosong</td></tr></tbody>
+        </table>
       </div>
     </div>`;
 }
@@ -369,6 +1354,925 @@ function dosenContent(user) {
             <div class="task-item"><span class="task-dot success"></span><div class="task-body"><h4>Workshop Jurnal Terakreditasi</h4><p>Jumat, 28 Maret 2026</p></div></div>
           </div>
         </div>
+      </div>
+    </div>`;
+}
+
+// ---- DOSEN SUB-PAGES ----
+
+function dosenInfoHeader(user) {
+  return `<div class="dash-card" style="margin-bottom:20px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,hsl(200 55% 28%),hsl(170 45% 38%));padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,hsl(200 40% 55%),hsl(180 40% 65%));border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:1.3rem;color:white;font-weight:700;">${getInitials(user.nama)}</span>
+      </div>
+      <div style="color:white;flex:1;">
+        <div style="font-size:1rem;font-weight:700;">${user.nama}</div>
+        <div style="font-size:0.8rem;opacity:0.85;">NIP: ${user.nip || '198501012010011001'} — ${user.prodi || 'Administrasi Negara'}</div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
+          <div style="font-size:0.6rem;opacity:0.7;">Mata Kuliah</div>
+          <div style="font-size:1rem;font-weight:800;">${DOSEN_KELAS_MAHASISWA.length}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
+          <div style="font-size:0.6rem;opacity:0.7;">Mahasiswa PA</div>
+          <div style="font-size:1rem;font-weight:800;">${DOSEN_BIMBINGAN.length}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function jadwalDosenContent(user) {
+  const days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+  const allJadwal = DOSEN_KELAS_MAHASISWA.map((k,idx) => ({
+    hari: k.hari, jam: k.jam, kode: k.kode, nama: k.nama, kelas: k.kelas, ruang: k.ruang,
+    jmlMhs: k.mahasiswa.length, idx
+  }));
+  return `${dosenInfoHeader(user)}
+    <div class="dash-card">
+      <div class="dash-card-head"><h3>📅 Jadwal Mengajar — Semester Genap ${new Date().getFullYear()}</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>Hari</th><th>Jam</th><th>Kode MK</th><th>Mata Kuliah</th><th>Kelas</th><th>Ruang</th><th>Mhs</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${allJadwal.map((j,i) => `<tr>
+              <td>${i+1}.</td>
+              <td><strong>${j.hari}</strong></td>
+              <td class="sch-time">${j.jam}</td>
+              <td><strong>${j.kode}</strong></td>
+              <td>${j.nama}</td>
+              <td>${j.kelas}</td>
+              <td>${j.ruang}</td>
+              <td style="text-align:center;">${j.jmlMhs}</td>
+              <td style="text-align:center;white-space:nowrap;">
+                <button class="jadwal-absensi-btn" data-kelas-idx="${j.idx}" style="font-size:0.68rem;padding:4px 10px;border-radius:4px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">📋 Absensi</button>
+                <button class="jadwal-nilai-btn" data-kelas-idx="${j.idx}" style="font-size:0.68rem;padding:4px 10px;border-radius:4px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;margin-left:4px;">✏️ Nilai</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+      ${days.map(day => {
+        const jadwal = allJadwal.filter(j => j.hari === day);
+        return `<div class="dash-card">
+          <div class="dash-card-head" style="background:hsl(210 50% 95%);"><h3 style="margin:0;font-size:0.85rem;">${day}</h3></div>
+          <div class="dash-card-body" style="padding:${jadwal.length?'0':'16px'};">
+            ${jadwal.length ? jadwal.map(j => `
+              <div style="padding:12px 16px;border-bottom:1px solid hsl(215 20% 92%);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:700;font-size:0.82rem;">${j.kode} — ${j.nama}</div>
+                    <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:4px;">${j.jam} · ${j.kelas} · ${j.ruang} · ${j.jmlMhs} mhs</div>
+                  </div>
+                  <div style="display:flex;gap:4px;flex-shrink:0;">
+                    <button class="jadwal-absensi-btn" data-kelas-idx="${j.idx}" style="font-size:0.65rem;padding:4px 10px;border-radius:4px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">📋 Absensi</button>
+                    <button class="jadwal-nilai-btn" data-kelas-idx="${j.idx}" style="font-size:0.65rem;padding:4px 10px;border-radius:4px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;">✏️ Nilai</button>
+                  </div>
+                </div>
+              </div>`).join('') : '<div style="color:hsl(215 15% 60%);font-size:0.8rem;text-align:center;">Tidak ada jadwal</div>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>
+    <div id="jadwalNilaiDetail" style="display:none;margin-top:20px;"></div>`;
+}
+
+function renderInputNilaiDetail(kelasIdx) {
+  function calcGrade(v) {
+    if (v >= 85) return 'A'; if (v >= 80) return 'A-'; if (v >= 75) return 'B+';
+    if (v >= 70) return 'B'; if (v >= 65) return 'B-'; if (v >= 60) return 'C+';
+    if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
+  }
+  const kelas = DOSEN_KELAS_MAHASISWA[kelasIdx];
+  const b = kelas.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
+  const totalPertemuan = 14;
+  const rumusStr = `UTS×${b.uts}% + UAS×${b.uas}% + Tugas×${b.tugas}% + Quiz×${b.quiz}% + Absensi×${b.absensi}%`;
+  return `
+    <div class="dash-card" style="margin-bottom:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);">${kelas.kode} · ${kelas.kelas}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:white;">✏️ Input Nilai — ${kelas.nama}</div>
+          <div id="nilaiRumusLabel" style="font-size:0.78rem;color:rgba(255,255,255,0.8);margin-top:4px;">Rumus: ${rumusStr}</div>
+        </div>
+        <button id="btnToggleBobot" onclick="document.getElementById('bobotPanel').style.display = document.getElementById('bobotPanel').style.display === 'none' ? 'block' : 'none'" style="font-size:0.72rem;padding:6px 14px;border-radius:6px;cursor:pointer;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);font-weight:600;backdrop-filter:blur(4px);">⚙️ Atur Bobot</button>
+      </div>
+      <!-- Bobot Settings Panel -->
+      <div id="bobotPanel" style="display:none;padding:16px 24px;background:hsl(210 30% 96%);border-bottom:2px solid hsl(210 40% 85%);">
+        <div style="font-size:0.82rem;font-weight:700;color:hsl(210 50% 35%);margin-bottom:10px;">⚙️ Pengaturan Bobot Penilaian</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;font-weight:600;color:hsl(215 20% 40%);">UTS (%)
+            <input id="bobotUTS" type="number" value="${b.uts}" min="0" max="100" style="width:55px;padding:5px 6px;border:1px solid hsl(215 20% 82%);border-radius:5px;text-align:center;font-size:0.82rem;font-weight:700;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;font-weight:600;color:hsl(215 20% 40%);">UAS (%)
+            <input id="bobotUAS" type="number" value="${b.uas}" min="0" max="100" style="width:55px;padding:5px 6px;border:1px solid hsl(215 20% 82%);border-radius:5px;text-align:center;font-size:0.82rem;font-weight:700;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;font-weight:600;color:hsl(215 20% 40%);">Tugas (%)
+            <input id="bobotTugas" type="number" value="${b.tugas}" min="0" max="100" style="width:55px;padding:5px 6px;border:1px solid hsl(215 20% 82%);border-radius:5px;text-align:center;font-size:0.82rem;font-weight:700;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;font-weight:600;color:hsl(215 20% 40%);">Quiz (%)
+            <input id="bobotQuiz" type="number" value="${b.quiz}" min="0" max="100" style="width:55px;padding:5px 6px;border:1px solid hsl(215 20% 82%);border-radius:5px;text-align:center;font-size:0.82rem;font-weight:700;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;font-weight:600;color:hsl(215 20% 40%);">Absensi (%)
+            <input id="bobotAbsensi" type="number" value="${b.absensi}" min="0" max="100" style="width:55px;padding:5px 6px;border:1px solid hsl(215 20% 82%);border-radius:5px;text-align:center;font-size:0.82rem;font-weight:700;">
+          </label>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span id="bobotTotalLabel" style="font-size:0.72rem;font-weight:700;color:hsl(150 60% 40%);">Total: ${b.uts+b.uas+b.tugas+b.quiz+b.absensi}%</span>
+            <button id="btnApplyBobot" data-kelas-idx="${kelasIdx}" onclick="window.__applyBobot && window.__applyBobot()" style="padding:5px 14px;border-radius:5px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;font-size:0.75rem;">✅ Terapkan</button>
+          </div>
+        </div>
+        <div id="bobotWarning" style="display:none;margin-top:8px;padding:6px 12px;background:hsl(0 70% 95%);color:hsl(0 60% 45%);border-radius:4px;font-size:0.72rem;font-weight:600;">⚠️ Total bobot harus = 100%!</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <button id="backFromNilai" style="font-size:0.78rem;padding:7px 16px;border-radius:6px;cursor:pointer;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;">← Kembali ke Jadwal</button>
+      <button id="btnSimpanNilaiInline" data-kelas-idx="${kelasIdx}" style="font-size:0.72rem;padding:6px 14px;border-radius:5px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">💾 Simpan Nilai</button>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;overflow-x:auto;">
+        <table id="nilaiTable" class="sch-table" style="width:100%;font-size:0.78rem;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th class="th-uts">UTS (${b.uts}%)</th><th class="th-uas">UAS (${b.uas}%)</th><th class="th-tugas">Tugas (${b.tugas}%)</th><th class="th-quiz">Quiz (${b.quiz}%)</th><th class="th-absensi">Absensi (${b.absensi}%)</th><th>Akhir</th><th>Huruf</th></tr></thead>
+          <tbody>
+            ${kelas.mahasiswa.map((m,i) => {
+              const nilaiAbsensi = Math.round(m.kehadiran / totalPertemuan * 100);
+              const akhir = Math.round(m.nilaiUTS * b.uts/100 + m.nilaiUAS * b.uas/100 + m.nilaiTugas * b.tugas/100 + (m.nilaiQuiz||0) * b.quiz/100 + nilaiAbsensi * b.absensi/100);
+              const huruf = calcGrade(akhir);
+              const hColor = huruf.startsWith('A') ? 'hsl(150 60% 45%)' : huruf.startsWith('B') ? 'hsl(200 55% 50%)' : huruf.startsWith('C') ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+              const inputStyle = 'width:50px;padding:4px 4px;border:1px solid hsl(215 20% 85%);border-radius:4px;text-align:center;font-size:0.78rem;';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td style="white-space:nowrap;">${m.nama}</td>
+                <td style="text-align:center;"><input type="number" data-field="uts" value="${m.nilaiUTS}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" data-field="uas" value="${m.nilaiUAS}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" data-field="tugas" value="${m.nilaiTugas}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" data-field="quiz" value="${m.nilaiQuiz||0}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><span style="display:inline-block;padding:3px 8px;border-radius:4px;background:${nilaiAbsensi>=85?'hsl(150 50% 92%)':'hsl(40 50% 92%)'};color:${nilaiAbsensi>=85?'hsl(150 60% 35%)':'hsl(40 70% 35%)'};font-weight:600;font-size:0.75rem;" title="Otomatis: ${m.kehadiran}/${totalPertemuan} hadir">${nilaiAbsensi}</span></td>
+                <td style="text-align:center;font-weight:700;" class="td-akhir">${akhir}</td>
+                <td style="text-align:center;" class="td-huruf"><span style="background:${hColor};color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${huruf}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:12px 16px;background:hsl(200 60% 94%);border-left:4px solid hsl(200 60% 50%);border-radius:0 8px 8px 0;">
+      <strong style="font-size:0.78rem;">💡 Keterangan:</strong>
+      <ul style="font-size:0.75rem;color:hsl(215 15% 40%);margin:6px 0 0 16px;padding:0;">
+        <li><strong>Absensi</strong> dihitung otomatis dari kehadiran mahasiswa (hadir/14 × 100)</li>
+        <li>Klik <strong>⚙️ Atur Bobot</strong> untuk mengubah persentase tiap komponen (total harus 100%)</li>
+        <li><strong>Quiz</strong> dan komponen lainnya bisa diinput manual oleh dosen</li>
+      </ul>
+    </div>`;
+}
+
+function initJadwalDosenPage() {
+  const absensiDiv = document.getElementById('jadwalAbsensiDetail');
+  const nilaiDiv = document.getElementById('jadwalNilaiDetail');
+
+  function hideAllDetails() {
+    if (absensiDiv) { absensiDiv.style.display = 'none'; absensiDiv.innerHTML = ''; }
+    if (nilaiDiv) { nilaiDiv.style.display = 'none'; nilaiDiv.innerHTML = ''; }
+  }
+
+  // Absensi buttons
+  document.querySelectorAll('.jadwal-absensi-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideAllDetails();
+      const idx = parseInt(btn.dataset.kelasIdx);
+      if (absensiDiv) {
+        absensiDiv.style.display = 'block';
+        absensiDiv.innerHTML = renderAbsensiDetail(idx);
+        absensiDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('backToClassList')?.addEventListener('click', () => hideAllDetails());
+        // Attach cell toggle handlers
+        attachAbsensiCellHandlers(absensiDiv);
+        // Attach save + print handlers
+        attachAbsensiSaveHandlers(absensiDiv, idx);
+      }
+    });
+  });
+
+  // Input Nilai buttons
+  document.querySelectorAll('.jadwal-nilai-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideAllDetails();
+      const idx = parseInt(btn.dataset.kelasIdx);
+      if (nilaiDiv) {
+        nilaiDiv.style.display = 'block';
+        nilaiDiv.innerHTML = renderInputNilaiDetail(idx);
+        nilaiDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('backFromNilai')?.addEventListener('click', () => hideAllDetails());
+        
+        // ── Apply Bobot handler ──
+        window.__applyBobot = function() {
+          const bUts = parseInt(document.getElementById('bobotUTS')?.value) || 0;
+          const bUas = parseInt(document.getElementById('bobotUAS')?.value) || 0;
+          const bTugas = parseInt(document.getElementById('bobotTugas')?.value) || 0;
+          const bQuiz = parseInt(document.getElementById('bobotQuiz')?.value) || 0;
+          const bAbsensi = parseInt(document.getElementById('bobotAbsensi')?.value) || 0;
+          const total = bUts + bUas + bTugas + bQuiz + bAbsensi;
+          
+          const totalLabel = document.getElementById('bobotTotalLabel');
+          const warning = document.getElementById('bobotWarning');
+          if (totalLabel) {
+            totalLabel.textContent = 'Total: ' + total + '%';
+            totalLabel.style.color = total === 100 ? 'hsl(150 60% 40%)' : 'hsl(0 60% 50%)';
+          }
+          if (total !== 100) {
+            if (warning) warning.style.display = 'block';
+            return;
+          }
+          if (warning) warning.style.display = 'none';
+          
+          // Save bobot to data
+          const kls2 = DOSEN_KELAS_MAHASISWA[idx];
+          kls2.bobot = { uts: bUts, uas: bUas, tugas: bTugas, quiz: bQuiz, absensi: bAbsensi };
+          
+          // Update header labels
+          const thUts = nilaiDiv.querySelector('.th-uts'); if (thUts) thUts.textContent = 'UTS (' + bUts + '%)';
+          const thUas = nilaiDiv.querySelector('.th-uas'); if (thUas) thUas.textContent = 'UAS (' + bUas + '%)';
+          const thTugas = nilaiDiv.querySelector('.th-tugas'); if (thTugas) thTugas.textContent = 'Tugas (' + bTugas + '%)';
+          const thQuiz = nilaiDiv.querySelector('.th-quiz'); if (thQuiz) thQuiz.textContent = 'Quiz (' + bQuiz + '%)';
+          const thAbsensi = nilaiDiv.querySelector('.th-absensi'); if (thAbsensi) thAbsensi.textContent = 'Absensi (' + bAbsensi + '%)';
+          
+          // Update rumus label
+          const rumusLabel = document.getElementById('nilaiRumusLabel');
+          if (rumusLabel) rumusLabel.textContent = 'Rumus: UTS×' + bUts + '% + UAS×' + bUas + '% + Tugas×' + bTugas + '% + Quiz×' + bQuiz + '% + Absensi×' + bAbsensi + '%';
+          
+          // Recalculate all rows
+          function calcGrade2(v) {
+            if (v >= 85) return 'A'; if (v >= 80) return 'A-'; if (v >= 75) return 'B+';
+            if (v >= 70) return 'B'; if (v >= 65) return 'B-'; if (v >= 60) return 'C+';
+            if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
+          }
+          const rows2 = nilaiDiv.querySelectorAll('#nilaiTable tbody tr');
+          rows2.forEach((row, ri) => {
+            const inputs = row.querySelectorAll('input[type=number]');
+            if (inputs.length >= 4 && kls2.mahasiswa[ri]) {
+              const uts = parseFloat(inputs[0].value) || 0;
+              const uas = parseFloat(inputs[1].value) || 0;
+              const tugas = parseFloat(inputs[2].value) || 0;
+              const quiz = parseFloat(inputs[3].value) || 0;
+              const nilaiAbsensi = Math.round(kls2.mahasiswa[ri].kehadiran / 14 * 100);
+              const akhir = Math.round(uts*bUts/100 + uas*bUas/100 + tugas*bTugas/100 + quiz*bQuiz/100 + nilaiAbsensi*bAbsensi/100);
+              const huruf = calcGrade2(akhir);
+              const hColor = huruf.startsWith('A') ? 'hsl(150 60% 45%)' : huruf.startsWith('B') ? 'hsl(200 55% 50%)' : huruf.startsWith('C') ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+              const tdAkhir = row.querySelector('.td-akhir'); if (tdAkhir) tdAkhir.textContent = akhir;
+              const tdHuruf = row.querySelector('.td-huruf'); if (tdHuruf) tdHuruf.innerHTML = '<span style="background:' + hColor + ';color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">' + huruf + '</span>';
+            }
+          });
+          
+          // Close panel with success feedback
+          document.getElementById('bobotPanel').style.display = 'none';
+        };
+        
+        // ── Simpan Nilai → POST to backend ──
+        document.getElementById('btnSimpanNilaiInline')?.addEventListener('click', async () => {
+          const kelasIdx2 = parseInt(document.getElementById('btnSimpanNilaiInline').dataset.kelasIdx);
+          const kls = DOSEN_KELAS_MAHASISWA[kelasIdx2];
+          const rows = nilaiDiv.querySelectorAll('#nilaiTable tbody tr');
+          const items = [];
+          rows.forEach((row, ri) => {
+            const inputs = row.querySelectorAll('input[type=number]');
+            if (inputs.length >= 4 && kls.mahasiswa[ri]) {
+              const uts = parseFloat(inputs[0].value) || 0;
+              const uas = parseFloat(inputs[1].value) || 0;
+              const tugas = parseFloat(inputs[2].value) || 0;
+              const quiz = parseFloat(inputs[3].value) || 0;
+              // Update in-memory
+              kls.mahasiswa[ri].nilaiUTS = uts;
+              kls.mahasiswa[ri].nilaiUAS = uas;
+              kls.mahasiswa[ri].nilaiTugas = tugas;
+              kls.mahasiswa[ri].nilaiQuiz = quiz;
+              items.push({
+                nim: kls.mahasiswa[ri].nim,
+                mata_kuliah_id: kls.mkId || 0,
+                semester: 4,
+                uts, uas, tugas, quiz,
+                kelas: kls.kelas
+              });
+            }
+          });
+          const btn = document.getElementById('btnSimpanNilaiInline');
+          btn.textContent = '⏳ Menyimpan...';
+          btn.disabled = true;
+          const result = await bulkSaveNilai(items);
+          if (result) {
+            btn.textContent = '✅ Tersimpan!';
+            setTimeout(() => { btn.textContent = '💾 Simpan Nilai'; btn.disabled = false; }, 2000);
+          } else {
+            btn.textContent = '✅ Tersimpan (Lokal)';
+            btn.style.background = 'hsl(40 70% 48%)';
+            setTimeout(() => { btn.textContent = '💾 Simpan Nilai'; btn.style.background = 'hsl(150 55% 45%)'; btn.disabled = false; }, 2000);
+          }
+        });
+      }
+    });
+  });
+}
+
+function mhsDosenContent(user) {
+  return `${dosenInfoHeader(user)}
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>👥 Data Mahasiswa per Kelas</h3></div>
+    </div>
+    ${DOSEN_KELAS_MAHASISWA.map(kelas => `
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+        <h3 style="margin:0;font-size:0.88rem;">${kelas.kode} — ${kelas.nama} (${kelas.kelas})</h3>
+        <span class="badge-sm blue">${kelas.mahasiswa.length} mahasiswa</span>
+      </div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama Mahasiswa</th><th>Angkatan</th><th>Kehadiran</th><th>% Hadir</th></tr></thead>
+          <tbody>
+            ${kelas.mahasiswa.map((m,i) => {
+              const pct = Math.round(m.kehadiran / 14 * 100);
+              const color = pct >= 85 ? 'hsl(150 60% 45%)' : pct >= 75 ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td>${m.nama}</td>
+                <td style="text-align:center;">${m.angkatan}</td>
+                <td style="text-align:center;">${m.kehadiran}/14</td>
+                <td style="text-align:center;"><span style="background:${color};color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">${pct}%</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`).join('')}`;
+}
+
+function inputNilaiContent(user) {
+  function calcGrade(v) {
+    if (v >= 85) return 'A'; if (v >= 80) return 'A-'; if (v >= 75) return 'B+';
+    if (v >= 70) return 'B'; if (v >= 65) return 'B-'; if (v >= 60) return 'C+';
+    if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
+  }
+  const totalPertemuan = 14;
+  return `${dosenInfoHeader(user)}
+    <div style="margin-bottom:16px;padding:14px 20px;background:hsl(200 60% 94%);border-left:4px solid hsl(200 60% 50%);border-radius:0 8px 8px 0;">
+      <strong style="font-size:0.85rem;">📝 Petunjuk:</strong>
+      <span style="font-size:0.82rem;color:hsl(215 15% 40%);"> Pilih kelas, edit nilai pada tabel, lalu klik Simpan Nilai. Bobot bisa dikonfigurasi per kelas via ⚙️ Atur Bobot di Jadwal Mengajar.</span>
+    </div>
+    ${DOSEN_KELAS_MAHASISWA.map((kelas, ki) => {
+      const b = kelas.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
+      return `
+    <div class="dash-card" style="margin-bottom:20px;">
+      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3 style="margin:0;font-size:0.88rem;">${kelas.kode} — ${kelas.nama} (${kelas.kelas})</h3>
+          <div style="font-size:0.7rem;color:hsl(215 20% 55%);margin-top:2px;">Bobot: UTS ${b.uts}% · UAS ${b.uas}% · Tugas ${b.tugas}% · Quiz ${b.quiz}% · Absensi ${b.absensi}%</div>
+        </div>
+        <button class="btn-simpan-nilai" data-kelas-idx="${ki}" style="font-size:0.75rem;padding:6px 16px;border-radius:6px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">💾 Simpan Nilai</button>
+      </div>
+      <div class="dash-card-body" style="padding:0;overflow-x:auto;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th>UTS (${b.uts}%)</th><th>UAS (${b.uas}%)</th><th>Tugas (${b.tugas}%)</th><th>Quiz (${b.quiz}%)</th><th>Absensi (${b.absensi}%)</th><th>Akhir</th><th>Huruf</th></tr></thead>
+          <tbody>
+            ${kelas.mahasiswa.map((m,i) => {
+              const nilaiAbsensi = Math.round(m.kehadiran / totalPertemuan * 100);
+              const akhir = Math.round(m.nilaiUTS * b.uts/100 + m.nilaiUAS * b.uas/100 + m.nilaiTugas * b.tugas/100 + (m.nilaiQuiz||0) * b.quiz/100 + nilaiAbsensi * b.absensi/100);
+              const huruf = calcGrade(akhir);
+              const hColor = huruf.startsWith('A') ? 'hsl(150 60% 45%)' : huruf.startsWith('B') ? 'hsl(200 55% 50%)' : huruf.startsWith('C') ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+              const inputStyle = 'width:50px;padding:4px 4px;border:1px solid hsl(215 20% 85%);border-radius:4px;text-align:center;font-size:0.78rem;';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td style="white-space:nowrap;">${m.nama}</td>
+                <td style="text-align:center;"><input type="number" value="${m.nilaiUTS}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" value="${m.nilaiUAS}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" value="${m.nilaiTugas}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><input type="number" value="${m.nilaiQuiz||0}" min="0" max="100" style="${inputStyle}"></td>
+                <td style="text-align:center;"><span style="display:inline-block;padding:3px 8px;border-radius:4px;background:${nilaiAbsensi>=85?'hsl(150 50% 92%)':'hsl(40 50% 92%)'};color:${nilaiAbsensi>=85?'hsl(150 60% 35%)':'hsl(40 70% 35%)'};font-weight:600;font-size:0.75rem;" title="${m.kehadiran}/${totalPertemuan} hadir">${nilaiAbsensi}</span></td>
+                <td style="text-align:center;font-weight:700;">${akhir}</td>
+                <td style="text-align:center;"><span style="background:${hColor};color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${huruf}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+    }).join('')}`;
+}
+
+function initInputNilaiPage() {
+  document.querySelectorAll('.btn-simpan-nilai').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const kelasIdx = parseInt(btn.dataset.kelasIdx);
+      const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+      const card = btn.closest('.dash-card');
+      const rows = card.querySelectorAll('tbody tr');
+      const items = [];
+      rows.forEach((row, ri) => {
+        const inputs = row.querySelectorAll('input[type=number]');
+        if (inputs.length >= 4 && kls.mahasiswa[ri]) {
+          const uts = parseFloat(inputs[0].value) || 0;
+          const uas = parseFloat(inputs[1].value) || 0;
+          const tugas = parseFloat(inputs[2].value) || 0;
+          const quiz = parseFloat(inputs[3].value) || 0;
+          // Update in-memory
+          kls.mahasiswa[ri].nilaiUTS = uts;
+          kls.mahasiswa[ri].nilaiUAS = uas;
+          kls.mahasiswa[ri].nilaiTugas = tugas;
+          kls.mahasiswa[ri].nilaiQuiz = quiz;
+          items.push({
+            nim: kls.mahasiswa[ri].nim,
+            mata_kuliah_id: kls.mkId || 0,
+            semester: 4,
+            uts, uas, tugas, quiz,
+            kelas: kls.kelas
+          });
+        }
+      });
+      btn.textContent = '⏳ Menyimpan...';
+      btn.disabled = true;
+      const result = await bulkSaveNilai(items);
+      if (result) {
+        btn.textContent = '✅ Tersimpan!';
+        setTimeout(() => { btn.textContent = '💾 Simpan Nilai'; btn.disabled = false; }, 2000);
+      } else {
+        btn.textContent = '✅ Tersimpan (Lokal)';
+        btn.style.background = 'hsl(40 70% 48%)';
+        setTimeout(() => { btn.textContent = '💾 Simpan Nilai'; btn.style.background = 'hsl(150 55% 45%)'; btn.disabled = false; }, 2000);
+      }
+    });
+  });
+}
+
+function rekapNilaiContent(user) {
+  function calcGrade(v) {
+    if (v >= 85) return 'A'; if (v >= 80) return 'A-'; if (v >= 75) return 'B+';
+    if (v >= 70) return 'B'; if (v >= 65) return 'B-'; if (v >= 60) return 'C+';
+    if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
+  }
+  const totalPertemuan = 14;
+  const stats = DOSEN_KELAS_MAHASISWA.map(k => {
+    const b = k.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
+    const scores = k.mahasiswa.map(m => {
+      const nilaiAbsensi = Math.round(m.kehadiran / totalPertemuan * 100);
+      return Math.round(m.nilaiUTS * b.uts/100 + m.nilaiUAS * b.uas/100 + m.nilaiTugas * b.tugas/100 + (m.nilaiQuiz||0) * b.quiz/100 + nilaiAbsensi * b.absensi/100);
+    });
+    const avg = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1);
+    const max = Math.max(...scores);
+    const min = Math.min(...scores);
+    const grades = {};
+    scores.forEach(s => { const g = calcGrade(s); grades[g] = (grades[g]||0)+1; });
+    return { ...k, avg, max, min, grades, total: k.mahasiswa.length, bobot: b };
+  });
+  return `${dosenInfoHeader(user)}
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>📊 Rekap Nilai — Semester Genap ${new Date().getFullYear()}</h3></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:16px;">
+      ${stats.map(s => `
+      <div class="dash-card">
+        <div class="dash-card-head"><h3 style="margin:0;font-size:0.85rem;">${s.kode} — ${s.nama}</h3></div>
+        <div class="dash-card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+            <div style="text-align:center;padding:8px;background:hsl(200 60% 94%);border-radius:6px;">
+              <div style="font-size:0.65rem;color:hsl(215 15% 50%);">Rata-rata</div>
+              <div style="font-size:1.1rem;font-weight:800;color:hsl(200 50% 40%);">${s.avg}</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:hsl(150 50% 94%);border-radius:6px;">
+              <div style="font-size:0.65rem;color:hsl(150 40% 40%);">Tertinggi</div>
+              <div style="font-size:1.1rem;font-weight:800;color:hsl(150 50% 40%);">${s.max}</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:hsl(0 50% 95%);border-radius:6px;">
+              <div style="font-size:0.65rem;color:hsl(0 40% 45%);">Terendah</div>
+              <div style="font-size:1.1rem;font-weight:800;color:hsl(0 50% 45%);">${s.min}</div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;font-weight:600;margin-bottom:8px;">Distribusi Nilai (${s.total} mhs):</div>
+          ${Object.entries(s.grades).sort().map(([g,c]) => {
+            const pct = Math.round(c / s.total * 100);
+            const color = g.startsWith('A') ? 'hsl(150 60% 45%)' : g.startsWith('B') ? 'hsl(200 55% 50%)' : 'hsl(40 80% 50%)';
+            return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+              <span style="font-size:0.72rem;font-weight:700;min-width:22px;">${g}</span>
+              <div class="progress-wrap" style="flex:1;"><div class="progress-bar" style="width:${pct}%;background:${color};"></div></div>
+              <span style="font-size:0.68rem;color:hsl(215 15% 55%);min-width:45px;">${c} (${pct}%)</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function absensiDosenContent(user) {
+  const totalPertemuan = 14;
+  // Class selector cards view
+  return `${dosenInfoHeader(user)}
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>✅ Absensi Kelas — Pilih Kelas</h3></div>
+      <div class="dash-card-body">
+        <p style="font-size:0.82rem;color:hsl(215 15% 50%);margin:0;">Klik kelas di bawah untuk melihat dan mengelola absensi mahasiswa.</p>
+      </div>
+    </div>
+    <div id="absensiClassGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+      ${DOSEN_KELAS_MAHASISWA.map((kelas,idx) => {
+        const totalMhs = kelas.mahasiswa.length;
+        const avgHadir = Math.round(kelas.mahasiswa.reduce((a,m) => a + m.kehadiran,0) / totalMhs);
+        const avgPct = Math.round(avgHadir / totalPertemuan * 100);
+        const pctColor = avgPct >= 85 ? 'hsl(150 60% 45%)' : avgPct >= 75 ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+        return `
+        <div class="dash-card absensi-class-card" data-kelas-idx="${idx}" style="cursor:pointer;transition:all 0.25s;border:2px solid transparent;">
+          <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:16px 20px;border-radius:8px 8px 0 0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);">${kelas.kode}</div>
+                <div style="font-size:1rem;font-weight:700;color:white;margin-top:2px;">${kelas.nama}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.18);border-radius:8px;padding:6px 12px;backdrop-filter:blur(4px);">
+                <div style="font-size:0.55rem;color:rgba(255,255,255,0.7);">Kelas</div>
+                <div style="font-size:0.9rem;font-weight:800;color:white;">${kelas.kelas}</div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-card-body" style="padding:14px 20px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+              <div style="text-align:center;padding:8px;background:hsl(210 50% 96%);border-radius:6px;">
+                <div style="font-size:0.58rem;color:hsl(215 15% 50%);">Mahasiswa</div>
+                <div style="font-size:1rem;font-weight:800;color:hsl(210 50% 40%);">${totalMhs}</div>
+              </div>
+              <div style="text-align:center;padding:8px;background:hsl(150 50% 95%);border-radius:6px;">
+                <div style="font-size:0.58rem;color:hsl(150 40% 40%);">Avg Hadir</div>
+                <div style="font-size:1rem;font-weight:800;color:hsl(150 50% 40%);">${avgHadir}/${totalPertemuan}</div>
+              </div>
+              <div style="text-align:center;padding:8px;background:${avgPct>=85?'hsl(150 50% 95%)':'hsl(40 50% 95%)'};border-radius:6px;">
+                <div style="font-size:0.58rem;color:hsl(215 15% 50%);">Rata-rata</div>
+                <div style="font-size:1rem;font-weight:800;color:${pctColor};">${avgPct}%</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.72rem;color:hsl(215 15% 55%);">📅 ${kelas.hari}, ${kelas.jam} · 📍 ${kelas.ruang}</span>
+              <span style="font-size:0.72rem;font-weight:600;color:hsl(210 55% 50%);">Buka →</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="absensiDetailView" style="display:none;"></div>`;
+}
+
+function renderAbsensiDetail(kelasIdx) {
+  const totalPertemuan = 14;
+  const kelas = DOSEN_KELAS_MAHASISWA[kelasIdx];
+  const totalMhs = kelas.mahasiswa.length;
+  const avgHadir = Math.round(kelas.mahasiswa.reduce((a,m) => a + m.kehadiran,0) / totalMhs);
+  const avgPct = Math.round(avgHadir / totalPertemuan * 100);
+  const pertemuanDates = generatePertemuanDates(kelas.hari, totalPertemuan);
+
+  return `
+    <div class="dash-card" style="margin-bottom:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);">${kelas.kode} · ${kelas.kelas}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:white;">${kelas.nama}</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.8);margin-top:4px;">📅 ${kelas.hari}, ${kelas.jam} · 📍 ${kelas.ruang} · 👥 ${totalMhs} mahasiswa</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
+            <div style="font-size:0.55rem;opacity:0.7;">Avg Hadir</div>
+            <div style="font-size:1rem;font-weight:800;">${avgPct}%</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
+            <div style="font-size:0.55rem;opacity:0.7;">Pertemuan</div>
+            <div style="font-size:1rem;font-weight:800;">${totalPertemuan}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <button id="backToClassList" style="font-size:0.78rem;padding:7px 16px;border-radius:6px;cursor:pointer;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;">← Kembali ke Daftar Kelas</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="btnSimpanAbsensi" data-kelas-idx="${kelasIdx}" onclick="window.__simpanAbsensi && window.__simpanAbsensi()" style="font-size:0.72rem;padding:6px 14px;border-radius:5px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">💾 Simpan Absensi</button>
+        <button id="btnCetakRekap" data-kelas-idx="${kelasIdx}" onclick="window.__cetakRekap && window.__cetakRekap()" style="font-size:0.72rem;padding:6px 14px;border-radius:5px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;">🖨️ Cetak Rekap</button>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;overflow-x:auto;">
+        <table class="sch-table" style="width:100%;font-size:0.78rem;">
+          <thead>
+            <tr style="background:hsl(215 20% 95%);">
+              <th rowspan="3" style="vertical-align:middle;">No.</th>
+              <th rowspan="3" style="vertical-align:middle;">NIM</th>
+              <th rowspan="3" style="vertical-align:middle;">Nama</th>
+              <th colspan="${totalPertemuan}" style="text-align:center;">Pertemuan ke-</th>
+              <th rowspan="3" style="vertical-align:middle;">Hadir</th>
+              <th rowspan="3" style="vertical-align:middle;">%</th>
+            </tr>
+            <tr style="background:hsl(215 20% 93%);">
+              ${Array.from({length:totalPertemuan},(_,i)=>`<th style="padding:4px 6px;font-size:0.68rem;">${i+1}</th>`).join('')}
+            </tr>
+            <tr style="background:hsl(210 30% 90%);">
+              ${pertemuanDates.map(d => `<th style="padding:2px 4px;font-size:0.55rem;font-weight:600;color:hsl(210 40% 45%);white-space:nowrap;">${formatTanggalShort(d)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${kelas.mahasiswa.map((m,i) => {
+              const pct = Math.round(m.kehadiran / totalPertemuan * 100);
+              // Generate deterministic attendance pattern
+              const attendance = Array.from({length:totalPertemuan}, (_,j) => j < m.kehadiran ? '✓' : '✗');
+              for (let k = attendance.length - 1; k > 0; k--) {
+                const j2 = Math.floor((m.nim.charCodeAt(m.nim.length-1) + k) % (k + 1));
+                [attendance[k], attendance[j2]] = [attendance[j2], attendance[k]];
+              }
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td style="white-space:nowrap;">${m.nama}</td>
+                ${attendance.map((a,ai) => `<td style="text-align:center;">
+                  <span class="absensi-cell" data-nim="${m.nim}" data-pertemuan="${ai+1}" style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:4px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${a==='✓'?'hsl(150 60% 45%)':'hsl(0 55% 52%)'};color:white;text-align:center;transition:background 0.15s;">${a==='✓'?'H':'A'}</span>
+                </td>`).join('')}
+                <td style="text-align:center;font-weight:700;">${m.kehadiran}</td>
+                <td style="text-align:center;"><span style="background:${pct>=85?'hsl(150 60% 45%)':pct>=75?'hsl(40 80% 50%)':'hsl(0 60% 50%)'};color:white;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:600;">${pct}%</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:12px 16px;background:hsl(200 60% 94%);border-left:4px solid hsl(200 60% 50%);border-radius:0 8px 8px 0;">
+      <strong style="font-size:0.78rem;">💡 Keterangan:</strong>
+      <span style="font-size:0.75rem;color:hsl(215 15% 40%);"> Klik kotak H/A/I/S pada tabel untuk mengubah status kehadiran. </span>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;"><span style="width:18px;height:18px;border-radius:3px;background:hsl(150 60% 45%);display:inline-block;"></span> Hadir (H)</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;"><span style="width:18px;height:18px;border-radius:3px;background:hsl(40 80% 50%);display:inline-block;"></span> Izin (I)</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;"><span style="width:18px;height:18px;border-radius:3px;background:hsl(30 70% 52%);display:inline-block;"></span> Sakit (S)</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;"><span style="width:18px;height:18px;border-radius:3px;background:hsl(0 55% 52%);display:inline-block;"></span> Alpa (A)</span>
+      </div>
+    </div>`;
+}
+
+function initAbsensiDosenPage() {
+  // Class card click → show detail
+  document.querySelectorAll('.absensi-class-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const idx = parseInt(card.dataset.kelasIdx);
+      const grid = document.getElementById('absensiClassGrid');
+      const detail = document.getElementById('absensiDetailView');
+      if (grid) grid.style.display = 'none';
+      if (detail) {
+        detail.style.display = 'block';
+        detail.innerHTML = renderAbsensiDetail(idx);
+        // Back button
+        document.getElementById('backToClassList')?.addEventListener('click', () => {
+          detail.style.display = 'none';
+          detail.innerHTML = '';
+          grid.style.display = 'grid';
+        });
+        // Attach cell toggle handlers
+        attachAbsensiCellHandlers(detail);
+        // Attach save + print handlers
+        attachAbsensiSaveHandlers(detail, idx);
+      }
+    });
+    // Hover effect
+    card.addEventListener('mouseenter', () => { card.style.borderColor = 'hsl(210 55% 50%)'; card.style.transform = 'translateY(-2px)'; card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
+    card.addEventListener('mouseleave', () => { card.style.borderColor = 'transparent'; card.style.transform = 'none'; card.style.boxShadow = 'none'; });
+  });
+}
+
+// ─── Shared Absensi Helpers ─────────────────────────────────────────────
+function attachAbsensiCellHandlers(container) {
+  container.querySelectorAll('.absensi-cell').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const states = [{label:'H',bg:'hsl(150 60% 45%)'},{label:'I',bg:'hsl(40 80% 50%)'},{label:'S',bg:'hsl(30 70% 52%)'},{label:'A',bg:'hsl(0 55% 52%)'}];
+      const current = cell.textContent.trim();
+      const curIdx = states.findIndex(s => s.label === current);
+      const next = states[(curIdx + 1) % states.length];
+      cell.textContent = next.label;
+      cell.style.background = next.bg;
+      // Update Hadir count + % in the same row
+      const row = cell.closest('tr');
+      if (row) {
+        const cells = row.querySelectorAll('.absensi-cell');
+        const hadirCount = Array.from(cells).filter(c => c.textContent.trim() === 'H').length;
+        const tds = row.querySelectorAll('td');
+        // Hadir count is second-to-last td, % is last td
+        if (tds.length >= 2) {
+          tds[tds.length - 2].textContent = hadirCount;
+          const pct = Math.round(hadirCount / cells.length * 100);
+          tds[tds.length - 1].innerHTML = `<span style="background:${pct>=85?'hsl(150 60% 45%)':pct>=75?'hsl(40 80% 50%)':'hsl(0 60% 50%)'};color:white;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:600;">${pct}%</span>`;
+        }
+      }
+    });
+  });
+}
+
+function attachAbsensiSaveHandlers(container, kelasIdx) {
+  // ── Simpan Absensi (window-level for inline onclick) ──
+  window.__simpanAbsensi = async function() {
+    const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+    const items = [];
+    container.querySelectorAll('.absensi-cell').forEach(cell => {
+      items.push({
+        krs_id: 0,
+        nim: cell.dataset.nim,
+        pertemuan: parseInt(cell.dataset.pertemuan),
+        status: cell.textContent.trim()
+      });
+    });
+
+    const btn = document.getElementById('btnSimpanAbsensi');
+    if (btn) {
+      btn.textContent = '⏳ Menyimpan...';
+      btn.disabled = true;
+    }
+
+    // Update in-memory data
+    kls.mahasiswa.forEach(m => {
+      const mhsCells = items.filter(it => it.nim === m.nim);
+      m.kehadiran = mhsCells.filter(it => it.status === 'H').length;
+    });
+
+    // Try backend
+    try {
+      const result = await bulkSaveAbsensi(items);
+      if (btn) {
+        if (result) {
+          btn.textContent = '✅ Tersimpan!';
+          btn.style.background = 'hsl(150 60% 40%)';
+        } else {
+          btn.textContent = '✅ Tersimpan (Lokal)';
+          btn.style.background = 'hsl(40 70% 48%)';
+        }
+      }
+    } catch(e) {
+      if (btn) {
+        btn.textContent = '✅ Tersimpan (Lokal)';
+        btn.style.background = 'hsl(40 70% 48%)';
+      }
+    }
+    setTimeout(() => {
+      if (btn) {
+        btn.textContent = '💾 Simpan Absensi';
+        btn.style.background = 'hsl(150 55% 45%)';
+        btn.disabled = false;
+      }
+    }, 2500);
+  };
+
+  // ── Cetak Rekap (window-level for inline onclick) ──
+  window.__cetakRekap = function() {
+    const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+    const totalPertemuan = 14;
+    // Collect current cell data
+    const rowsData = [];
+    const rows = container.querySelectorAll('tbody tr');
+    rows.forEach((row, i) => {
+      const cells = row.querySelectorAll('.absensi-cell');
+      const attendance = Array.from(cells).map(c => c.textContent.trim());
+      const hadir = attendance.filter(a => a === 'H').length;
+      const izin = attendance.filter(a => a === 'I').length;
+      const sakit = attendance.filter(a => a === 'S').length;
+      const alpa = attendance.filter(a => a === 'A').length;
+      rowsData.push({
+        no: i + 1,
+        nim: kls.mahasiswa[i]?.nim || '-',
+        nama: kls.mahasiswa[i]?.nama || '-',
+        attendance, hadir, izin, sakit, alpa,
+        pct: Math.round(hadir / totalPertemuan * 100)
+      });
+    });
+
+    const printWin = window.open('', '_blank', 'width=900,height=700');
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Rekap Absensi - ${kls.nama}</title>
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; padding: 30px; color: #333; }
+          h2 { text-align: center; margin-bottom: 4px; }
+          .info { text-align: center; font-size: 13px; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #bbb; padding: 6px 8px; text-align: center; }
+          th { background: #2c3e50; color: white; }
+          .hadir { background: #27ae60; color: white; font-weight: 700; }
+          .izin { background: #f39c12; color: white; font-weight: 700; }
+          .sakit { background: #e67e22; color: white; font-weight: 700; }
+          .alpa { background: #e74c3c; color: white; font-weight: 700; }
+          tfoot td { font-weight: 700; background: #ecf0f1; }
+          @media print { body { padding: 10px; } }
+        </style>
+      </head>
+      <body>
+        <h2>REKAP ABSENSI</h2>
+        <h3 style="text-align:center;margin:4px 0;">${kls.kode} — ${kls.nama} (Kelas ${kls.kelas})</h3>
+        <div class="info">${kls.hari}, ${kls.jam} · Ruang ${kls.ruang} · Semester Genap ${new Date().getFullYear()}</div>
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2">No.</th>
+              <th rowspan="2">NIM</th>
+              <th rowspan="2">Nama</th>
+              <th colspan="${totalPertemuan}">Pertemuan</th>
+              <th rowspan="2">H</th>
+              <th rowspan="2">I</th>
+              <th rowspan="2">S</th>
+              <th rowspan="2">A</th>
+              <th rowspan="2">%</th>
+            </tr>
+            <tr>
+              ${Array.from({length: totalPertemuan}, (_, i) => `<th>${i+1}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsData.map(r => `
+              <tr>
+                <td>${r.no}</td>
+                <td>${r.nim}</td>
+                <td style="text-align:left;">${r.nama}</td>
+                ${r.attendance.map(a => `<td class="${a==='H'?'hadir':a==='I'?'izin':a==='S'?'sakit':'alpa'}">${a}</td>`).join('')}
+                <td>${r.hadir}</td>
+                <td>${r.izin}</td>
+                <td>${r.sakit}</td>
+                <td>${r.alpa}</td>
+                <td>${r.pct}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Rata-rata</td>
+              ${Array.from({length: totalPertemuan}, (_, i) => {
+                const hadirCount = rowsData.filter(r => r.attendance[i] === 'H').length;
+                return `<td>${hadirCount}/${rowsData.length}</td>`;
+              }).join('')}
+              <td>${rowsData.reduce((a,r)=>a+r.hadir,0)}</td>
+              <td>${rowsData.reduce((a,r)=>a+r.izin,0)}</td>
+              <td>${rowsData.reduce((a,r)=>a+r.sakit,0)}</td>
+              <td>${rowsData.reduce((a,r)=>a+r.alpa,0)}</td>
+              <td>${Math.round(rowsData.reduce((a,r)=>a+r.pct,0)/rowsData.length)}%</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="margin-top:30px;display:flex;justify-content:space-between;font-size:12px;">
+          <div>Dicetak: ${new Date().toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})}</div>
+          <div style="text-align:center;">Dosen Pengampu<br><br><br><br>_______________________</div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+    setTimeout(() => printWin.print(), 500);
+  };
+}
+
+function bimbinganContent(user) {
+  const avgIPK = (DOSEN_BIMBINGAN.reduce((a,m) => a + m.ipk, 0) / DOSEN_BIMBINGAN.length).toFixed(2);
+  return `${dosenInfoHeader(user)}
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>🎓 Bimbingan Akademik (PA) — Dosen Pembimbing</h3></div>
+      <div class="dash-card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:0;">
+          <div style="text-align:center;padding:12px;background:hsl(200 60% 94%);border-radius:8px;">
+            <div style="font-size:0.68rem;color:hsl(215 15% 50%);">Total Mahasiswa PA</div>
+            <div style="font-size:1.3rem;font-weight:800;color:hsl(200 50% 40%);">${DOSEN_BIMBINGAN.length}</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:hsl(150 50% 94%);border-radius:8px;">
+            <div style="font-size:0.68rem;color:hsl(150 40% 40%);">Rata-rata IPK</div>
+            <div style="font-size:1.3rem;font-weight:800;color:hsl(150 50% 40%);">${avgIPK}</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:hsl(40 60% 94%);border-radius:8px;">
+            <div style="font-size:0.68rem;color:hsl(40 50% 40%);">Status Aktif</div>
+            <div style="font-size:1.3rem;font-weight:800;color:hsl(40 60% 45%);">${DOSEN_BIMBINGAN.filter(m=>m.status==='Aktif').length}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Sem.</th><th>IPK</th><th>SKS Lulus</th><th>Status</th></tr></thead>
+          <tbody>
+            ${DOSEN_BIMBINGAN.map((m,i) => {
+              const color = m.ipk >= 3.5 ? 'hsl(150 60% 45%)' : m.ipk >= 3.0 ? 'hsl(200 55% 50%)' : 'hsl(40 80% 50%)';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td>${m.nama}</td>
+                <td>${m.prodi}</td>
+                <td style="text-align:center;">${m.angkatan}</td>
+                <td style="text-align:center;">${m.semester}</td>
+                <td style="text-align:center;"><span style="background:${color};color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${m.ipk}</span></td>
+                <td style="text-align:center;">${m.sksLulus}</td>
+                <td style="text-align:center;"><span class="badge-sm green">${m.status}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>`;
 }
@@ -527,8 +2431,1511 @@ function bapContent(user) {
     </div>`;
 }
 
+// ---- BAP SUB-PAGES ----
+
+// ---- Kelas Management (persisted in localStorage) ----
+function getKelasList() {
+  try {
+    const stored = localStorage.getItem('siakad_kelas_list');
+    if (stored) return JSON.parse(stored);
+  } catch(e) {}
+  return ['RA-101','RA-201','RA-202','RA-203','RA-204','RA-205','RN-101','RN-102','RN-103','RN-104','RN-105','LAB-K1'];
+}
+function saveKelasList(list) {
+  localStorage.setItem('siakad_kelas_list', JSON.stringify(list));
+}
+
+function jadwalManageContent() {
+  const yr = new Date().getFullYear();
+  const kelasList = getKelasList();
+  // Build MK list from KURIKULUM_DATA
+  const allMK = [];
+  ['niaga','negara'].forEach(prodi => {
+    const d = KURIKULUM_DATA[prodi];
+    if (!d) return;
+    d.semester.forEach(sem => {
+      sem.mk.forEach(mk => {
+        allMK.push({ ...mk, prodi, prodiNama: d.nama, semester: sem.no });
+      });
+    });
+  });
+  // Build unique dosen from DOSEN_LIST
+  const dosenOptions = DOSEN_LIST.filter(d => d.status === 'Aktif').map(d => d.nama);
+
+  // Dummy jadwal data for preview — using real MK names
+  // ---- Generate full schedule from KURIKULUM_DATA ----
+  // Ensure JADWAL_DUMMY is initialized (reuse global function)
+  initJadwalDummy();
+
+  const tipeColors = { 'Offline':'hsl(210 55% 50%)','Online':'hsl(150 55% 45%)','Hybrid':'hsl(275 55% 55%)' };
+  const tipeBg = { 'Offline':'hsl(210 50% 94%)','Online':'hsl(150 50% 94%)','Hybrid':'hsl(275 50% 94%)' };
+  const prodiColors = { 'niaga':'hsl(35 75% 50%)','negara':'hsl(145 55% 45%)' };
+  const prodiBg = { 'niaga':'hsl(35 70% 94%)','negara':'hsl(145 50% 93%)' };
+
+  const totalOnline = JADWAL_DUMMY.filter(j=>j.tipeKelas==='Online').length;
+  const totalOffline = JADWAL_DUMMY.filter(j=>j.tipeKelas==='Offline').length;
+  const totalHybrid = JADWAL_DUMMY.filter(j=>j.tipeKelas==='Hybrid').length;
+  const totalNiaga = JADWAL_DUMMY.filter(j=>j.prodi==='niaga').length;
+  const totalNegara = JADWAL_DUMMY.filter(j=>j.prodi==='negara').length;
+
+  return `
+    <div class="dash-card" style="margin-bottom:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,hsl(210 55% 35%),hsl(200 50% 48%));padding:24px 28px;">
+        <div style="font-size:1.2rem;font-weight:700;color:white;">\ud83d\udcc5 Manajemen Jadwal Perkuliahan</div>
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.75);margin-top:4px;">Semester Genap ${yr} \u2014 Kelola ruang, jam, dan tipe kelas \u2022 ${allMK.length} Mata Kuliah tersedia</div>
+      </div>
+      <div class="dash-card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:0;">
+          <div style="text-align:center;padding:14px;background:hsl(210 50% 96%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(215 15% 50%);">Total Jadwal</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(210 50% 40%);">${JADWAL_DUMMY.length}</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:hsl(35 70% 94%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(35 60% 40%);">\ud83c\udfea Adm. Niaga</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(35 75% 50%);">${totalNiaga}</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:hsl(145 50% 93%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(145 40% 38%);">\ud83c\udfe6 Adm. Negara</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(145 55% 45%);">${totalNegara}</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:hsl(210 50% 94%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(210 45% 45%);">\ud83c\udfeb Offline</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(210 55% 50%);">${totalOffline}</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:hsl(150 50% 94%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(150 40% 40%);">\ud83c\udf10 Online</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(150 55% 45%);">${totalOnline}</div>
+          </div>
+          <div style="text-align:center;padding:14px;background:hsl(275 50% 94%);border-radius:8px;">
+            <div style="font-size:0.65rem;color:hsl(275 40% 45%);">\ud83d\udd04 Hybrid</div>
+            <div style="font-size:1.5rem;font-weight:800;color:hsl(275 55% 55%);">${totalHybrid}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="jadwalFilterProdi" style="padding:7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.78rem;font-weight:600;">
+          <option value="">Semua Prodi</option>
+          <option value="niaga">\ud83c\udfea Adm. Niaga</option>
+          <option value="negara">\ud83c\udfe6 Adm. Negara</option>
+        </select>
+        <select id="jadwalFilterSmt" style="padding:7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.78rem;font-weight:600;">
+          <option value="">Semua Smt</option>
+          <option value="1">Smt 1</option><option value="2">Smt 2</option><option value="3">Smt 3</option><option value="4">Smt 4</option>
+          <option value="5">Smt 5</option><option value="6">Smt 6</option><option value="7">Smt 7</option><option value="8">Smt 8</option>
+        </select>
+        <select id="jadwalFilterHari" style="padding:7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.78rem;font-weight:600;">
+          <option value="">Semua Hari</option>
+          <option>Senin</option><option>Selasa</option><option>Rabu</option><option>Kamis</option><option>Jumat</option><option>Sabtu</option>
+        </select>
+        <select id="jadwalFilterTipe" style="padding:7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.78rem;font-weight:600;">
+          <option value="">Semua Tipe</option>
+          <option>Offline</option><option>Online</option><option>Hybrid</option>
+        </select>
+
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="jadwalCount" style="font-size:0.72rem;color:hsl(215 15% 55%);font-weight:600;"></span>
+        <button id="btnTambahJadwal" style="padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%));color:white;border:none;font-weight:700;font-size:0.82rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);">\u2795 Tambah Jadwal</button>
+      </div>
+    </div>
+
+    <div id="jadwalFormArea" style="display:none;margin-bottom:16px;"></div>
+
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;overflow-x:auto;">
+        <table class="sch-table" id="jadwalTable" style="width:100%;font-size:0.78rem;">
+          <thead><tr style="background:hsl(215 20% 95%);">
+            <th style="width:35px;">No.</th><th>Prodi</th><th>Smt</th><th>Kode MK</th><th>Mata Kuliah</th><th>Dosen Pengampu</th><th>Hari</th><th>Jam</th><th>Ruang</th><th>Tipe</th><th>SKS</th><th style="width:180px;">Aksi</th>
+          </tr></thead>
+          <tbody>
+            ${JADWAL_DUMMY.map((j,i) => {
+              const tColor = tipeColors[j.tipeKelas] || 'hsl(215 15% 50%)';
+              const tBg = tipeBg[j.tipeKelas] || 'hsl(215 20% 95%)';
+              const tIcon = j.tipeKelas === 'Online' ? '\ud83c\udf10' : j.tipeKelas === 'Hybrid' ? '\ud83d\udd04' : '\ud83c\udfeb';
+              const pColor = prodiColors[j.prodi] || 'hsl(215 15% 50%)';
+              const pBg = prodiBg[j.prodi] || 'hsl(215 20% 95%)';
+              const pLabel = j.prodi === 'niaga' ? 'Niaga' : 'Negara';
+              const pertemuanDates = generatePertemuanDates(j.hari, 14);
+              const modes = j.modePertemuan || Array(14).fill('offline');
+              const onlineCount = modes.filter(x => x === 'online').length;
+              const offlineCount = 14 - onlineCount;
+              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}">
+                <td>${i+1}.</td>
+                <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
+                <td style="text-align:center;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:hsl(215 20% 92%);font-size:0.65rem;font-weight:800;color:hsl(215 30% 45%);">${j.semester}</span></td>
+                <td><strong>${j.kodeMK}</strong></td>
+                <td style="white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${j.namaMK}</td>
+                <td style="white-space:nowrap;font-size:0.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${j.dosen}</td>
+                <td><strong>${j.hari}</strong></td>
+                <td class="sch-time" style="white-space:nowrap;">${j.jamMulai}-${j.jamSelesai}</td>
+                <td style="font-weight:600;font-size:0.72rem;">${j.tipeKelas === 'Online' ? '<span style="color:hsl(215 15% 60%);font-style:italic;">\u2014 (Online)</span>' : j.ruang}</td>
+                <td><span style="padding:3px 10px;border-radius:12px;font-size:0.68rem;font-weight:700;background:${tBg};color:${tColor};">${tIcon} ${j.tipeKelas}</span></td>
+
+                <td style="text-align:center;">${j.sks}</td>
+                <td style="text-align:center;white-space:nowrap;">
+                  <button class="jadwal-date-btn" data-id="${j.id}" title="Lihat Detail Pertemuan" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(200 60% 50%),hsl(210 55% 45%));color:white;border:none;font-weight:700;margin-right:2px;">📆</button>
+                  <button class="jadwal-ai-btn" data-id="${j.id}" title="AI Rekomendasi Jadwal" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(260 65% 55%),hsl(280 55% 50%));color:white;border:none;font-weight:700;margin-right:3px;">\ud83e\udd16</button>
+                  <button class="jadwal-edit-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(40 80% 50%);color:white;border:none;font-weight:600;">\u270f\ufe0f Edit</button>
+                  <button class="jadwal-del-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(0 55% 52%);color:white;border:none;font-weight:600;margin-left:3px;">\ud83d\uddd1\ufe0f</button>
+                </td>
+              </tr>
+              <tr class="jadwal-detail-row" data-parent-id="${j.id}" style="display:none;">
+                <td colspan="12" style="padding:0;border-top:none;">
+                  <div style="background:linear-gradient(180deg,hsl(210 30% 97%),hsl(210 20% 99%));padding:14px 18px;border-top:2px solid hsl(200 55% 75%);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                      <div>
+                        <div style="font-size:0.78rem;font-weight:700;color:hsl(210 50% 38%);">📆 Detail 14 Pertemuan — ${j.kodeMK} ${j.namaMK}</div>
+                        <div style="font-size:0.62rem;color:hsl(215 15% 55%);margin-top:2px;">💡 Klik kartu untuk atur jadwal, tanggal, dan jam pertemuan • Cocok untuk kelas pengganti</div>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:center;">
+                        <span class="jadwal-mode-legend" data-jid="${j.id}" style="display:inline-flex;gap:8px;font-size:0.65rem;">
+                          <span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:2px;background:hsl(210 55% 50%);display:inline-block;"></span> Offline (🏫 <span class="off-count">${offlineCount}</span>)</span>
+                          <span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:2px;background:hsl(150 60% 45%);display:inline-block;"></span> Online (🌐 <span class="on-count">${onlineCount}</span>)</span>
+                        </span>
+                        <button class="jadwal-save-mode-btn" data-jid="${j.id}" style="font-size:0.62rem;padding:4px 12px;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%));color:white;border:none;font-weight:700;display:none;">💾 Simpan</button>
+                      </div>
+                    </div>
+                    <div class="jadwal-pertemuan-grid" data-jid="${j.id}" style="display:grid;grid-template-columns:repeat(14,1fr);gap:4px;">
+                      ${pertemuanDates.map((d, pi) => {
+                        const custom = j.customSchedule && j.customSchedule[pi];
+                        const mode = custom ? (custom.mode || modes[pi]) : modes[pi];
+                        const isOnline = mode === 'online';
+                        const origIsoDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                        const displayIsoDate = custom && custom.date ? custom.date : origIsoDate;
+                        const displayDate = custom && custom.date ? new Date(custom.date + 'T00:00:00') : d;
+                        const isRescheduled = custom && custom.date && custom.date !== origIsoDate;
+                        const cardStart = custom && custom.start ? custom.start : j.jamMulai;
+                        const cardEnd = custom && custom.end ? custom.end : j.jamSelesai;
+                        const cardNote = custom && custom.note ? custom.note : '';
+                        const bg = isRescheduled ? 'linear-gradient(135deg,hsl(40 65% 92%),hsl(40 60% 88%))' : isOnline ? 'linear-gradient(135deg,hsl(150 50% 92%),hsl(150 45% 88%))' : 'linear-gradient(135deg,hsl(210 40% 95%),hsl(210 35% 91%))';
+                        const borderColor = isRescheduled ? 'hsl(40 65% 65%)' : isOnline ? 'hsl(150 55% 70%)' : 'hsl(210 40% 82%)';
+                        const icon = isRescheduled ? '🔄' : isOnline ? '🌐' : '🏫';
+                        const label = isRescheduled ? 'Pengganti' : isOnline ? 'Online' : 'Offline';
+                        const labelColor = isRescheduled ? 'hsl(40 65% 35%)' : isOnline ? 'hsl(150 55% 35%)' : 'hsl(210 45% 40%)';
+                        const dateColor = isRescheduled ? 'hsl(40 60% 30%)' : 'hsl(210 40% 38%)';
+                        return `<div class="prt-mode-card" data-jid="${j.id}" data-pi="${pi}" data-mode="${mode}" data-orig-date="${origIsoDate}" data-date="${displayIsoDate}" data-start="${cardStart}" data-end="${cardEnd}" data-note="${cardNote.replace(/"/g,'&quot;')}" style="background:${bg};border:1px solid ${borderColor};border-radius:8px;padding:5px 3px;text-align:center;cursor:pointer;transition:all 0.2s ease;user-select:none;position:relative;" title="${formatTanggalFull(displayDate)} — ${label} • ${cardStart}-${cardEnd}${cardNote ? ' • 📝 ' + cardNote : ''} (Klik untuk edit)" onclick="window.__openPertemuanEdit && window.__openPertemuanEdit(this,${j.id},${pi})">
+                          <div style="font-size:0.5rem;font-weight:800;color:hsl(210 30% 45%);">P${pi+1}</div>
+                          <div class="prt-date-label" style="font-size:0.58rem;font-weight:700;color:${dateColor};margin:1px 0;">${formatTanggalShort(displayDate)}</div>
+                          <div class="prt-time-label" style="font-size:0.48rem;color:hsl(215 20% 50%);margin-bottom:1px;">${cardStart}-${cardEnd}</div>
+                          <div class="prt-icon" style="font-size:0.65rem;">${icon}</div>
+                          <div class="prt-label" style="font-size:0.46rem;font-weight:700;color:${labelColor};margin-top:1px;">${label}</div>
+                          <div class="prt-note-badge" style="${cardNote ? '' : 'display:none;'}position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:hsl(40 85% 55%);font-size:0.42rem;line-height:14px;color:white;font-weight:800;" title="${cardNote ? '📝 ' + cardNote : 'Ada catatan'}">📝</div>
+                        </div>`;
+                      }).join('')}
+                    </div>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="padding:14px 20px;background:hsl(200 60% 94%);border-left:4px solid hsl(200 60% 50%);border-radius:0 8px 8px 0;">
+        <strong style="font-size:0.82rem;">\ud83d\udca1 Tipe Kelas:</strong>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;"><span style="padding:2px 8px;border-radius:10px;background:hsl(210 50% 94%);color:hsl(210 55% 50%);font-weight:700;font-size:0.62rem;">\ud83c\udfeb Offline</span> Tatap muka</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;"><span style="padding:2px 8px;border-radius:10px;background:hsl(150 50% 94%);color:hsl(150 55% 45%);font-weight:700;font-size:0.62rem;">\ud83c\udf10 Online</span> Daring</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;"><span style="padding:2px 8px;border-radius:10px;background:hsl(275 50% 94%);color:hsl(275 55% 55%);font-weight:700;font-size:0.62rem;">\ud83d\udd04 Hybrid</span> Kombinasi</span>
+        </div>
+      </div>
+      <div style="padding:14px 20px;background:hsl(35 70% 94%);border-left:4px solid hsl(35 65% 50%);border-radius:0 8px 8px 0;">
+        <strong style="font-size:0.82rem;">\ud83c\udfe2 Kode Ruang:</strong>
+        <div style="font-size:0.68rem;margin-top:6px;color:hsl(35 60% 35%);display:flex;flex-direction:column;gap:3px;">
+          <span><strong>RN-1xx</strong> = Ruang Adm. Niaga</span>
+          <span><strong>RA-2xx</strong> = Ruang Adm. Negara</span>
+          <span><strong>LAB-Kx</strong> = Lab Komputer</span>
+        </div>
+      </div>
+      <div style="padding:14px 20px;background:hsl(145 50% 93%);border-left:4px solid hsl(145 55% 45%);border-radius:0 8px 8px 0;">
+        <strong style="font-size:0.82rem;">\ud83c\udf93 Data MK:</strong>
+        <div style="font-size:0.68rem;margin-top:6px;color:hsl(145 40% 30%);display:flex;flex-direction:column;gap:3px;">
+          <span>Adm. Niaga: <strong>${totalNiaga} jadwal</strong></span>
+          <span>Adm. Negara: <strong>${totalNegara} jadwal</strong></span>
+          <span>Total: <strong>${JADWAL_DUMMY.length} jadwal</strong> aktif</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Recommendation Modal -->
+    <div id="aiModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+      <div style="background:white;border-radius:16px;width:95%;max-width:740px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="background:linear-gradient(135deg,hsl(260 55% 42%),hsl(280 50% 55%));padding:20px 24px;border-radius:16px 16px 0 0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:1.1rem;font-weight:800;color:white;">\ud83e\udd16 AI Scheduling Assistant</div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.8);margin-top:2px;">Powered by Python AI Engine \u2022 STIA Bayuangga</div>
+            </div>
+            <button id="aiModalClose" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.2rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">\u2715</button>
+          </div>
+        </div>
+        <div id="aiModalBody" style="padding:20px 24px;"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <div class="dash-card" style="overflow:hidden;">
+        <div style="background:linear-gradient(135deg,hsl(200 50% 42%),hsl(210 45% 50%));padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:0.92rem;font-weight:700;color:white;">\ud83c\udfe2 Manajemen Ruangan</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:2px;">Tambah, edit, atau hapus nama ruangan kuliah sesuai kebutuhan</div>
+          </div>
+          <button id="btnToggleKelasPanel" style="padding:6px 16px;border-radius:6px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;font-size:0.75rem;font-weight:600;cursor:pointer;">\u2699\ufe0f Kelola Ruangan</button>
+        </div>
+        <div id="kelasPanelBody" style="display:none;">
+          <div class="dash-card-body" style="padding:16px 20px;">
+            <div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-end;">
+              <div style="flex:1;max-width:280px;">
+                <label style="font-size:0.72rem;font-weight:600;color:hsl(215 15% 45%);display:block;margin-bottom:4px;">Nama Ruangan Baru</label>
+                <input id="kelasNewInput" type="text" placeholder="cth: RA-101, RN-201, LAB-K1..." style="width:100%;padding:8px 12px;border:1px solid hsl(215 20% 85%);border-radius:6px;font-size:0.8rem;box-sizing:border-box;">
+              </div>
+              <button id="btnAddKelas" style="padding:8px 18px;border-radius:6px;background:linear-gradient(135deg,hsl(200 50% 42%),hsl(210 45% 50%));color:white;border:none;font-weight:700;font-size:0.8rem;cursor:pointer;white-space:nowrap;">\u2795 Tambah</button>
+            </div>
+            <div id="kelasListContainer" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            <div style="margin-top:12px;font-size:0.68rem;color:hsl(215 15% 55%);">\ud83d\udca1 Klik nama ruangan untuk edit \u2022 Klik \u00d7 untuk hapus \u2022 Data tersimpan otomatis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>`;
+}
+
+function renderJadwalForm(editData) {
+  const isEdit = !!editData;
+  const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const inputStyle = `padding:8px 12px;border:1px solid hsl(215 20% 85%);border-radius:6px;font-size:0.8rem;width:100%;box-sizing:border-box;`;
+  const labelStyle = `font-size:0.72rem;font-weight:600;color:hsl(215 15% 45%);margin-bottom:4px;display:block;`;
+
+  // Build MK options grouped by semester
+  function mkOptionsForProdi(prodiKey) {
+    const d = KURIKULUM_DATA[prodiKey];
+    if (!d) return '';
+    let opts = '';
+    d.semester.forEach(sem => {
+      opts += `<optgroup label="Semester ${sem.no}">`;
+      sem.mk.forEach(mk => {
+        const sel = editData && editData.kodeMK === mk.kode ? ' selected' : '';
+        opts += `<option value="${mk.kode}" data-nama="${mk.nama}" data-dosen="${mk.dosen}" data-sks="${mk.sks}"${sel}>${mk.kode} \u2014 ${mk.nama} (${mk.sks} SKS)</option>`;
+      });
+      opts += '</optgroup>';
+    });
+    return opts;
+  }
+
+  // Build dosen options
+  const dosenOpts = DOSEN_LIST.filter(d => d.status === 'Aktif').map(d => {
+    const sel = editData && editData.dosen === d.nama ? ' selected' : '';
+    return `<option value="${d.nama}"${sel}>${d.nama}</option>`;
+  }).join('');
+
+  const selProdi = editData?.prodi || 'niaga';
+
+  return `
+    <div class="dash-card" style="overflow:hidden;border:2px solid hsl(210 55% 50%);">
+      <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:14px 20px;">
+        <div style="font-size:0.95rem;font-weight:700;color:white;">${isEdit ? '\u270f\ufe0f Edit Jadwal' : '\u2795 Tambah Jadwal Baru'}</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:2px;">Pilih prodi terlebih dahulu, lalu pilih mata kuliah dari kurikulum</div>
+      </div>
+      <div class="dash-card-body" style="padding:20px;">
+        <!-- Row 1: Prodi + MK -->
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:14px;margin-bottom:14px;">
+          <div>
+            <label style="${labelStyle}">\ud83c\udf93 Program Studi</label>
+            <select id="jfProdi" style="${inputStyle}font-weight:600;">
+              <option value="niaga"${selProdi==='niaga'?' selected':''}>\ud83c\udfea Adm. Niaga</option>
+              <option value="negara"${selProdi==='negara'?' selected':''}>\ud83c\udfe6 Adm. Negara</option>
+            </select>
+          </div>
+          <div>
+            <label style="${labelStyle}">\ud83d\udcda Mata Kuliah <span style="font-size:0.62rem;color:hsl(150 50% 45%);">(otomatis dari kurikulum)</span></label>
+            <select id="jfMK" style="${inputStyle}">
+              <option value="">-- Pilih Mata Kuliah --</option>
+              ${mkOptionsForProdi(selProdi)}
+            </select>
+          </div>
+        </div>
+        <!-- Row 2: Details auto-filled -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:14px;">
+          <div><label style="${labelStyle}">Kode MK</label><input id="jfKode" type="text" value="${editData?.kodeMK||''}" readonly style="${inputStyle}background:hsl(215 20% 97%);color:hsl(215 15% 55%);"></div>
+          <div><label style="${labelStyle}">Dosen Pengampu <span style="font-size:0.62rem;color:hsl(200 50% 50%);">(bisa diganti)</span></label>
+            <select id="jfDosen" style="${inputStyle}">
+              <option value="">-- Pilih Dosen --</option>
+              ${dosenOpts}
+            </select>
+          </div>
+          <div><label style="${labelStyle}">SKS</label><input id="jfSks" type="number" value="${editData?.sks||''}" readonly style="${inputStyle}background:hsl(215 20% 97%);width:80px;font-weight:700;"></div>
+        </div>
+        <!-- Row 3: Schedule -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:14px;">
+          <div><label style="${labelStyle}">Hari</label><select id="jfHari" style="${inputStyle}">${days.map(d=>`<option${editData?.hari===d?' selected':''}>${d}</option>`).join('')}</select></div>
+          <div><label style="${labelStyle}">Jam Mulai</label><input id="jfMulai" type="time" value="${editData?.jamMulai||'07:30'}" style="${inputStyle}"></div>
+          <div><label style="${labelStyle}">Jam Selesai</label><input id="jfSelesai" type="time" value="${editData?.jamSelesai||'09:10'}" style="${inputStyle}"></div>
+          <div><label style="${labelStyle}">Tipe Kelas</label>
+            <div style="display:flex;gap:6px;margin-top:2px;" id="jfTipeGroup">
+              ${['Offline','Online','Hybrid'].map(t => {
+                const sel = (editData?.tipeKelas||'Offline') === t;
+                const icon = t==='Offline'?'\ud83c\udfeb':t==='Online'?'\ud83c\udf10':'\ud83d\udd04';
+                const tc = t==='Offline'?'hsl(210 55% 50%)':t==='Online'?'hsl(150 55% 45%)':'hsl(275 55% 55%)';
+                return `<button class="tipe-kelas-opt" data-tipe="${t}" style="flex:1;padding:8px 6px;border-radius:6px;cursor:pointer;font-size:0.72rem;font-weight:700;border:2px solid ${sel?tc:'hsl(215 20% 85%)'};background:${sel?tc:'white'};color:${sel?'white':tc};transition:all 0.2s;">${icon} ${t}</button>`;
+              }).join('')}
+            </div>
+          </div>
+          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="RA-201" style="${inputStyle}"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
+          <button id="jfCancel" style="padding:8px 20px;border-radius:6px;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;font-size:0.8rem;cursor:pointer;">Batal</button>
+          <button id="jfSave" style="padding:8px 24px;border-radius:6px;background:linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%));color:white;border:none;font-weight:700;font-size:0.8rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);">\ud83d\udcbe ${isEdit ? 'Simpan Perubahan' : 'Tambah Jadwal'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function initJadwalManagePage() {
+  const formArea = document.getElementById('jadwalFormArea');
+
+  // ---- Table filter handlers ----
+  function applyTableFilters() {
+    const fProdi = document.getElementById('jadwalFilterProdi')?.value || '';
+    const fSmt = document.getElementById('jadwalFilterSmt')?.value || '';
+    const fHari = document.getElementById('jadwalFilterHari')?.value || '';
+    const fTipe = document.getElementById('jadwalFilterTipe')?.value || '';
+
+    let visibleCount = 0;
+    // Hide all detail rows when filtering
+    document.querySelectorAll('.jadwal-detail-row').forEach(r => r.style.display = 'none');
+    document.querySelectorAll('#jadwalTable tbody tr:not(.jadwal-detail-row)').forEach(row => {
+      const show = (!fProdi || row.dataset.prodi === fProdi)
+        && (!fSmt || row.dataset.smt === fSmt)
+        && (!fHari || row.dataset.hari === fHari)
+        && (!fTipe || row.dataset.tipe === fTipe)
+;
+      row.style.display = show ? '' : 'none';
+      if (show) visibleCount++;
+    });
+    const countEl = document.getElementById('jadwalCount');
+    if (countEl) countEl.textContent = `Menampilkan ${visibleCount} dari ${JADWAL_DUMMY.length} jadwal`;
+  }
+  document.getElementById('jadwalFilterProdi')?.addEventListener('change', applyTableFilters);
+  document.getElementById('jadwalFilterSmt')?.addEventListener('change', applyTableFilters);
+  document.getElementById('jadwalFilterHari')?.addEventListener('change', applyTableFilters);
+  document.getElementById('jadwalFilterTipe')?.addEventListener('change', applyTableFilters);
+
+  applyTableFilters(); // show initial count
+
+  // ---- Add button ----
+  document.getElementById('btnTambahJadwal')?.addEventListener('click', () => {
+    formArea.style.display = 'block';
+    formArea.innerHTML = renderJadwalForm(null);
+    formArea.scrollIntoView({ behavior:'smooth', block:'start' });
+    initFormHandlers();
+  });
+
+  // ---- Detail Pertemuan toggle (📆 button) ----
+  document.querySelectorAll('.jadwal-date-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const jid = btn.dataset.id;
+      const detailRow = document.querySelector(`.jadwal-detail-row[data-parent-id="${jid}"]`);
+      if (detailRow) {
+        const isVisible = detailRow.style.display !== 'none';
+        // Close all other detail rows first
+        document.querySelectorAll('.jadwal-detail-row').forEach(r => r.style.display = 'none');
+        document.querySelectorAll('.jadwal-date-btn').forEach(b => b.style.background = 'linear-gradient(135deg,hsl(200 60% 50%),hsl(210 55% 45%))');
+        if (!isVisible) {
+          detailRow.style.display = 'table-row';
+          btn.style.background = 'linear-gradient(135deg,hsl(200 60% 35%),hsl(210 55% 30%))';
+        }
+      }
+    });
+  });
+
+  // ---- Pertemuan Edit Popup ----
+  // Create the popup once
+  let prtPopup = document.getElementById('prt-edit-popup');
+  if (!prtPopup) {
+    prtPopup = document.createElement('div');
+    prtPopup.id = 'prt-edit-popup';
+    prtPopup.style.cssText = 'display:none;position:absolute;z-index:9999;background:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.22);padding:16px;width:300px;border:2px solid hsl(210 40% 82%);';
+    document.body.appendChild(prtPopup);
+  }
+
+  // Close popup when clicking outside
+  document.addEventListener('click', (e) => {
+    if (prtPopup.style.display !== 'none' && !prtPopup.contains(e.target) && !e.target.closest('.prt-mode-card')) {
+      prtPopup.style.display = 'none';
+    }
+  });
+
+  window.__openPertemuanEdit = function(cardEl, jadwalId, pi) {
+    const entry = JADWAL_DUMMY.find(j => j.id === jadwalId);
+    if (!entry) return;
+
+    // Get card data
+    const currentMode = cardEl.dataset.mode || 'offline';
+    const currentDate = cardEl.dataset.date;
+    const origDate = cardEl.dataset.origDate;
+    const currentStart = cardEl.dataset.start || entry.jamMulai;
+    const currentEnd = cardEl.dataset.end || entry.jamSelesai;
+    const currentNote = cardEl.dataset.note || '';
+    const isRescheduled = currentDate !== origDate;
+
+    // Position popup near the card
+    const rect = cardEl.getBoundingClientRect();
+    prtPopup.style.display = 'block';
+    const popupLeft = Math.min(rect.left + window.scrollX, window.innerWidth - 320);
+    const popupTop = rect.bottom + window.scrollY + 6;
+    prtPopup.style.left = popupLeft + 'px';
+    prtPopup.style.top = popupTop + 'px';
+
+    prtPopup.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:0.82rem;font-weight:800;color:hsl(210 50% 35%);">📝 Edit Pertemuan ${pi+1}</div>
+        <button id="prtPopupClose" style="background:none;border:none;font-size:1rem;cursor:pointer;color:hsl(215 15% 50%);">✕</button>
+      </div>
+      <div style="font-size:0.68rem;color:hsl(215 15% 55%);margin-bottom:12px;padding:6px 8px;background:hsl(210 30% 97%);border-radius:6px;">
+        <strong>${entry.kodeMK}</strong> — ${entry.namaMK}
+        ${isRescheduled ? '<span style="margin-left:6px;padding:1px 6px;border-radius:6px;background:hsl(40 85% 55%);color:white;font-size:0.55rem;font-weight:700;">🔄 Reschedule</span>' : ''}
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">📅 Tanggal</label>
+        <input type="date" id="prtEditDate" value="${currentDate}" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">🕐 Jam Mulai</label>
+          <input type="time" id="prtEditStart" value="${currentStart}" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">🕐 Jam Selesai</label>
+          <input type="time" id="prtEditEnd" value="${currentEnd}" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:5px;">🔀 Mode Kelas</label>
+        <div style="display:flex;gap:6px;">
+          <button id="prtModeOffline" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${currentMode === 'offline' ? 'hsl(210 55% 50%)' : 'hsl(215 20% 85%)'};background:${currentMode === 'offline' ? 'hsl(210 50% 94%)' : 'white'};cursor:pointer;font-size:0.7rem;font-weight:700;color:hsl(210 55% 40%);">🏫 Offline</button>
+          <button id="prtModeOnline" style="flex:1;padding:6px;border-radius:6px;border:2px solid ${currentMode === 'online' ? 'hsl(150 55% 45%)' : 'hsl(215 20% 85%)'};background:${currentMode === 'online' ? 'hsl(150 50% 94%)' : 'white'};cursor:pointer;font-size:0.7rem;font-weight:700;color:hsl(150 55% 38%);">🌐 Online</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">📄 Catatan <span style="font-weight:400;color:hsl(215 15% 60%);">(opsional, misal: Kelas Pengganti)</span></label>
+        <input type="text" id="prtEditNote" value="${currentNote}" placeholder="Cth: Kelas Pengganti - Dosen Izin" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex;gap:6px;justify-content:flex-end;">
+        <button id="prtResetBtn" style="padding:5px 12px;border-radius:6px;border:1px solid hsl(215 20% 82%);background:white;cursor:pointer;font-size:0.68rem;font-weight:600;color:hsl(215 15% 50%);">↩️ Reset</button>
+        <button id="prtCancelBtn" style="padding:5px 12px;border-radius:6px;border:1px solid hsl(215 20% 82%);background:white;cursor:pointer;font-size:0.68rem;font-weight:600;color:hsl(0 55% 50%);">Batal</button>
+        <button id="prtSaveBtn" style="padding:5px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%));color:white;cursor:pointer;font-size:0.68rem;font-weight:700;">✅ Simpan</button>
+      </div>
+    `;
+
+    // Mode selection state
+    let selectedMode = currentMode;
+    const offBtn = document.getElementById('prtModeOffline');
+    const onBtn = document.getElementById('prtModeOnline');
+
+    function updateModeButtons() {
+      offBtn.style.borderColor = selectedMode === 'offline' ? 'hsl(210 55% 50%)' : 'hsl(215 20% 85%)';
+      offBtn.style.background = selectedMode === 'offline' ? 'hsl(210 50% 94%)' : 'white';
+      onBtn.style.borderColor = selectedMode === 'online' ? 'hsl(150 55% 45%)' : 'hsl(215 20% 85%)';
+      onBtn.style.background = selectedMode === 'online' ? 'hsl(150 50% 94%)' : 'white';
+    }
+
+    offBtn.onclick = (e) => { e.stopPropagation(); selectedMode = 'offline'; updateModeButtons(); };
+    onBtn.onclick = (e) => { e.stopPropagation(); selectedMode = 'online'; updateModeButtons(); };
+
+    // Close
+    document.getElementById('prtPopupClose').onclick = (e) => { e.stopPropagation(); prtPopup.style.display = 'none'; };
+    document.getElementById('prtCancelBtn').onclick = (e) => { e.stopPropagation(); prtPopup.style.display = 'none'; };
+
+    // Reset to original
+    document.getElementById('prtResetBtn').onclick = (e) => {
+      e.stopPropagation();
+      document.getElementById('prtEditDate').value = origDate;
+      document.getElementById('prtEditStart').value = entry.jamMulai;
+      document.getElementById('prtEditEnd').value = entry.jamSelesai;
+      document.getElementById('prtEditNote').value = '';
+      selectedMode = entry.modePertemuan[pi];
+      updateModeButtons();
+    };
+
+    // Save
+    document.getElementById('prtSaveBtn').onclick = async (e) => {
+      e.stopPropagation();
+      const newDate = document.getElementById('prtEditDate').value;
+      const newStart = document.getElementById('prtEditStart').value;
+      const newEnd = document.getElementById('prtEditEnd').value;
+      const newNote = document.getElementById('prtEditNote').value.trim();
+
+      // Update JADWAL_DUMMY
+      entry.modePertemuan[pi] = selectedMode;
+
+      // Store custom schedule in entry
+      if (!entry.customSchedule) entry.customSchedule = {};
+      entry.customSchedule[pi] = { date: newDate, start: newStart, end: newEnd, note: newNote, mode: selectedMode };
+
+      // Update card visually
+      const isOnline = selectedMode === 'online';
+      const isChanged = newDate !== origDate;
+      cardEl.dataset.mode = selectedMode;
+      cardEl.dataset.date = newDate;
+      cardEl.dataset.start = newStart;
+      cardEl.dataset.end = newEnd;
+      cardEl.dataset.note = newNote;
+
+      // Background
+      const cardBg = isChanged
+        ? (isOnline ? 'linear-gradient(135deg,hsl(40 70% 92%),hsl(150 40% 90%))' : 'linear-gradient(135deg,hsl(40 70% 92%),hsl(40 60% 88%))')
+        : (isOnline ? 'linear-gradient(135deg,hsl(150 50% 92%),hsl(150 45% 88%))' : 'linear-gradient(135deg,hsl(210 40% 95%),hsl(210 35% 91%))');
+      const cardBorder = isChanged ? 'hsl(40 70% 65%)' : (isOnline ? 'hsl(150 55% 70%)' : 'hsl(210 40% 82%)');
+      cardEl.style.background = cardBg;
+      cardEl.style.borderColor = cardBorder;
+
+      // Update inner elements
+      const dateLabel = cardEl.querySelector('.prt-date-label');
+      const timeLabel = cardEl.querySelector('.prt-time-label');
+      const iconEl = cardEl.querySelector('.prt-icon');
+      const labelEl = cardEl.querySelector('.prt-label');
+      const noteBadge = cardEl.querySelector('.prt-note-badge');
+
+      if (dateLabel) {
+        const dp = newDate.split('-');
+        const dObj = new Date(parseInt(dp[0]), parseInt(dp[1])-1, parseInt(dp[2]));
+        dateLabel.textContent = formatTanggalShort(dObj);
+        if (isChanged) dateLabel.style.color = 'hsl(40 70% 35%)';
+        else dateLabel.style.color = 'hsl(210 40% 38%)';
+      }
+      if (timeLabel) {
+        timeLabel.textContent = newStart + '-' + newEnd;
+        if (newStart !== entry.jamMulai || newEnd !== entry.jamSelesai) timeLabel.style.color = 'hsl(40 60% 40%)';
+        else timeLabel.style.color = 'hsl(215 20% 50%)';
+      }
+      if (iconEl) iconEl.textContent = isOnline ? '🌐' : '🏫';
+      if (labelEl) {
+        if (isChanged) {
+          labelEl.textContent = '🔄 Pengganti';
+          labelEl.style.color = 'hsl(40 70% 35%)';
+          labelEl.style.fontSize = '0.42rem';
+        } else {
+          labelEl.textContent = isOnline ? 'Online' : 'Offline';
+          labelEl.style.color = isOnline ? 'hsl(150 55% 35%)' : 'hsl(210 45% 40%)';
+          labelEl.style.fontSize = '0.46rem';
+        }
+      }
+      if (noteBadge) {
+        noteBadge.style.display = newNote ? 'block' : 'none';
+        noteBadge.title = newNote || 'Ada catatan';
+      }
+
+      // Animation
+      cardEl.style.transform = 'scale(1.08)';
+      setTimeout(() => cardEl.style.transform = 'scale(1)', 200);
+
+      // Update legend counts
+      const onCount = entry.modePertemuan.filter(m => m === 'online').length;
+      const offCount = 14 - onCount;
+      const legend = document.querySelector(`.jadwal-mode-legend[data-jid="${jadwalId}"]`);
+      if (legend) {
+        const offEl = legend.querySelector('.off-count');
+        const onEl = legend.querySelector('.on-count');
+        if (offEl) offEl.textContent = offCount;
+        if (onEl) onEl.textContent = onCount;
+      }
+
+      // Show save button
+      const mainSaveBtn = document.querySelector(`.jadwal-save-mode-btn[data-jid="${jadwalId}"]`);
+      if (mainSaveBtn) mainSaveBtn.style.display = 'inline-block';
+
+      // Close popup
+      prtPopup.style.display = 'none';
+
+      // Brief toast
+      const miniToast = document.createElement('div');
+      miniToast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,hsl(210 50% 42%),hsl(200 45% 38%));color:white;padding:10px 20px;border-radius:8px;font-size:0.75rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);z-index:99999;';
+      miniToast.innerHTML = `✏️ P${pi+1} diperbarui — ${isChanged ? '🔄 Kelas Pengganti' : selectedMode === 'online' ? '🌐 Online' : '🏫 Offline'}${newNote ? ' • 📝 ' + newNote : ''}`;
+      document.body.appendChild(miniToast);
+      setTimeout(() => { miniToast.style.opacity = '0'; miniToast.style.transition = 'opacity 0.3s'; setTimeout(() => miniToast.remove(), 300); }, 2500);
+
+      // ---- Persist to backend database ----
+      try {
+        const resp = await fetch('/api/jadwal-pertemuan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kode_mk: entry.kodeMK,
+            kelas: entry.kelas || 'B',
+            pertemuan: pi + 1,
+            tanggal: newDate,
+            tanggal_asli: origDate,
+            jam_mulai: newStart,
+            jam_selesai: newEnd,
+            mode: selectedMode,
+            catatan: newNote,
+            updated_by: user?.nip || 'BAP'
+          })
+        });
+        if (!resp.ok) console.warn('⚠️ Failed to persist jadwal pertemuan:', await resp.text());
+        else console.log('✅ P' + (pi+1) + ' saved to database');
+      } catch (err) {
+        console.warn('⚠️ Backend not available, saved in-memory only:', err.message);
+      }
+    };
+  };
+
+  // ---- Save all mode changes (connected to backend API) ----
+  const JADWAL_PRT_API = '/api/jadwal-pertemuan';
+
+  document.querySelectorAll('.jadwal-save-mode-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const jid = parseInt(btn.dataset.jid);
+      const entry = JADWAL_DUMMY.find(j => j.id === jid);
+      if (!entry) return;
+
+      const origText = btn.textContent;
+      btn.textContent = '⏳ Menyimpan...';
+      btn.style.opacity = '0.7';
+      btn.disabled = true;
+
+      // Build items for all 14 meetings
+      const cards = document.querySelectorAll(`.prt-mode-card[data-jid="${jid}"]`);
+      const items = [];
+      cards.forEach(card => {
+        const pi = parseInt(card.dataset.pi);
+        items.push({
+          pertemuan: pi + 1,
+          tanggal: card.dataset.date || '',
+          tanggal_asli: card.dataset.origDate || '',
+          jam_mulai: card.dataset.start || entry.jamMulai,
+          jam_selesai: card.dataset.end || entry.jamSelesai,
+          mode: card.dataset.mode || 'offline',
+          catatan: card.dataset.note || ''
+        });
+      });
+
+      // Try API first, fallback to local-only
+      let apiSuccess = false;
+      try {
+        const res = await fetch(`${JADWAL_PRT_API}/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kode_mk: entry.kodeMK,
+            kelas: entry.kelas || 'A',
+            updated_by: 'BAP',
+            items
+          })
+        });
+        if (res.ok) apiSuccess = true;
+      } catch (e) {
+        console.warn('API jadwal-pertemuan not available, saving locally only:', e.message);
+      }
+
+      btn.textContent = '✅ Tersimpan!';
+      btn.style.background = 'linear-gradient(135deg,hsl(150 55% 38%),hsl(160 50% 35%))';
+      btn.style.opacity = '1';
+
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,hsl(150 55% 42%),hsl(160 50% 38%));color:white;padding:12px 24px;border-radius:10px;font-size:0.82rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:99999;';
+      const onCount = entry.modePertemuan.filter(m => m === 'online').length;
+      const offCount = 14 - onCount;
+      const rescheduled = entry.customSchedule ? Object.keys(entry.customSchedule).filter(k => {
+        const card = document.querySelector(`.prt-mode-card[data-jid="${jid}"][data-pi="${k}"]`);
+        return card && entry.customSchedule[k].date !== card.dataset.origDate;
+      }).length : 0;
+      const dbIcon = apiSuccess ? '🗄️ DB' : '💾 Lokal';
+      toast.innerHTML = `✅ Jadwal <strong>${entry.kodeMK}</strong> berhasil disimpan ke ${dbIcon}! (🏫 ${offCount} Offline, 🌐 ${onCount} Online${rescheduled > 0 ? ', 🔄 ' + rescheduled + ' Reschedule' : ''})`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+      setTimeout(() => { btn.style.display = 'none'; btn.textContent = origText; btn.style.background = 'linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%))'; btn.disabled = false; }, 1500);
+    });
+  });
+
+
+  // ---- Edit buttons ----
+  document.querySelectorAll('.jadwal-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      const cells = row.querySelectorAll('td');
+      const jamParts = cells[6].textContent.trim().split('-');
+      const tipeText = cells[8].textContent.trim().replace(/\ud83c\udfeb|\ud83c\udf10|\ud83d\udd04/g,'').trim();
+      formArea.style.display = 'block';
+      formArea.innerHTML = renderJadwalForm({
+        prodi: row.dataset.prodi || 'niaga',
+        kodeMK: cells[2].textContent.trim(),
+        namaMK: cells[3].textContent.trim(),
+        dosen: cells[4].textContent.trim(),
+        hari: cells[5].textContent.trim(),
+        jamMulai: jamParts[0],
+        jamSelesai: jamParts[1] || '',
+        ruang: cells[7].textContent.trim().replace('\u2014 (Online)',''),
+        tipeKelas: tipeText,
+        sks: parseInt(cells[9].textContent) || 3
+      });
+      formArea.scrollIntoView({ behavior:'smooth', block:'start' });
+      initFormHandlers();
+    });
+  });
+
+  // ---- Delete buttons ----
+  document.querySelectorAll('.jadwal-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('\u2757 Hapus jadwal ini? Data tidak dapat dikembalikan.')) {
+        btn.closest('tr').style.opacity = '0.3';
+        setTimeout(() => btn.closest('tr').remove(), 300);
+      }
+    });
+  });
+
+  // ──── AI Scheduling Assistant ────────────────────────────────────────────
+  const aiModal = document.getElementById('aiModal');
+  const aiModalBody = document.getElementById('aiModalBody');
+  const AI_API = 'http://localhost:5050/api/ai';
+
+  // Room lists
+  const niagaRoomList = ['RN-101','RN-102','RN-103','RN-104','RN-105'];
+  const negaraRoomList = ['RA-201','RA-202','RA-203','RA-204','RA-205'];
+  const allRoomList = [...niagaRoomList, ...negaraRoomList, 'LAB-K1', 'LAB-K2'];
+
+  function showAiModal() { aiModal.style.display = 'flex'; }
+  function hideAiModal() { aiModal.style.display = 'none'; }
+
+  document.getElementById('aiModalClose')?.addEventListener('click', hideAiModal);
+  aiModal?.addEventListener('click', (e) => { if (e.target === aiModal) hideAiModal(); });
+
+  // Score color helper
+  function scoreColor(s) {
+    if (s >= 85) return 'hsl(145 55% 45%)';
+    if (s >= 70) return 'hsl(45 80% 50%)';
+    if (s >= 50) return 'hsl(25 70% 50%)';
+    return 'hsl(0 55% 50%)';
+  }
+  function scoreLabel(s) {
+    if (s >= 85) return 'Sangat Baik';
+    if (s >= 70) return 'Baik';
+    if (s >= 50) return 'Cukup';
+    return 'Kurang';
+  }
+
+  document.querySelectorAll('.jadwal-ai-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const jid = parseInt(btn.dataset.id);
+      const target = JADWAL_DUMMY.find(j => j.id === jid);
+      if (!target) return;
+
+      showAiModal();
+      aiModalBody.innerHTML = `
+        <div style="text-align:center;padding:40px;">
+          <div style="font-size:2rem;margin-bottom:12px;">🧠</div>
+          <div style="font-size:0.9rem;font-weight:700;color:hsl(260 50% 45%);">AI sedang menganalisis jadwal...</div>
+          <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:6px;">Memeriksa ${JADWAL_DUMMY.length} jadwal • ${allRoomList.length} ruang • Menghitung konflik</div>
+          <div style="margin-top:16px;height:4px;background:hsl(215 20% 90%);border-radius:4px;overflow:hidden;width:200px;margin-left:auto;margin-right:auto;">
+            <div style="height:100%;background:linear-gradient(90deg,hsl(260 65% 55%),hsl(280 55% 50%));border-radius:4px;animation:aiPulse 1.5s infinite;width:60%;"></div>
+          </div>
+        </div>
+        <style>@keyframes aiPulse{0%{width:20%;opacity:0.5}50%{width:80%;opacity:1}100%{width:20%;opacity:0.5}}</style>
+      `;
+
+      // Determine rooms based on prodi
+      const preferredRooms = target.prodi === 'niaga' ? niagaRoomList : negaraRoomList;
+
+      try {
+        const res = await fetch(`${AI_API}/recommend`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            schedule: JADWAL_DUMMY,
+            targetId: jid,
+            rooms: allRoomList,
+            preferredRooms: preferredRooms,
+            maxResults: 6
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || 'AI error');
+
+        renderAiResults(data, target);
+
+      } catch (err) {
+        console.warn('AI Server unavailable, using fallback:', err);
+        // Fallback: generate basic recommendations client-side
+        const fallback = generateFallbackRecommendations(target);
+        renderAiResults(fallback, target);
+      }
+    });
+  });
+
+  // Fallback client-side AI when Python server is unavailable
+  function generateFallbackRecommendations(target) {
+    const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const slots = [
+      {mulai:'07:30',selesai:'09:10'},{mulai:'09:20',selesai:'11:00'},
+      {mulai:'11:10',selesai:'12:50'},{mulai:'13:00',selesai:'14:40'},
+      {mulai:'14:50',selesai:'16:30'}
+    ];
+    const preferredRooms = target.prodi === 'niaga' ? niagaRoomList : negaraRoomList;
+    const recs = [];
+
+    for (const day of days) {
+      for (const slot of slots) {
+        for (const room of preferredRooms) {
+          // Check basic conflicts
+          const roomConflict = JADWAL_DUMMY.some(j =>
+            j.id !== target.id && j.hari === day && j.jamMulai === slot.mulai &&
+            j.ruang === room && j.tipeKelas !== 'Online'
+          );
+          const dosenConflict = JADWAL_DUMMY.some(j =>
+            j.id !== target.id && j.hari === day && j.jamMulai === slot.mulai &&
+            j.dosen === target.dosen
+          );
+          if (roomConflict || dosenConflict) continue;
+
+          let score = 80;
+          const reasons = [`✅ Ruang ${room} tersedia`, `✅ Dosen tersedia`];
+          if (slot.mulai === '07:30' || slot.mulai === '09:20') { score += 10; reasons.push('⏰ Jam pagi (ideal)'); }
+          if (day === 'Sabtu') { score -= 15; reasons.push('⚠️ Hari Sabtu'); }
+          if (day === target.hari) { score += 5; reasons.push(`🔄 Hari sama (${day})`); }
+
+          recs.push({ hari: day, jamMulai: slot.mulai, jamSelesai: slot.selesai, ruang: room, score: Math.min(100, score), reasons, conflicts: [] });
+        }
+      }
+    }
+
+    recs.sort((a,b) => b.score - a.score);
+    return {
+      success: true,
+      targetMK: target.namaMK,
+      targetKodeMK: target.kodeMK,
+      targetDosen: target.dosen,
+      targetCurrentDay: target.hari,
+      targetCurrentTime: `${target.jamMulai}-${target.jamSelesai}`,
+      totalAnalyzed: JADWAL_DUMMY.length,
+      recommendations: recs.slice(0, 6),
+      fallback: true
+    };
+  }
+
+  function renderAiResults(data, target) {
+    const recs = data.recommendations || [];
+    const isFallback = data.fallback || false;
+
+    aiModalBody.innerHTML = `
+      <!-- Target Info -->
+      <div style="background:linear-gradient(135deg,hsl(215 25% 96%),hsl(260 20% 96%));border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid hsl(260 20% 90%);">
+        <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-bottom:8px;font-weight:600;">📚 MATA KULIAH YANG AKAN DIJADWALKAN ULANG</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:hsl(215 15% 50%);">Mata Kuliah</div>
+            <div style="font-size:0.9rem;font-weight:800;color:hsl(260 45% 40%);">${data.targetKodeMK} — ${data.targetMK}</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:hsl(215 15% 50%);">Dosen Pengampu</div>
+            <div style="font-size:0.82rem;font-weight:700;color:hsl(215 30% 35%);">${data.targetDosen}</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:hsl(215 15% 50%);">Jadwal Saat Ini</div>
+            <div style="font-size:0.82rem;font-weight:700;color:hsl(215 30% 35%);">${data.targetCurrentDay}, ${data.targetCurrentTime}</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:hsl(215 15% 50%);">Status</div>
+            <div style="font-size:0.82rem;font-weight:700;color:hsl(${target.tipeKelas==='Online'?'150 55% 45%':'210 55% 50%'});">
+              ${target.tipeKelas === 'Online' ? '🌐 Online → 🏫 Offline' : '🏫 ' + target.tipeKelas}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Badge -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <span style="font-size:0.85rem;font-weight:800;color:hsl(260 45% 40%);">🎯 Top ${recs.length} Rekomendasi AI</span>
+          <span style="font-size:0.65rem;color:hsl(215 15% 55%);margin-left:8px;">${data.totalAnalyzed} jadwal dianalisis</span>
+        </div>
+        ${isFallback ? '<span style="font-size:0.6rem;padding:3px 8px;border-radius:8px;background:hsl(40 70% 92%);color:hsl(40 60% 40%);font-weight:600;">⚠️ Fallback Mode</span>' : '<span style="font-size:0.6rem;padding:3px 8px;border-radius:8px;background:hsl(260 50% 94%);color:hsl(260 50% 45%);font-weight:600;">🐍 Python AI Engine</span>'}
+      </div>
+
+      <!-- Recommendations -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${recs.map((r, idx) => `
+          <div class="ai-rec-card" style="border:1px solid hsl(215 20% 90%);border-radius:12px;padding:14px 16px;transition:all 0.2s;cursor:pointer;position:relative;overflow:hidden;${idx===0?'border-color:hsl(260 50% 70%);box-shadow:0 2px 12px rgba(100,50,200,0.1);':''}">
+            ${idx===0 ? '<div style="position:absolute;top:0;right:0;padding:3px 12px;background:linear-gradient(135deg,hsl(260 65% 55%),hsl(280 55% 50%));color:white;font-size:0.55rem;font-weight:800;border-radius:0 12px 0 8px;">⭐ TERBAIK</div>' : ''}
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                  <span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:hsl(260 40% 94%);font-size:0.7rem;font-weight:800;color:hsl(260 45% 45%);">${idx+1}</span>
+                  <span style="font-size:0.88rem;font-weight:800;color:hsl(215 30% 30%);">📅 ${r.hari}</span>
+                  <span style="font-size:0.82rem;font-weight:700;color:hsl(260 45% 45%);">⏰ ${r.jamMulai}-${r.jamSelesai}</span>
+                  <span style="padding:3px 10px;border-radius:8px;background:hsl(210 50% 94%);color:hsl(210 55% 45%);font-size:0.72rem;font-weight:700;">🏢 ${r.ruang}</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                  ${r.reasons.slice(0,4).map(reason => `<span style="font-size:0.62rem;padding:2px 8px;border-radius:6px;background:hsl(145 40% 95%);color:hsl(145 40% 35%);">${reason}</span>`).join('')}
+                </div>
+              </div>
+              <div style="text-align:center;min-width:70px;">
+                <div style="font-size:1.4rem;font-weight:900;color:${scoreColor(r.score)};">${r.score}</div>
+                <div style="font-size:0.55rem;font-weight:600;color:${scoreColor(r.score)};">${scoreLabel(r.score)}</div>
+                <div style="height:5px;background:hsl(215 20% 92%);border-radius:3px;margin-top:4px;overflow:hidden;">
+                  <div style="height:100%;width:${r.score}%;background:${scoreColor(r.score)};border-radius:3px;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:10px;text-align:right;">
+              <button class="ai-apply-btn" data-hari="${r.hari}" data-mulai="${r.jamMulai}" data-selesai="${r.jamSelesai}" data-ruang="${r.ruang}" data-target="${target.id}" style="padding:5px 16px;border-radius:8px;background:linear-gradient(135deg,hsl(260 55% 50%),hsl(280 50% 48%));color:white;border:none;font-size:0.72rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(100,50,200,0.2);transition:transform 0.15s;">✅ Terapkan Jadwal Ini</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${recs.length === 0 ? '<div style="text-align:center;padding:30px;color:hsl(0 55% 50%);font-weight:600;">❌ Tidak ditemukan slot yang tersedia tanpa konflik</div>' : ''}
+    `;
+
+    // Add hover effects
+    aiModalBody.querySelectorAll('.ai-rec-card').forEach(card => {
+      card.addEventListener('mouseenter', () => { card.style.borderColor = 'hsl(260 50% 70%)'; card.style.boxShadow = '0 4px 16px rgba(100,50,200,0.12)'; });
+      card.addEventListener('mouseleave', () => { card.style.borderColor = 'hsl(215 20% 90%)'; card.style.boxShadow = 'none'; });
+    });
+
+    // Apply button handlers
+    aiModalBody.querySelectorAll('.ai-apply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tid = parseInt(btn.dataset.target);
+        const row = document.querySelector(`tr[data-id="${tid}"]`);
+        if (row) {
+          const cells = row.querySelectorAll('td');
+          // Update row data attributes
+          row.dataset.hari = btn.dataset.hari;
+          row.dataset.tipe = 'Offline';
+          // Update visible cells: [0]=No, [1]=Prodi, [2]=Smt, [3]=Kode, [4]=Nama, [5]=Dosen, [6]=Hari, [7]=Jam, [8]=Ruang, [9]=Tipe, [10]=Kelas, [11]=SKS, [12]=Aksi
+          cells[6].innerHTML = `<strong>${btn.dataset.hari}</strong>`;
+          cells[7].textContent = `${btn.dataset.mulai}-${btn.dataset.selesai}`;
+          cells[8].innerHTML = `<span style="font-weight:600;font-size:0.72rem;">${btn.dataset.ruang}</span>`;
+          cells[9].innerHTML = `<span style="padding:3px 10px;border-radius:12px;font-size:0.68rem;font-weight:700;background:hsl(210 50% 94%);color:hsl(210 55% 50%);">🏫 Offline</span>`;
+          // Flash effect
+          row.style.transition = 'background 0.3s';
+          row.style.background = 'hsl(260 40% 95%)';
+          setTimeout(() => { row.style.background = ''; }, 2000);
+        }
+        // Update JADWAL_DUMMY
+        const jEntry = JADWAL_DUMMY.find(j => j.id === tid);
+        if (jEntry) {
+          jEntry.hari = btn.dataset.hari;
+          jEntry.jamMulai = btn.dataset.mulai;
+          jEntry.jamSelesai = btn.dataset.selesai;
+          jEntry.ruang = btn.dataset.ruang;
+          jEntry.tipeKelas = 'Offline';
+        }
+        hideAiModal();
+        alert(`✅ Jadwal berhasil diperbarui!\n\n${target.namaMK}\n→ ${btn.dataset.hari}, ${btn.dataset.mulai}-${btn.dataset.selesai}\n→ Ruang: ${btn.dataset.ruang}\n→ Tipe: Offline`);
+      });
+    });
+  }
+
+  function initFormHandlers() {
+    // ---- Prodi change → refresh MK dropdown ----
+    const prodiSelect = document.getElementById('jfProdi');
+    const mkSelect = document.getElementById('jfMK');
+    prodiSelect?.addEventListener('change', () => {
+      const prodi = prodiSelect.value;
+      const d = KURIKULUM_DATA[prodi];
+      let opts = '<option value="">-- Pilih Mata Kuliah --</option>';
+      if (d) {
+        d.semester.forEach(sem => {
+          opts += `<optgroup label="Semester ${sem.no}">`;
+          sem.mk.forEach(mk => {
+            opts += `<option value="${mk.kode}" data-nama="${mk.nama}" data-dosen="${mk.dosen}" data-sks="${mk.sks}">${mk.kode} \u2014 ${mk.nama} (${mk.sks} SKS)</option>`;
+          });
+          opts += '</optgroup>';
+        });
+      }
+      mkSelect.innerHTML = opts;
+      document.getElementById('jfKode').value = '';
+      document.getElementById('jfSks').value = '';
+    });
+
+    // ---- MK change → auto-fill kode, dosen, sks ----
+    mkSelect?.addEventListener('change', () => {
+      const opt = mkSelect.options[mkSelect.selectedIndex];
+      if (opt && opt.value) {
+        document.getElementById('jfKode').value = opt.value;
+        const dosenVal = opt.dataset.dosen || '';
+        document.getElementById('jfSks').value = opt.dataset.sks || '';
+        // Try to match dosen from dropdown
+        const dosenSelect = document.getElementById('jfDosen');
+        if (dosenSelect) {
+          let matched = false;
+          for (let i = 0; i < dosenSelect.options.length; i++) {
+            if (dosenVal.includes(dosenSelect.options[i].value)) {
+              dosenSelect.selectedIndex = i;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) dosenSelect.selectedIndex = 0;
+        }
+      }
+    });
+
+    // ---- Tipe kelas toggle ----
+    document.querySelectorAll('.tipe-kelas-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const tipe = opt.dataset.tipe;
+        const colors = {Offline:'hsl(210 55% 50%)',Online:'hsl(150 55% 45%)',Hybrid:'hsl(275 55% 55%)'};
+        document.querySelectorAll('.tipe-kelas-opt').forEach(o => {
+          const c = colors[o.dataset.tipe];
+          if (o.dataset.tipe === tipe) { o.style.background = c; o.style.color = 'white'; o.style.borderColor = c; }
+          else { o.style.background = 'white'; o.style.color = c; o.style.borderColor = 'hsl(215 20% 85%)'; }
+        });
+        const ruangWrap = document.getElementById('jfRuangWrap');
+        if (tipe === 'Online') { ruangWrap.style.opacity = '0.4'; document.getElementById('jfRuang').value = ''; document.getElementById('jfRuang').placeholder = 'Tidak diperlukan'; }
+        else { ruangWrap.style.opacity = '1'; document.getElementById('jfRuang').placeholder = 'R.201'; }
+      });
+    });
+
+    // Cancel
+    document.getElementById('jfCancel')?.addEventListener('click', () => { formArea.style.display = 'none'; formArea.innerHTML = ''; });
+    // Save (demo)
+    document.getElementById('jfSave')?.addEventListener('click', () => {
+      const btn = document.getElementById('jfSave');
+      btn.textContent = '\u23f3 Menyimpan...';
+      setTimeout(() => { btn.textContent = '\u2705 Tersimpan!'; setTimeout(() => { formArea.style.display = 'none'; formArea.innerHTML = ''; }, 1000); }, 800);
+    });
+  }
+
+  // ---- Kelas panel toggle ----
+  document.getElementById('btnToggleKelasPanel')?.addEventListener('click', () => {
+    const body = document.getElementById('kelasPanelBody');
+    body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    if (body.style.display === 'block') renderKelasList();
+  });
+
+  function renderKelasList() {
+    const container = document.getElementById('kelasListContainer');
+    if (!container) return;
+    const list = getKelasList();
+    container.innerHTML = list.map((k, i) => `
+      <div class="kelas-chip" data-idx="${i}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:white;border:1px solid hsl(260 30% 82%);border-radius:8px;font-size:0.8rem;font-weight:600;color:hsl(260 40% 40%);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <span class="kelas-chip-name" style="min-width:20px;text-align:center;">${k}</span>
+        <button class="kelas-edit-btn" data-idx="${i}" style="background:none;border:none;cursor:pointer;font-size:0.7rem;padding:0 2px;color:hsl(40 70% 50%);" title="Edit">\u270f\ufe0f</button>
+        ${list.length > 1 ? `<button class="kelas-del-btn" data-idx="${i}" style="background:none;border:none;cursor:pointer;font-size:0.8rem;padding:0 2px;color:hsl(0 50% 55%);line-height:1;" title="Hapus">\u00d7</button>` : ''}
+      </div>
+    `).join('');
+
+    // Edit handlers
+    container.querySelectorAll('.kelas-edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const list = getKelasList();
+        const newName = prompt('\u270f\ufe0f Edit nama ruangan:', list[idx]);
+        if (newName !== null && newName.trim()) {
+          list[idx] = newName.trim();
+          saveKelasList(list);
+          renderKelasList();
+          showKelasToast(`Ruangan diubah menjadi "${newName.trim()}"`);
+        }
+      });
+    });
+
+    // Delete handlers
+    container.querySelectorAll('.kelas-del-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const list = getKelasList();
+        if (list.length <= 1) return alert('Minimal harus ada 1 ruangan!');
+        const removed = list[idx];
+        if (confirm(`\u2757 Hapus ruangan "${removed}"?`)) {
+          list.splice(idx, 1);
+          saveKelasList(list);
+          renderKelasList();
+          showKelasToast(`Ruangan "${removed}" dihapus`);
+        }
+      });
+    });
+
+    // Click chip to highlight
+    container.querySelectorAll('.kelas-chip').forEach(chip => {
+      chip.addEventListener('mouseenter', () => { chip.style.borderColor = 'hsl(260 50% 60%)'; chip.style.boxShadow = '0 2px 8px rgba(100,60,180,0.15)'; });
+      chip.addEventListener('mouseleave', () => { chip.style.borderColor = 'hsl(260 30% 82%)'; chip.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; });
+    });
+  }
+
+  // Add kelas
+  document.getElementById('btnAddKelas')?.addEventListener('click', () => {
+    const input = document.getElementById('kelasNewInput');
+    const val = input?.value?.trim();
+    if (!val) return input?.focus();
+    const list = getKelasList();
+    if (list.includes(val)) return alert(`Ruangan "${val}" sudah ada!`);
+    list.push(val);
+    saveKelasList(list);
+    input.value = '';
+    renderKelasList();
+    showKelasToast(`Ruangan "${val}" berhasil ditambahkan!`);
+  });
+
+  // Enter key on input
+  document.getElementById('kelasNewInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnAddKelas')?.click(); }
+  });
+
+  function showKelasToast(msg) {
+    const toast = document.createElement('div');
+    toast.textContent = '\u2705 ' + msg;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(200 50% 42%);color:white;padding:10px 20px;border-radius:8px;font-size:0.8rem;font-weight:600;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:fadeInUp .3s ease;';
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 2500);
+  }
+}
+function statistikContent() {
+  const prodiStats = [
+    { prodi: 'Administrasi Negara', aktif: 420, cuti: 8, lulus: 285, avgIPK: 3.42 },
+    { prodi: 'Administrasi Niaga', aktif: 380, cuti: 5, lulus: 248, avgIPK: 3.38 },
+  ];
+  const totalAktif = prodiStats.reduce((a,p) => a + p.aktif, 0);
+  const totalLulus = prodiStats.reduce((a,p) => a + p.lulus, 0);
+  return `
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-icon blue">${I.users}</div>
+        <div class="stat-info"><div class="stat-label">Total Mahasiswa Aktif</div><div class="stat-value">${totalAktif.toLocaleString()}</div><div class="stat-sub">semua prodi</div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon green">${I.award}</div>
+        <div class="stat-info"><div class="stat-label">Total Lulusan</div><div class="stat-value">${totalLulus}</div><div class="stat-sub">sampai saat ini</div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon gold">${I.trendUp}</div>
+        <div class="stat-info"><div class="stat-label">Rata-rata IPK</div><div class="stat-value">${(prodiStats.reduce((a,p) => a + p.avgIPK, 0) / prodiStats.length).toFixed(2)}</div><div class="stat-sub">seluruh prodi</div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-icon purple">${I.fileText}</div>
+        <div class="stat-info"><div class="stat-label">Total Cuti</div><div class="stat-value">${prodiStats.reduce((a,p) => a + p.cuti, 0)}</div><div class="stat-sub">mahasiswa</div></div>
+      </div>
+    </div>
+
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>📊 Statistik per Program Studi</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>Program Studi</th><th>Aktif</th><th>Cuti</th><th>Lulusan</th><th>Rata-rata IPK</th><th>% dari Total</th></tr></thead>
+          <tbody>
+            ${prodiStats.map((p,i) => {
+              const pct = Math.round(p.aktif / totalAktif * 100);
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${p.prodi}</strong></td>
+                <td style="text-align:center;">${p.aktif}</td>
+                <td style="text-align:center;">${p.cuti}</td>
+                <td style="text-align:center;">${p.lulus}</td>
+                <td style="text-align:center;"><span style="background:hsl(150 60% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${p.avgIPK}</span></td>
+                <td style="width:150px;"><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:hsl(210 55% 50%);"></div></div><span style="font-size:0.68rem;color:hsl(215 15% 55%);">${pct}%</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+      <div class="dash-card">
+        <div class="dash-card-head"><h3 style="margin:0;font-size:0.85rem;">📈 Trend Mahasiswa Baru</h3></div>
+        <div class="dash-card-body">
+          ${[{tahun:'2022/2023', mhs: 310},{tahun:'2023/2024', mhs: 345},{tahun:'2024/2025', mhs: 380},{tahun:'2025/2026', mhs: 420}].map(t => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:0.72rem;font-weight:600;min-width:65px;">${t.tahun}</span>
+            <div class="progress-wrap" style="flex:1;"><div class="progress-bar" style="width:${Math.round(t.mhs/420*100)}%;background:hsl(210 55% 50%);"></div></div>
+            <span style="font-size:0.82rem;font-weight:700;min-width:30px;">${t.mhs}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-head"><h3 style="margin:0;font-size:0.85rem;">🎯 Distribusi IPK Mahasiswa</h3></div>
+        <div class="dash-card-body">
+          ${[{range:'3.50 - 4.00', pct: 35, color:'hsl(150 60% 45%)'},{range:'3.00 - 3.49', pct: 40, color:'hsl(200 55% 50%)'},{range:'2.50 - 2.99', pct: 18, color:'hsl(40 80% 50%)'},{range:'< 2.50', pct: 7, color:'hsl(0 60% 50%)'}].map(d => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:0.72rem;font-weight:600;min-width:72px;">${d.range}</span>
+            <div class="progress-wrap" style="flex:1;"><div class="progress-bar" style="width:${d.pct}%;background:${d.color};"></div></div>
+            <span style="font-size:0.82rem;font-weight:700;min-width:30px;">${d.pct}%</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function transkripContent() {
+  const sampleMhs = [
+    { nim: '2024101001', nama: 'Ahmad Rizky Pratama', prodi: 'Administrasi Negara', semester: 4, ipk: 3.69, sksLulus: 41, status: 'Aktif' },
+    { nim: '2024101002', nama: 'Siti Nurhaliza', prodi: 'Administrasi Negara', semester: 4, ipk: 3.52, sksLulus: 39, status: 'Aktif' },
+    { nim: '2024101003', nama: 'Budi Santoso', prodi: 'Administrasi Negara', semester: 4, ipk: 3.85, sksLulus: 43, status: 'Aktif' },
+    { nim: '2021101001', nama: 'Rina Wulandari', prodi: 'Administrasi Negara', semester: 8, ipk: 3.82, sksLulus: 148, status: 'Lulus' },
+    { nim: '2021101002', nama: 'Agung Prasetya', prodi: 'Administrasi Negara', semester: 8, ipk: 3.65, sksLulus: 148, status: 'Lulus' },
+  ];
+  return `
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>📄 Transkrip Mahasiswa</h3></div>
+      <div class="dash-card-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+          <div style="flex:1;min-width:200px;">
+            <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:4px;">Cari NIM / Nama:</label>
+            <input type="text" placeholder="Masukkan NIM atau nama..." style="width:100%;padding:8px 12px;border:1px solid hsl(215 20% 85%);border-radius:6px;font-size:0.85rem;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:4px;">Prodi:</label>
+            <select style="padding:8px 12px;border:1px solid hsl(215 20% 85%);border-radius:6px;font-size:0.85rem;">
+              <option>Semua Prodi</option><option>S1 Adm. Publik</option><option>S1 Adm. Bisnis</option><option>S2 Adm. Publik</option><option>D3 Ilmu Adm.</option>
+            </select>
+          </div>
+          <button style="padding:8px 20px;background:hsl(210 55% 50%);color:white;border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;">🔍 Cari</button>
+        </div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th>Prodi</th><th>Sem.</th><th>IPK</th><th>SKS</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${sampleMhs.map((m,i) => {
+              const sColor = m.status === 'Aktif' ? 'green' : 'blue';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${m.nim}</strong></td>
+                <td>${m.nama}</td>
+                <td>${m.prodi}</td>
+                <td style="text-align:center;">${m.semester}</td>
+                <td style="text-align:center;"><span style="background:hsl(150 60% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${m.ipk}</span></td>
+                <td style="text-align:center;">${m.sksLulus}</td>
+                <td style="text-align:center;"><span class="badge-sm ${sColor}">${m.status}</span></td>
+                <td style="text-align:center;"><button style="font-size:0.7rem;padding:4px 12px;border-radius:4px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;">🖨 Cetak</button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function validasiKrsContent() {
+  const krsRequests = [
+    { nim: '2024101001', nama: 'Ahmad Rizky Pratama', prodi: 'Adm. Publik', semester: 4, sks: 19, tanggal: '10 Feb 2026', status: 'Divalidasi' },
+    { nim: '2024101002', nama: 'Siti Nurhaliza', prodi: 'Adm. Publik', semester: 4, sks: 18, tanggal: '11 Feb 2026', status: 'Divalidasi' },
+    { nim: '2024101009', nama: 'Irfan Hakim', prodi: 'Adm. Publik', semester: 4, sks: 21, tanggal: '12 Feb 2026', status: 'Menunggu' },
+    { nim: '2024101010', nama: 'Julia Putri', prodi: 'Adm. Publik', semester: 2, sks: 20, tanggal: '13 Feb 2026', status: 'Menunggu' },
+    { nim: '2024101011', nama: 'Kurniawan', prodi: 'Adm. Bisnis', semester: 2, sks: 22, tanggal: '14 Feb 2026', status: 'Ditolak' },
+  ];
+  const validated = krsRequests.filter(k => k.status === 'Divalidasi').length;
+  const pending = krsRequests.filter(k => k.status === 'Menunggu').length;
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px;">
+      <div class="stat-box"><div class="stat-icon green">${I.checkCircle}</div><div class="stat-info"><div class="stat-label">Divalidasi</div><div class="stat-value">${validated}</div></div></div>
+      <div class="stat-box"><div class="stat-icon gold">${I.clipboard}</div><div class="stat-info"><div class="stat-label">Menunggu</div><div class="stat-value">${pending}</div></div></div>
+      <div class="stat-box"><div class="stat-icon purple">${I.fileText}</div><div class="stat-info"><div class="stat-label">Ditolak</div><div class="stat-value">${krsRequests.filter(k => k.status === 'Ditolak').length}</div></div></div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head"><h3>📋 Validasi KRS Mahasiswa — Semester Genap ${new Date().getFullYear()}</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th>Prodi</th><th>Sem.</th><th>SKS</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${krsRequests.map((k,i) => {
+              const sColor = k.status === 'Divalidasi' ? 'green' : k.status === 'Menunggu' ? 'gold' : 'danger';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${k.nim}</strong></td>
+                <td>${k.nama}</td>
+                <td>${k.prodi}</td>
+                <td style="text-align:center;">${k.semester}</td>
+                <td style="text-align:center;">${k.sks}</td>
+                <td>${k.tanggal}</td>
+                <td style="text-align:center;"><span class="badge-sm ${sColor}">${k.status}</span></td>
+                <td style="text-align:center;">
+                  ${k.status === 'Menunggu' ? `<button style="font-size:0.68rem;padding:3px 10px;border-radius:4px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;margin-right:4px;">✅ Validasi</button><button style="font-size:0.68rem;padding:3px 10px;border-radius:4px;cursor:pointer;background:hsl(0 60% 50%);color:white;border:none;font-weight:600;">❌ Tolak</button>` : `<button style="font-size:0.68rem;padding:3px 10px;border-radius:4px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;">👁 Detail</button>`}
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function rekapAbsensiContent() {
+  const rekapData = [
+    { kode: 'AP301', nama: 'Kebijakan Publik', kelas: 'EU101', dosen: 'Dr. Bambang Sudarsono, M.Si.', pertemuan: 10, avgHadir: 92 },
+    { kode: 'AP302', nama: 'Statistik Sosial', kelas: 'EU101', dosen: 'Ir. Siti Nurjanah, M.T.', pertemuan: 10, avgHadir: 95 },
+    { kode: 'AP303', nama: 'Teori Administrasi', kelas: 'EU102', dosen: 'Prof. Dr. Sri Wahyuni, M.AP.', pertemuan: 9, avgHadir: 88 },
+    { kode: 'AP304', nama: 'Hukum Administrasi', kelas: 'EU101', dosen: 'Dr. Agus Rahardjo, S.H., M.H.', pertemuan: 10, avgHadir: 90 },
+    { kode: 'AP305', nama: 'Manajemen SDM', kelas: 'EU101', dosen: 'Dr. Rina Kartika, M.M.', pertemuan: 10, avgHadir: 97 },
+    { kode: 'AP306', nama: 'Sistem Informasi Manajemen', kelas: 'EU101', dosen: 'Ir. Andi Prasetyo, M.Kom.', pertemuan: 10, avgHadir: 91 },
+    { kode: 'AP307', nama: 'Etika Administrasi', kelas: 'EU102', dosen: 'Dr. Bambang Sudarsono, M.Si.', pertemuan: 10, avgHadir: 85 },
+  ];
+  return `
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">📊 Rekap Absensi — Semester Genap ${new Date().getFullYear()}</h3>
+        <button style="font-size:0.75rem;padding:6px 16px;border-radius:6px;cursor:pointer;background:hsl(210 55% 50%);color:white;border:none;font-weight:600;">📋 Export Excel</button>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>Kode</th><th>Mata Kuliah</th><th>Kelas</th><th>Dosen</th><th>Pertemuan</th><th>Rata-rata Hadir</th><th>Status</th></tr></thead>
+          <tbody>
+            ${rekapData.map((r,i) => {
+              const color = r.avgHadir >= 90 ? 'hsl(150 60% 45%)' : r.avgHadir >= 80 ? 'hsl(40 80% 50%)' : 'hsl(0 60% 50%)';
+              return `<tr>
+                <td>${i+1}.</td>
+                <td><strong>${r.kode}</strong></td>
+                <td>${r.nama}</td>
+                <td style="text-align:center;">${r.kelas}</td>
+                <td>${r.dosen}</td>
+                <td style="text-align:center;">${r.pertemuan}/14</td>
+                <td style="text-align:center;"><span style="background:${color};color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${r.avgHadir}%</span></td>
+                <td style="text-align:center;"><span class="badge-sm ${r.avgHadir >= 90 ? 'green' : 'gold'}">${r.avgHadir >= 90 ? 'Baik' : 'Perhatian'}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function suratContent() {
+  return `
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>📝 Surat Menyurat — Administrasi Akademik</h3></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px;">
+      ${SURAT_TEMPLATES.map(s => `
+      <div class="dash-card" style="cursor:pointer;transition:transform 0.2s;">
+        <div class="dash-card-body" style="display:flex;align-items:center;gap:14px;padding:16px;">
+          <div style="width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,hsl(210 55% 50%),hsl(200 50% 60%));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="color:white;font-weight:700;font-size:0.78rem;">${s.kode}</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:0.82rem;font-weight:700;">${s.jenis}</div>
+            <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:3px;">${s.count} surat diterbitkan</div>
+          </div>
+          <button style="font-size:0.7rem;padding:5px 12px;border-radius:5px;cursor:pointer;background:hsl(150 55% 45%);color:white;border:none;font-weight:600;">+ Buat</button>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head"><h3>📋 Riwayat Surat Terbaru</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>No. Surat</th><th>Jenis</th><th>Untuk</th><th>Tanggal</th><th>Status</th></tr></thead>
+          <tbody>
+            ${[
+              { no: '001/SKA/III/2026', jenis: 'Surat Keterangan Aktif', untuk: 'Ahmad Rizky Pratama', tgl: '20 Mar 2026', status: 'Selesai' },
+              { no: '002/SPM/III/2026', jenis: 'Surat Pengantar Magang', untuk: 'Siti Nurhaliza', tgl: '19 Mar 2026', status: 'Proses' },
+              { no: '003/SRB/III/2026', jenis: 'Surat Rekomendasi', untuk: 'Budi Santoso', tgl: '18 Mar 2026', status: 'Menunggu' },
+              { no: '004/LGI/III/2026', jenis: 'Legalisir Ijazah', untuk: 'Dewi Lestari', tgl: '17 Mar 2026', status: 'Selesai' },
+            ].map((s,i) => `<tr>
+              <td>${i+1}.</td>
+              <td><strong>${s.no}</strong></td>
+              <td>${s.jenis}</td>
+              <td>${s.untuk}</td>
+              <td>${s.tgl}</td>
+              <td style="text-align:center;"><span class="badge-sm ${s.status==='Selesai'?'green':s.status==='Proses'?'blue':'gold'}">${s.status}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function kalenderContent() {
+  return `
+    <div class="dash-card" style="margin-bottom:16px;">
+      <div class="dash-card-head"><h3>📅 Kalender Akademik — Semester Genap ${new Date().getFullYear()}</h3></div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>Kegiatan</th><th>Mulai</th><th>Selesai</th><th>Status</th></tr></thead>
+          <tbody>
+            ${KALENDER_AKADEMIK.map(k => {
+              const sColor = k.status === 'Selesai' ? 'green' : k.status === 'Berjalan' ? 'blue' : 'gold';
+              return `<tr>
+                <td>${k.no}.</td>
+                <td><strong>${k.kegiatan}</strong></td>
+                <td>${k.mulai}</td>
+                <td>${k.selesai}</td>
+                <td style="text-align:center;"><span class="badge-sm ${sColor}">${k.status}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dash-card" style="margin-top:16px;">
+      <div class="dash-card-head"><h3 style="margin:0;font-size:0.88rem;">📊 Progress Semester</h3></div>
+      <div class="dash-card-body">
+        <div style="display:flex;height:28px;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+          <div style="width:30%;background:hsl(150 55% 50%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:600;">Selesai (30%)</div>
+          <div style="width:40%;background:hsl(210 55% 50%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:600;">Berjalan (40%)</div>
+          <div style="width:30%;background:hsl(215 20% 85%);display:flex;align-items:center;justify-content:center;color:hsl(215 15% 45%);font-size:0.7rem;font-weight:600;">Mendatang (30%)</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wisudaContent() {
+  return `
+    <div class="dash-card" style="margin-bottom:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,hsl(35 70% 45%),hsl(25 60% 50%));padding:24px 28px;color:white;">
+        <h3 style="margin:0 0 8px;font-size:1.1rem;">🎓 Wisuda ${WISUDA_DATA.periode}</h3>
+        <div style="font-size:0.85rem;opacity:0.9;">📅 ${WISUDA_DATA.tanggal} · 📍 ${WISUDA_DATA.tempat}</div>
+        <div style="display:flex;gap:16px;margin-top:14px;">
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 16px;backdrop-filter:blur(4px);">
+            <div style="font-size:0.6rem;opacity:0.7;">Total Calon</div>
+            <div style="font-size:1.2rem;font-weight:800;">${WISUDA_DATA.calon.length}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 16px;backdrop-filter:blur(4px);">
+            <div style="font-size:0.6rem;opacity:0.7;">Toga Siap</div>
+            <div style="font-size:1.2rem;font-weight:800;">${WISUDA_DATA.calon.filter(c => c.statusToga === 'Sudah').length}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 16px;backdrop-filter:blur(4px);">
+            <div style="font-size:0.6rem;opacity:0.7;">IPK Tertinggi</div>
+            <div style="font-size:1.2rem;font-weight:800;">${Math.max(...WISUDA_DATA.calon.map(c => c.ipk)).toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head"><h3>📋 Daftar Calon Wisudawan</h3></div>
+      <div class="dash-card-body" style="padding:0;">
+        <table class="sch-table" style="width:100%;">
+          <thead><tr style="background:hsl(215 20% 95%);"><th>No.</th><th>NIM</th><th>Nama</th><th>Prodi</th><th>IPK</th><th>Judul Skripsi</th><th>Toga</th></tr></thead>
+          <tbody>
+            ${WISUDA_DATA.calon.map((c,i) => `<tr>
+              <td>${i+1}.</td>
+              <td><strong>${c.nim}</strong></td>
+              <td>${c.nama}</td>
+              <td>${c.prodi}</td>
+              <td style="text-align:center;"><span style="background:hsl(150 60% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">${c.ipk}</span></td>
+              <td style="font-size:0.78rem;max-width:250px;">${c.judulSkripsi}</td>
+              <td style="text-align:center;"><span class="badge-sm ${c.statusToga === 'Sudah' ? 'green' : 'gold'}">${c.statusToga}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
 // ---- PMB Management Page (BAP) ----
-const PMB_API = 'http://localhost:8080/api/pmb';
+const PMB_API = '/api/pmb';
 
 function bapPMBContent() {
   return `
@@ -655,10 +4062,8 @@ function renderPMBList(stats, registrations) {
       </select>
       <select id="pmbFilterProdi" class="form-select" style="width:auto;min-width:160px;">
         <option value="">Semua Prodi</option>
-        <option value="S1 Administrasi Publik">S1 Adm. Publik</option>
-        <option value="S1 Administrasi Bisnis">S1 Adm. Bisnis</option>
-        <option value="S2 Administrasi Publik">S2 Adm. Publik</option>
-        <option value="D3 Ilmu Administrasi">D3 Ilmu Adm.</option>
+        <option value="Administrasi Negara">Adm. Negara</option>
+        <option value="Administrasi Niaga">Adm. Niaga</option>
       </select>
       <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">${I.fileText} Export</button>
     </div>
@@ -1125,7 +4530,7 @@ function showOfflineForm() {
   const content = document.getElementById('pmbMgmtContent');
   if (!content) return;
 
-  const prodiOptions = ['S1 Administrasi Publik', 'S1 Administrasi Bisnis', 'S2 Administrasi Publik', 'D3 Ilmu Administrasi'];
+  const prodiOptions = ['Administrasi Negara', 'Administrasi Niaga'];
 
   content.innerHTML = `
     <form id="offlineRegForm" style="max-width:640px;">
@@ -1370,7 +4775,7 @@ function showEditForm(regId) {
   const content = document.getElementById('pmbDetailContent');
   if (!modal || !content) return;
 
-  const prodiOptions = ['S1 Administrasi Publik','S1 Administrasi Bisnis','S2 Administrasi Publik','D3 Ilmu Administrasi'];
+  const prodiOptions = ['Administrasi Negara','Administrasi Niaga'];
   const v = (val) => val || '';
 
   content.innerHTML = `
@@ -1570,7 +4975,7 @@ function showEditForm(regId) {
 // ============================================
 // DATA MAHASISWA — Student Management
 // ============================================
-const MHS_API = 'http://localhost:8080/api/pmb';
+const MHS_API = '/api/pmb';
 let _mahasiswaList = [];
 
 function bapMahasiswaContent() {
@@ -1612,10 +5017,8 @@ function bapMahasiswaContent() {
           </div>
           <select id="mhsFilterProdi" class="form-select" style="min-width:160px;">
             <option value="">Semua Prodi</option>
-            <option value="S1 Administrasi Publik">S1 Adm. Publik</option>
-            <option value="S1 Administrasi Bisnis">S1 Adm. Bisnis</option>
-            <option value="S2 Administrasi Publik">S2 Adm. Publik</option>
-            <option value="D3 Ilmu Administrasi">D3 Ilmu Adm.</option>
+            <option value="Administrasi Negara">Adm. Negara</option>
+            <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
           <select id="mhsFilterStatus" class="form-select" style="min-width:130px;">
             <option value="">Semua Status</option>
@@ -1853,7 +5256,7 @@ function showMhsEditModal(m) {
 
   if (modalTitle) modalTitle.textContent = 'Edit Data Mahasiswa';
 
-  const prodiOptions = ['S1 Administrasi Publik','S1 Administrasi Bisnis','S2 Administrasi Publik','D3 Ilmu Administrasi'];
+  const prodiOptions = ['Administrasi Negara','Administrasi Niaga'];
   const v = (val) => val || '';
 
   modalBody.innerHTML = `
@@ -2128,7 +5531,11 @@ function kurikulumContent() {
     + '<input type="hidden" id="mkEditIdx">'
     + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Kode MK</label><input id="mkEditKode" readonly style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;background:var(--gray-50);color:var(--text-muted);"></div>'
     + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Mata Kuliah *</label><input id="mkEditNama" required style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
-    + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Dosen</label><input id="mkEditDosen" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
+    + '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">Dosen <span style="font-size:0.62rem;color:hsl(150 50% 45%);">(dari Data Dosen)</span></label>'
+    + '<select id="mkEditDosen" style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;cursor:pointer;">'
+    + '<option value="">— Pilih Dosen —</option>'
+    + (typeof DOSEN_LIST !== 'undefined' ? DOSEN_LIST.filter(d => d.status === 'Aktif').map(d => `<option value="${d.nama}">${d.nama}</option>`).join('') : '')
+    + '</select></div>'
     + '<div style="margin-bottom:14px;"><label style="font-size:0.72rem;font-weight:600;display:block;margin-bottom:3px;color:var(--text-secondary);">SKS</label><input id="mkEditSks" type="number" min="1" max="10" required style="width:100px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.82rem;box-sizing:border-box;"></div>'
     + '<div style="display:flex;justify-content:flex-end;gap:8px;">'
     + '<button type="button" id="cancelMkEdit" style="padding:8px 18px;border:1px solid var(--gray-200);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;">Batal</button>'
@@ -2164,6 +5571,15 @@ function renderKurikulumProdi(prodiKey) {
   for (let i = 1; i <= 8; i++) {
     html += `<button class="sem-filter" data-sem="${i}" style="padding:5px 14px;border:1px solid var(--gray-200);border-radius:20px;font-size:0.72rem;font-weight:600;cursor:pointer;background:white;color:var(--text-primary);transition:all .2s;">Smt ${i}</button>`;
   }
+  html += '</div>';
+
+  // Dosen search filter
+  html += '<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">';
+  html += '<div style="position:relative;flex:1;max-width:400px;">';
+  html += '<input id="dosenSearchInput" type="text" placeholder="🔍 Cari nama dosen..." style="width:100%;padding:8px 12px 8px 34px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.82rem;box-sizing:border-box;transition:border-color .2s;">';
+  html += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:0.85rem;pointer-events:none;">👤</span>';
+  html += '</div>';
+  html += '<span id="dosenSearchCount" style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;"></span>';
   html += '</div>';
 
   // Semesters
@@ -2227,9 +5643,41 @@ function initKurikulumPage() {
   function renderAndBind(prodi) {
     contentArea.innerHTML = renderKurikulumProdi(prodi);
     attachSemesterFilters();
+    attachDosenSearch();
     attachMkEditButtons();
     attachMkAddButtons();
     attachMkDeleteButtons();
+  }
+
+  function attachDosenSearch() {
+    const input = document.getElementById('dosenSearchInput');
+    const countLabel = document.getElementById('dosenSearchCount');
+    if (!input) return;
+    input.addEventListener('input', () => {
+      const query = input.value.trim().toLowerCase();
+      const rows = contentArea.querySelectorAll('tbody tr:not([style*="border-top:2px"])');
+      let matched = 0, total = 0;
+      rows.forEach(row => {
+        const dosenCell = row.querySelectorAll('td')[3];
+        if (!dosenCell) return;
+        const isTotal = row.querySelector('td[colspan]');
+        if (isTotal) return;
+        total++;
+        const dosenText = dosenCell.textContent.toLowerCase();
+        if (!query || dosenText.includes(query)) {
+          row.style.display = '';
+          matched++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      if (query && countLabel) {
+        countLabel.textContent = `${matched} dari ${total} mata kuliah ditemukan`;
+        countLabel.style.color = matched > 0 ? 'hsl(150 55% 40%)' : 'hsl(0 55% 50%)';
+      } else if (countLabel) {
+        countLabel.textContent = '';
+      }
+    });
   }
 
   // Initial render
@@ -2273,7 +5721,8 @@ function initKurikulumPage() {
 
     const newKode = document.getElementById('mkEditKode').value.trim();
     const newNama = document.getElementById('mkEditNama').value.trim();
-    const newDosen = document.getElementById('mkEditDosen').value.trim();
+    const dosenSelect = document.getElementById('mkEditDosen');
+    const newDosen = dosenSelect.value.trim();
     const newSks = parseInt(document.getElementById('mkEditSks').value);
     if (!newKode) { alert('\u26a0\ufe0f Kode MK harus diisi'); return; }
     if (!newNama) { alert('\u26a0\ufe0f Nama mata kuliah harus diisi'); return; }
@@ -2307,7 +5756,31 @@ function initKurikulumPage() {
     kodeField.style.background = isAdd ? 'white' : 'var(--gray-50)';
     kodeField.style.color = isAdd ? 'var(--text-primary)' : 'var(--text-muted)';
     document.getElementById('mkEditNama').value = mk.nama;
-    document.getElementById('mkEditDosen').value = mk.dosen === '-' ? '' : mk.dosen;
+    // Smart match dosen dropdown
+    const dosenSelect = document.getElementById('mkEditDosen');
+    if (dosenSelect) {
+      const dosenVal = mk.dosen === '-' ? '' : mk.dosen;
+      let matched = false;
+      // 1st pass: exact match
+      for (let i = 0; i < dosenSelect.options.length; i++) {
+        if (dosenSelect.options[i].value && dosenSelect.options[i].value === dosenVal) {
+          dosenSelect.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      // 2nd pass: fuzzy match (includes)
+      if (!matched && dosenVal) {
+        for (let i = 0; i < dosenSelect.options.length; i++) {
+          if (dosenSelect.options[i].value && (dosenVal.includes(dosenSelect.options[i].value) || dosenSelect.options[i].value.includes(dosenVal))) {
+            dosenSelect.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+      }
+      if (!matched) dosenSelect.selectedIndex = 0;
+    }
     document.getElementById('mkEditSks').value = mk.sks;
     modal.style.display = 'flex';
   }
@@ -2774,8 +6247,61 @@ export function renderDashboard(container) {
         initDosenPage(mainContent, isoFooter);
       } else if (mainContent && page === 'home') {
         mainContent.innerHTML = contentFn(user) + isoFooter;
+      } else if (mainContent && page === 'krs' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = krsContent(user) + isoFooter;
+      } else if (mainContent && page === 'khs' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = khsContent(user) + isoFooter;
+        initKHSPage(user, mainContent, isoFooter);
+      } else if (mainContent && page === 'jadwal' && user.role === 'mahasiswa') {
+        await loadSavedJadwalPertemuan();
+        mainContent.innerHTML = jadwalContent(user) + isoFooter;
+      } else if (mainContent && page === 'absensi' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = absensiContent(user) + isoFooter;
+      } else if (mainContent && page === 'nilai' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = nilaiContent(user) + isoFooter;
+      } else if (mainContent && page === 'evaluasi' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = evaluasiContent(user) + isoFooter;
+      } else if (mainContent && page === 'perkembangan' && user.role === 'mahasiswa') {
+        mainContent.innerHTML = perkembanganContent(user) + isoFooter;
+      // ---- DOSEN ROUTES ----
+      } else if (mainContent && page === 'jadwal-dosen' && user.role === 'dosen') {
+        mainContent.innerHTML = jadwalDosenContent(user) + isoFooter;
+        initJadwalDosenPage();
+      } else if (mainContent && page === 'mhs-dosen' && user.role === 'dosen') {
+        mainContent.innerHTML = mhsDosenContent(user) + isoFooter;
+      } else if (mainContent && page === 'input-nilai' && user.role === 'dosen') {
+        mainContent.innerHTML = inputNilaiContent(user) + isoFooter;
+        initInputNilaiPage();
+      } else if (mainContent && page === 'rekap-nilai' && user.role === 'dosen') {
+        mainContent.innerHTML = rekapNilaiContent(user) + isoFooter;
+      } else if (mainContent && page === 'absensi-dosen' && user.role === 'dosen') {
+        mainContent.innerHTML = absensiDosenContent(user) + isoFooter;
+        initAbsensiDosenPage();
+      } else if (mainContent && page === 'bimbingan' && user.role === 'dosen') {
+        mainContent.innerHTML = bimbinganContent(user) + isoFooter;
+      } else if (mainContent && page === 'profil-dosen' && user.role === 'dosen') {
+        mainContent.innerHTML = dosenContent(user) + isoFooter;
+      // ---- BAP ROUTES ----
+      } else if (mainContent && page === 'statistik' && user.role === 'bap') {
+        mainContent.innerHTML = statistikContent() + isoFooter;
+      } else if (mainContent && page === 'transkrip' && user.role === 'bap') {
+        mainContent.innerHTML = transkripContent() + isoFooter;
+      } else if (mainContent && page === 'validasi-krs' && user.role === 'bap') {
+        mainContent.innerHTML = validasiKrsContent() + isoFooter;
+      } else if (mainContent && page === 'rekap-absensi' && user.role === 'bap') {
+        mainContent.innerHTML = rekapAbsensiContent() + isoFooter;
+      } else if (mainContent && page === 'surat' && user.role === 'bap') {
+        mainContent.innerHTML = suratContent() + isoFooter;
+      } else if (mainContent && page === 'kalender' && user.role === 'bap') {
+        mainContent.innerHTML = kalenderContent() + isoFooter;
+      } else if (mainContent && page === 'wisuda' && user.role === 'bap') {
+        mainContent.innerHTML = wisudaContent() + isoFooter;
+      } else if (mainContent && page === 'jadwal-manage' && user.role === 'bap') {
+        await loadSavedJadwalPertemuan();
+        mainContent.innerHTML = jadwalManageContent() + isoFooter;
+        initJadwalManagePage();
       } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
-        const PROFILE_API = 'http://localhost:8080/api/profile';
+        const PROFILE_API = '/api/profile';
         // Try to fetch profile from backend, fallback to local user data
         let profileUser = { ...user };
         try {
@@ -2876,7 +6402,7 @@ export function renderDashboard(container) {
               sessionStorage.setItem('user', JSON.stringify(profileUser));
               const sidebarAvatar = document.querySelector('.sidebar-avatar');
               if (sidebarAvatar) {
-                sidebarAvatar.style.background = 'url(http://localhost:8080' + data.avatar_url + ') center/cover';
+                sidebarAvatar.style.background = 'url(' + data.avatar_url + ') center/cover';
                 sidebarAvatar.textContent = '';
               }
               alert('\u2705 Foto profil berhasil diperbarui!');
@@ -3023,7 +6549,7 @@ export function renderDashboard(container) {
           btn.disabled = true;
           try {
             const id = user.nim || user.nip || 'admin';
-            const res = await fetch('http://localhost:8080/api/profile/' + id + '/password', {
+            const res = await fetch('/api/profile/' + id + '/password', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ old_password: oldPw, new_password: newPw, confirm_password: confPw })

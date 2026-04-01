@@ -3,7 +3,7 @@
 // Separate E-Learning module
 // ============================================
 
-import { CAMPUS, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus } from '../../js/data.js';
+import { CAMPUS, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus, generatePertemuanDates, formatTanggalShort, formatTanggalFull } from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 
 // ---- SVG Icons ----
@@ -33,8 +33,6 @@ const EL_MENUS = {
   mahasiswa: [
     { label: 'E-Learning', items: [
       { icon: I.home, text: 'Dashboard', id: 'home', active: true },
-      { icon: I.monitor, text: 'Kelas Saya', id: 'kelas' },
-      { icon: I.checkCircle, text: 'Nilai Saya', id: 'nilai' },
     ]},
   ],
   dosen: [
@@ -134,16 +132,47 @@ function mahasiswaElearning(user) {
   const pendingTasks = TUGAS_LIST.filter(t => t.status === 'Belum');
   const completedTasks = TUGAS_LIST.filter(t => t.status === 'Sudah');
   const totalProgress = Math.round(KELAS_LIST.reduce((a, k) => a + k.progress, 0) / KELAS_LIST.length);
+  const totalSKS = KELAS_LIST.reduce((a,k) => a + k.sks, 0);
   const now = new Date();
   const dateStr = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const courseIcons = ['🏛️','📊','🏢','⚖️','👥','💻','📜'];
+
+  // Grade computation
+  const myNim = (user && user.nim) || '2024001';
+  const kelasGrades = {};
+  KELAS_LIST.forEach(kelas => {
+    const data = CLASS_CONTENT[kelas.id] || { tugas:[], uts:[], uas:[], quiz:[] };
+    let grades = [];
+    (data.quiz||[]).forEach(q => { if (q.status==='Selesai' && q.nilai!==null) grades.push(q.nilai); });
+    (data.tugas||[]).forEach(t => {
+      const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+      const mySub = subs.find(s => s.nim === myNim);
+      if (mySub && mySub.nilai !== null && mySub.nilai !== undefined) grades.push(mySub.nilai);
+    });
+    (data.uts||[]).forEach(t => {
+      if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); if(m&&m.nilai!=null) grades.push(m.nilai); }
+      else if (t.status==='Selesai'&&t.nilai!=null) grades.push(t.nilai);
+    });
+    (data.uas||[]).forEach(t => {
+      if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); if(m&&m.nilai!=null) grades.push(m.nilai); }
+      else if (t.status==='Selesai'&&t.nilai!=null) grades.push(t.nilai);
+    });
+    kelasGrades[kelas.id] = grades.length ? Math.round(grades.reduce((a,b)=>a+b,0)/grades.length) : null;
+  });
+  const allGrades = Object.values(kelasGrades).filter(v => v !== null);
+  const overallAvg = allGrades.length ? Math.round(allGrades.reduce((a,b)=>a+b,0)/allGrades.length) : '—';
+  const avgColor = typeof overallAvg === 'number' ? (overallAvg >= 80 ? '#10b981' : overallAvg >= 60 ? '#3b82f6' : '#ef4444') : '#94a3b8';
 
   return `
     <!-- Hero Welcome Banner -->
     <div class="el-welcome-banner">
+      <div class="el-wb-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
       <div class="el-welcome-text">
         <span class="el-welcome-date">${I.clock} ${dateStr}</span>
         <h2>${getGreeting()}, ${(user.nama || user.name || 'Mahasiswa').split(' ')[0]}! 👋</h2>
-        <p>Kamu punya <strong>${pendingTasks.length} tugas</strong> yang perlu dikerjakan dan <strong>${KELAS_LIST.length} kelas aktif</strong> semester ini.</p>
+        <p>Kamu punya <strong>${pendingTasks.length} tugas</strong> yang perlu dikerjakan dan <strong>${KELAS_LIST.length} kelas aktif</strong> (${totalSKS} SKS) semester ini.</p>
       </div>
       <div class="el-welcome-stats">
         <div class="el-mini-ring">
@@ -156,58 +185,79 @@ function mahasiswaElearning(user) {
     </div>
 
     <!-- Stat Cards -->
-    <div class="el-stat-row">
+    <div class="el-stat-row" style="grid-template-columns: repeat(2, 1fr);">
       <div class="el-stat-card el-stat-blue">
-        <div class="el-stat-card-icon">${I.monitor}</div>
+        <div class="el-stat-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
         <div class="el-stat-card-info">
           <span class="el-stat-card-num">${KELAS_LIST.length}</span>
           <span class="el-stat-card-label">Kelas Aktif</span>
         </div>
         <div class="el-stat-card-badge">Semester Ini</div>
       </div>
-      <div class="el-stat-card el-stat-amber">
-        <div class="el-stat-card-icon">${I.clipboard}</div>
-        <div class="el-stat-card-info">
-          <span class="el-stat-card-num">${pendingTasks.length}</span>
-          <span class="el-stat-card-label">Tugas Pending</span>
-        </div>
-        <div class="el-stat-card-badge">⚡ Segera</div>
-      </div>
-      <div class="el-stat-card el-stat-green">
-        <div class="el-stat-card-icon">${I.checkCircle}</div>
-        <div class="el-stat-card-info">
-          <span class="el-stat-card-num">${completedTasks.length}</span>
-          <span class="el-stat-card-label">Tugas Selesai</span>
-        </div>
-        <div class="el-stat-card-badge">✓ Bagus!</div>
-      </div>
       <div class="el-stat-card el-stat-purple">
-        <div class="el-stat-card-icon">${I.book}</div>
-        <div class="el-stat-card-info">
-          <span class="el-stat-card-num">8</span>
-          <span class="el-stat-card-label">Materi Baru</span>
+        <div class="el-stat-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         </div>
-        <div class="el-stat-card-badge">Minggu Ini</div>
+        <div class="el-stat-card-info">
+          <span class="el-stat-card-num">${totalSKS}</span>
+          <span class="el-stat-card-label">Total SKS</span>
+        </div>
+        <div class="el-stat-card-badge">📚 Beban</div>
       </div>
     </div>
 
-    <!-- Progress Overview -->
-    <div class="el-section-title"><h3>📊 Progress Kelas</h3><a class="el-see-all" data-goto="kelas">Lihat Semua →</a></div>
-    <div class="el-progress-grid">
-      ${KELAS_LIST.map(k => {
-        const color = k.progress > 70 ? '#10b981' : k.progress > 50 ? '#3b82f6' : '#f59e0b';
-        return `<div class="el-progress-card enter-course-btn" data-class-id="${k.id}" tabindex="0">
-          <div class="el-progress-ring-wrap">
-            <svg viewBox="0 0 36 36"><path class="el-ring-bg" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831"/>
-            <path class="el-ring-fill" style="stroke:${color}" stroke-dasharray="${k.progress}, 100" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831 15.9155 15.9155 0 0 1 0-31.831"/></svg>
-            <span class="el-ring-text" style="font-size:.65rem">${k.progress}%</span>
+    <!-- Kelas Saya -->
+    <div class="el-section-title"><h3>📚 Kelas Saya</h3>
+      <button id="toggleNilaiView" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid ${avgColor};background:${avgColor}10;color:${avgColor};font-size:0.72rem;font-weight:600;cursor:pointer;transition:all .2s;">
+        📊 Lihat Semua Nilai <span style="background:${avgColor};color:#fff;padding:1px 7px;border-radius:10px;font-size:0.62rem;">${overallAvg}</span>
+      </button>
+    </div>
+    <div class="el-kelas-list" aria-label="Daftar kelas" style="margin-bottom:16px;">
+      ${KELAS_LIST.map((k, i) => {
+        const bannerColors = ['linear-gradient(135deg,#1e3a5f,#2563eb)','linear-gradient(135deg,#065f46,#10b981)','linear-gradient(135deg,#92400e,#f59e0b)','linear-gradient(135deg,#5b21b6,#8b5cf6)','linear-gradient(135deg,#9d174d,#ec4899)','linear-gradient(135deg,#0e7490,#06b6d4)','linear-gradient(135deg,#7c2d12,#ea580c)'];
+        const bg = bannerColors[i % bannerColors.length];
+        const progressColor = k.progress > 70 ? '#10b981' : k.progress > 50 ? '#3b82f6' : '#f59e0b';
+        const cIcon = courseIcons[i % courseIcons.length];
+        const grade = kelasGrades[k.id];
+        const gradeColor = grade !== null ? (grade >= 80 ? '#10b981' : grade >= 60 ? '#3b82f6' : '#ef4444') : '#94a3b8';
+        const gradeLabel = grade !== null ? grade : '—';
+        return `
+        <div class="el-kelas-card" tabindex="0" role="article" aria-label="${k.nama}">
+          <div class="el-kelas-banner" style="background:${bg}">
+            <div class="el-kelas-banner-content">
+              <span class="el-kelas-badge">${k.kode}</span>
+              <h3 class="el-kelas-banner-title">${k.nama}</h3>
+              <p class="el-kelas-banner-sub">${k.dosen} · ${k.sks} SKS · ${k.semester}</p>
+            </div>
+            <div class="el-kelas-banner-icon">${cIcon}</div>
           </div>
-          <div class="el-progress-info">
-            <h4>${k.nama}</h4>
-            <p>${k.kode} · ${k.dosen}</p>
-            <span class="el-progress-meta">${I.clock} ${k.jadwal}</span>
+          <div class="el-kelas-body">
+            <div class="el-kelas-info-row">
+              <div class="el-kelas-info-item">
+                ${I.clock} <span>${k.jadwal}</span>
+              </div>
+              <div class="el-kelas-info-item">
+                ${I.book} <span>${k.materiSelesai}/${k.totalMateri} materi</span>
+              </div>
+            </div>
+            <div class="el-kelas-progress-section">
+              <div class="el-kelas-progress-header">
+                <span>Progress</span>
+                <span style="color:${progressColor};font-weight:700">${k.progress}%</span>
+              </div>
+              <div class="progress-wrap"><div class="progress-bar" style="width:${k.progress}%;background:${progressColor}"></div></div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="el-kelas-enter enter-course-btn" data-class-id="${k.id}" aria-label="Masuk kelas ${k.nama}" style="flex:1;">
+                Masuk Kelas →
+              </button>
+              <button class="el-kelas-nilai-btn" data-class-id="${k.id}" style="flex-shrink:0;padding:8px 12px;border:none;border-radius:8px;background:${gradeColor}15;color:${gradeColor};font-size:0.7rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;" aria-label="Lihat nilai ${k.nama}">
+                📊 <span>${gradeLabel}</span>
+              </button>
+            </div>
           </div>
-          <svg class="el-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>`;
       }).join('')}
     </div>
@@ -220,10 +270,9 @@ function mahasiswaElearning(user) {
           <div class="dash-card-body">
             ${TUGAS_LIST.map(t => {
               const dl = getDeadlineStatus(t.deadline);
+              const icon = t.status === 'Sudah' ? '✅' : (dl.class === 'danger' ? '🔴' : '🟡');
               return `<div class="el-task-row">
-                <div class="el-task-status ${t.status === 'Sudah' ? 'done' : dl.class}">
-                  ${t.status === 'Sudah' ? '✓' : '!'}
-                </div>
+                <div class="el-task-icon-wrap">${icon}</div>
                 <div class="el-task-info">
                   <h4>${t.judul}</h4>
                   <p>${t.kelas} · ${t.type}</p>
@@ -241,12 +290,23 @@ function mahasiswaElearning(user) {
         <div class="el-section-title"><h3>📚 Materi Terbaru</h3></div>
         <div class="dash-card el-card-modern">
           <div class="dash-card-body">
-            <div class="el-task-row"><div class="el-materi-icon">📄</div><div class="el-task-info"><h4>BAB 5 — Birokrasi & Reformasi</h4><p>Pengantar Ilmu Administrasi · PDF, 2.3 MB</p></div><span class="badge-sm blue">PDF</span></div>
-            <div class="el-task-row"><div class="el-materi-icon">📊</div><div class="el-task-info"><h4>Slide — Analisis Kebijakan</h4><p>Kebijakan Publik · PPT, 5.1 MB</p></div><span class="badge-sm gold">PPT</span></div>
-            <div class="el-task-row"><div class="el-materi-icon">🎬</div><div class="el-task-info"><h4>Video Lecture — Manajemen Kinerja</h4><p>Manajemen SDM · MP4, 45 menit</p></div><span class="badge-sm green">MP4</span></div>
-            <div class="el-task-row"><div class="el-materi-icon">📄</div><div class="el-task-info"><h4>Modul — Metode Penelitian</h4><p>Metode Penelitian · PDF, 3.8 MB</p></div><span class="badge-sm blue">PDF</span></div>
+            <div class="el-task-row"><div class="el-materi-icon-wrap">📄</div><div class="el-task-info"><h4>BAB 5 — Birokrasi & Reformasi</h4><p>Pengantar Ilmu Administrasi · PDF, 2.3 MB</p></div><span class="badge-sm blue">PDF</span></div>
+            <div class="el-task-row"><div class="el-materi-icon-wrap">📊</div><div class="el-task-info"><h4>Slide — Analisis Kebijakan</h4><p>Kebijakan Publik · PPT, 5.1 MB</p></div><span class="badge-sm gold">PPT</span></div>
+            <div class="el-task-row"><div class="el-materi-icon-wrap">🎬</div><div class="el-task-info"><h4>Video Lecture — Manajemen Kinerja</h4><p>Manajemen SDM · MP4, 45 menit</p></div><span class="badge-sm green">MP4</span></div>
+            <div class="el-task-row"><div class="el-materi-icon-wrap">📄</div><div class="el-task-info"><h4>Modul — Metode Penelitian</h4><p>Metode Penelitian · PDF, 3.8 MB</p></div><span class="badge-sm blue">PDF</span></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Nilai Modal -->
+    <div class="el-modal-overlay" id="nilaiSayaModal" style="display:none">
+      <div class="el-modal" style="max-width:680px">
+        <div class="el-modal-header">
+          <h3>📊 Nilai Saya — Semester Genap 2025/2026</h3>
+          <button class="el-modal-close" id="closeNilaiModal">✕</button>
+        </div>
+        <div class="el-modal-form" style="max-height:75vh;overflow-y:auto;" id="nilaiModalContent"></div>
       </div>
     </div>`;
 }
@@ -645,6 +705,81 @@ CLASS_CONTENT[5].video = [
   { judul:'Hubungan Industrial Indonesia', durasi:'38:20', views:90, status:'watched', pertemuan:6 },
   { judul:'HR Analytics untuk Pemula', durasi:'45:00', views:42, status:'new', pertemuan:9 },
   { judul:'Kepemimpinan Transformasional', durasi:'40:30', views:18, status:'new', pertemuan:11 },
+];
+
+// Sistem Informasi Manajemen (id:6)
+CLASS_CONTENT[6].materi = [
+  { judul:'BAB 1 — Konsep Dasar Sistem Informasi', tipe:'PDF', ukuran:'2.2 MB', tanggal:'5 Feb 2026', icon:'📄', pertemuan:1 },
+  { judul:'Slide — Komponen Sistem Informasi', tipe:'PPT', ukuran:'3.8 MB', tanggal:'12 Feb 2026', icon:'📊', pertemuan:2 },
+  { judul:'BAB 2 — Database Management System', tipe:'PDF', ukuran:'2.6 MB', tanggal:'19 Feb 2026', icon:'📄', pertemuan:3 },
+  { judul:'Slide — Data Warehouse & Mining', tipe:'PPT', ukuran:'4.2 MB', tanggal:'26 Feb 2026', icon:'📊', pertemuan:4 },
+  { judul:'BAB 3 — E-Government', tipe:'PDF', ukuran:'2.9 MB', tanggal:'5 Mar 2026', icon:'📄', pertemuan:5 },
+  { judul:'Slide — Keamanan Sistem Informasi', tipe:'PPT', ukuran:'3.5 MB', tanggal:'12 Mar 2026', icon:'📊', pertemuan:6 },
+  { judul:'Rangkuman Materi UTS', tipe:'PDF', ukuran:'3.2 MB', tanggal:'19 Mar 2026', icon:'📚', pertemuan:7 },
+  { judul:'BAB 4 — Enterprise Resource Planning', tipe:'PDF', ukuran:'2.5 MB', tanggal:'26 Mar 2026', icon:'📄', pertemuan:8 },
+];
+CLASS_CONTENT[6].tugas = [
+  { judul:'Analisis Sistem Informasi Instansi', type:'Tugas Kelompok', deadline:'2026-03-10 23:59', status:'Sudah', pertemuan:3 },
+  { judul:'Desain Database Sederhana', type:'Tugas Individu', deadline:'2026-03-20 23:59', status:'Sudah', pertemuan:4 },
+  { judul:'Studi Kasus E-Government', type:'Tugas Kelompok', deadline:'2026-04-05 23:59', status:'Belum', pertemuan:6 },
+  { judul:'Proyek Akhir — Prototype Aplikasi', type:'Tugas Kelompok', deadline:'2026-04-25 23:59', status:'Belum', pertemuan:8 },
+];
+CLASS_CONTENT[6].forum = [
+  { judul:'Diskusi: Tantangan Digitalisasi Birokrasi', balasan:14, waktu:'2 hari lalu', author:'Andi P.', hot:true, pertemuan:1 },
+  { judul:'Sharing: Tools Database Gratis', balasan:8, waktu:'4 hari lalu', author:'Siti N.', hot:false, pertemuan:3 },
+  { judul:'Diskusi: Keamanan Data Pemerintah', balasan:11, waktu:'1 hari lalu', author:'Ir. Andi P.', hot:true, pertemuan:6 },
+];
+CLASS_CONTENT[6].quiz = [
+  { judul:'Quiz Konsep SI BAB 1-2', soal:15, durasi:'20 menit', status:'Selesai', deadline:'12 Mar 2026', nilai:80, pertemuan:2 },
+  { judul:'UTS Sistem Informasi Manajemen', soal:30, durasi:'75 menit', status:'Selesai', deadline:'19 Mar 2026', nilai:78, pertemuan:7 },
+  { judul:'Quiz ERP & Cloud', soal:20, durasi:'25 menit', status:'Belum', deadline:'8 Apr 2026', nilai:null, pertemuan:8 },
+];
+CLASS_CONTENT[6].video = [
+  { judul:'Pengantar Sistem Informasi', durasi:'28:40', views:180, status:'watched', pertemuan:1 },
+  { judul:'Tutorial SQL Dasar', durasi:'45:15', views:142, status:'watched', pertemuan:3 },
+  { judul:'E-Government Indonesia', durasi:'35:20', views:76, status:'new', pertemuan:5 },
+];
+CLASS_CONTENT[6].uts = [
+  { judul:'UTS — Sistem Informasi Manajemen', mode:'upload', type:'Upload File', deadline:'2026-03-19 23:59', status:'Sudah', nilai:null, pertemuan:7 }
+];
+CLASS_CONTENT[6].uas = [
+  { judul:'UAS — Sistem Informasi Manajemen', mode:'upload', type:'Upload File', deadline:'2026-04-28 23:59', status:'Belum', nilai:null, pertemuan:12 }
+];
+
+// Etika Administrasi (id:7)
+CLASS_CONTENT[7].materi = [
+  { judul:'BAB 1 — Pengertian Etika & Moral', tipe:'PDF', ukuran:'1.8 MB', tanggal:'6 Feb 2026', icon:'📄', pertemuan:1 },
+  { judul:'Slide — Etika Profesi PNS', tipe:'PPT', ukuran:'3.2 MB', tanggal:'13 Feb 2026', icon:'📊', pertemuan:2 },
+  { judul:'BAB 2 — Kode Etik ASN', tipe:'PDF', ukuran:'2.1 MB', tanggal:'20 Feb 2026', icon:'📄', pertemuan:3 },
+  { judul:'Slide — Integritas & Anti Korupsi', tipe:'PPT', ukuran:'3.5 MB', tanggal:'27 Feb 2026', icon:'📊', pertemuan:4 },
+  { judul:'BAB 3 — Etika Pelayanan Publik', tipe:'PDF', ukuran:'2.4 MB', tanggal:'6 Mar 2026', icon:'📄', pertemuan:5 },
+  { judul:'Rangkuman Materi UTS', tipe:'PDF', ukuran:'2.8 MB', tanggal:'13 Mar 2026', icon:'📚', pertemuan:6 },
+  { judul:'BAB 4 — Dilema Etika Birokrasi', tipe:'PDF', ukuran:'2.0 MB', tanggal:'20 Mar 2026', icon:'📄', pertemuan:7 },
+];
+CLASS_CONTENT[7].tugas = [
+  { judul:'Analisis Kasus Etika Pelayanan', type:'Tugas Individu', deadline:'2026-03-08 23:59', status:'Sudah', pertemuan:2 },
+  { judul:'Essay Anti Korupsi di Birokrasi', type:'Tugas Individu', deadline:'2026-03-22 23:59', status:'Sudah', pertemuan:4 },
+  { judul:'Studi Kasus Dilema Etika', type:'Tugas Kelompok', deadline:'2026-04-12 23:59', status:'Belum', pertemuan:7 },
+];
+CLASS_CONTENT[7].forum = [
+  { judul:'Diskusi: Etika vs Hukum dalam Birokrasi', balasan:18, waktu:'3 hari lalu', author:'Bambang S.', hot:true, pertemuan:1 },
+  { judul:'Sharing: Kasus Nyata Dilema Etika', balasan:12, waktu:'2 hari lalu', author:'Ahmad R.', hot:true, pertemuan:4 },
+];
+CLASS_CONTENT[7].quiz = [
+  { judul:'Quiz Etika BAB 1-2', soal:15, durasi:'20 menit', status:'Selesai', deadline:'20 Mar 2026', nilai:90, pertemuan:3 },
+  { judul:'UTS Etika Administrasi', soal:25, durasi:'60 menit', status:'Selesai', deadline:'27 Mar 2026', nilai:85, pertemuan:6 },
+  { judul:'Quiz Dilema Etika', soal:15, durasi:'20 menit', status:'Belum', deadline:'15 Apr 2026', nilai:null, pertemuan:7 },
+];
+CLASS_CONTENT[7].video = [
+  { judul:'Pengantar Etika Administrasi', durasi:'25:30', views:165, status:'watched', pertemuan:1 },
+  { judul:'Kode Etik ASN — Penjelasan', durasi:'32:10', views:130, status:'watched', pertemuan:3 },
+  { judul:'Studi Kasus: Whistleblowing', durasi:'28:45', views:54, status:'new', pertemuan:5 },
+];
+CLASS_CONTENT[7].uts = [
+  { judul:'UTS — Etika Administrasi', mode:'upload', type:'Upload File', deadline:'2026-03-27 23:59', status:'Sudah', nilai:null, pertemuan:6 }
+];
+CLASS_CONTENT[7].uas = [
+  { judul:'UAS — Etika Administrasi', mode:'upload', type:'Upload File', deadline:'2026-04-24 23:59', status:'Belum', nilai:null, pertemuan:10 }
 ];
 
 // ============================================
@@ -1188,7 +1323,13 @@ function renderCourseDetail(kelas, activeTab, userRole, userNim) {
     });
 
     const addBtn = isDosen ? '<button class="el-prt-add-btn" data-meeting="'+num+'" data-class-id="'+kelas.id+'">＋ Tambah Konten</button>' : '';
-    return '<div class="el-prt-section"><div class="el-prt-header" onclick="this.parentElement.classList.toggle(\'collapsed\')"><div class="el-prt-header-left"><span class="el-prt-num">Ke-'+num+'</span><div><h3 class="el-prt-title">'+topic+'</h3><p class="el-prt-meta">'+total+' item</p></div></div><svg class="el-prt-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="el-prt-body">'+items+addBtn+'</div></div>';
+    // Get day from jadwal (e.g. "Senin, 07:30-09:10")
+    const hariFromJadwal = kelas.jadwal ? kelas.jadwal.split(',')[0].trim() : 'Senin';
+    const allDates = generatePertemuanDates(hariFromJadwal, 14);
+    const meetingDate = allDates[num - 1];
+    const dateStr = meetingDate ? formatTanggalFull(meetingDate) : '';
+    const dateShort = meetingDate ? formatTanggalShort(meetingDate) : '';
+    return '<div class="el-prt-section"><div class="el-prt-header" onclick="this.parentElement.classList.toggle(\'collapsed\')"><div class="el-prt-header-left"><span class="el-prt-num">Ke-'+num+'</span><div><h3 class="el-prt-title">'+topic+'</h3><p class="el-prt-meta"><span style="display:inline-flex;align-items:center;gap:4px;color:hsl(210 50% 45%);font-weight:600;">📅 '+dateStr+'</span> · '+total+' item</p></div></div><svg class="el-prt-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="el-prt-body">'+items+addBtn+'</div></div>';
   }).join('');
 
   return `
@@ -1213,6 +1354,125 @@ function renderCourseDetail(kelas, activeTab, userRole, userNim) {
         </div>
       </div>
     </div>
+    ${!isDosen ? (() => {
+      const myNm = userNim || '2024001';
+      const allTugas = data.tugas || [];
+      const allQuiz = data.quiz || [];
+      const allUts = data.uts || [];
+      const allUas = data.uas || [];
+      // Combine tugas + uts + uas into allAssignments with category labels
+      const allAssignments = [
+        ...allTugas.map(t => ({...t, _cat:'TUGAS', _catColor:'#f59e0b'})),
+        ...allUts.map(t => ({...t, _cat:'UTS', _catColor:'#ef4444'})),
+        ...allUas.map(t => ({...t, _cat:'UAS', _catColor:'#8b5cf6'})),
+      ];
+      function isPending(t) {
+        const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+        const mySub = subs.find(s => s.nim === myNm);
+        return t.status !== 'Sudah' && !mySub?.file && !(t.deadline && new Date(t.deadline) < new Date());
+      }
+      function isCompleted(t) {
+        const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+        const mySub = subs.find(s => s.nim === myNm);
+        return t.status === 'Sudah' || mySub?.file;
+      }
+      function isExpired(t) {
+        const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+        const mySub = subs.find(s => s.nim === myNm);
+        return t.status !== 'Sudah' && !mySub?.file && t.deadline && new Date(t.deadline) < new Date();
+      }
+      const pending = allAssignments.filter(isPending);
+      const completed = allAssignments.filter(isCompleted);
+      const expired = allAssignments.filter(isExpired);
+      const quizPending = allQuiz.filter(q => q.status !== 'Selesai');
+      const quizDone = allQuiz.filter(q => q.status === 'Selesai');
+      // SVG icons for summary cards
+      const svgPending = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+      const svgDone = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+      const svgExpired = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      const svgQuiz = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>';
+      // Helper: render item row for detail panel — premium version
+      function renderItem(t, statusIcon, statusText, statusColor, idx) {
+        const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) : '—';
+        const prt = t.pertemuan ? 'Pertemuan '+t.pertemuan : '';
+        const bgAlt = idx % 2 === 0 ? 'background:hsl(215 20% 98.5%);' : '';
+        return '<div class="el-panel-row" style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid hsl(215 15% 93%);font-size:0.82rem;'+bgAlt+'transition:background .15s;">'
+          +'<span style="background:'+t._catColor+'12;color:'+t._catColor+';padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;min-width:52px;text-align:center;letter-spacing:0.3px;border:1px solid '+t._catColor+'20;">'+t._cat+'</span>'
+          +'<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:0.82rem;color:hsl(215 30% 20%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+t.judul+'</div><div style="color:hsl(215 15% 52%);font-size:0.72rem;margin-top:3px;display:flex;align-items:center;gap:6px;"><span style="display:inline-flex;align-items:center;gap:3px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+prt+'</span><span>·</span><span>'+dl+'</span></div></div>'
+          +'<span style="color:'+statusColor+';font-weight:700;font-size:0.75rem;white-space:nowrap;display:flex;align-items:center;gap:4px;">'+statusIcon+' '+statusText+'</span>'
+          +'</div>';
+      }
+      function renderQuizItem(q, statusIcon, statusText, statusColor, idx) {
+        const dl = q.deadline || '—';
+        const prt = q.pertemuan ? 'Pertemuan '+q.pertemuan : '';
+        const nilaiStr = q.nilai !== null && q.nilai !== undefined ? '<span style="background:#10b98115;color:#10b981;padding:2px 8px;border-radius:6px;font-size:0.68rem;font-weight:700;margin-left:6px;">'+q.nilai+'/100</span>' : '';
+        const bgAlt = idx % 2 === 0 ? 'background:hsl(215 20% 98.5%);' : '';
+        return '<div class="el-panel-row" style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid hsl(215 15% 93%);font-size:0.82rem;'+bgAlt+'transition:background .15s;">'
+          +'<span style="background:#6366f112;color:#6366f1;padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;min-width:52px;text-align:center;letter-spacing:0.3px;border:1px solid #6366f120;">QUIZ</span>'
+          +'<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:0.82rem;color:hsl(215 30% 20%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+q.judul+nilaiStr+'</div><div style="color:hsl(215 15% 52%);font-size:0.72rem;margin-top:3px;">'+prt+(prt?' · ':'')+q.soal+' soal · '+q.durasi+'</div></div>'
+          +'<span style="color:'+statusColor+';font-weight:700;font-size:0.75rem;white-space:nowrap;display:flex;align-items:center;gap:4px;">'+statusIcon+' '+statusText+'</span>'
+          +'</div>';
+      }
+      // Build detail panels
+      const pendingDetail = pending.map((t,i) => renderItem(t,'⏳','Belum dikerjakan','#b45309',i)).join('');
+      const completedDetail = completed.map((t,i) => {
+        const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+        const mySub = subs.find(s => s.nim === myNm);
+        const nilaiStr = mySub?.nilai != null ? ' ('+mySub.nilai+')' : (t.nilai != null ? ' ('+t.nilai+')' : '');
+        return renderItem(t,'✅','Selesai'+nilaiStr,'#047857',i);
+      }).join('');
+      const expiredDetail = expired.map((t,i) => renderItem(t,'🔒','Ditutup','#dc2626',i)).join('');
+      const quizDetail = [...quizDone.map((q,i) => renderQuizItem(q,'✅','Selesai','#047857',i)), ...quizPending.map((q,i) => renderQuizItem(q,'⏳','Belum','#6366f1',quizDone.length+i))].join('');
+      return `
+      <div class="el-tugas-summary">
+        <div class="el-summary-card" data-panel="pending">
+          <div class="el-sc-icon el-sc-icon-amber">${svgPending}</div>
+          <div class="el-sc-body">
+            <span class="el-sc-num" style="color:#b45309;">${pending.length}</span>
+            <span class="el-sc-label">Tugas Pending</span>
+          </div>
+          <div class="el-sc-badge el-sc-badge-amber">⚡ Segera</div>
+        </div>
+        <div class="el-summary-card" data-panel="completed">
+          <div class="el-sc-icon el-sc-icon-green">${svgDone}</div>
+          <div class="el-sc-body">
+            <span class="el-sc-num" style="color:#047857;">${completed.length}</span>
+            <span class="el-sc-label">Selesai</span>
+          </div>
+          <div class="el-sc-badge el-sc-badge-green">✓ Bagus</div>
+        </div>
+        <div class="el-summary-card" data-panel="expired">
+          <div class="el-sc-icon el-sc-icon-red">${svgExpired}</div>
+          <div class="el-sc-body">
+            <span class="el-sc-num" style="color:#dc2626;">${expired.length}</span>
+            <span class="el-sc-label">Expired</span>
+          </div>
+          <div class="el-sc-badge el-sc-badge-red">${expired.length > 0 ? '⚠ Lewat' : '✓ Aman'}</div>
+        </div>
+        <div class="el-summary-card" data-panel="quiz">
+          <div class="el-sc-icon el-sc-icon-indigo">${svgQuiz}</div>
+          <div class="el-sc-body">
+            <span class="el-sc-num" style="color:#4338ca;">${quizDone.length}<span style="font-size:0.75rem;font-weight:600;color:hsl(215 15% 55%);">/${allQuiz.length}</span></span>
+            <span class="el-sc-label">Quiz</span>
+          </div>
+          <div class="el-sc-badge el-sc-badge-indigo">${quizDone.length === allQuiz.length ? '✓ Complete' : '⏳ Progress'}</div>
+        </div>
+      </div>
+      <!-- Detail panels (hidden by default) -->
+      <div id="summaryDetailPanel" class="el-summary-detail-panel">
+        <div class="el-sdp-header">
+          <h4 id="summaryPanelTitle"></h4>
+          <button id="closeSummaryPanel" class="el-sdp-close">✕</button>
+        </div>
+        <div id="summaryPanelBody" style="max-height:340px;overflow-y:auto;"></div>
+        <div id="summaryPanelEmpty" style="display:none;padding:28px;text-align:center;color:hsl(215 15% 60%);font-size:0.82rem;">🎉 Tidak ada item.</div>
+      </div>
+      <!-- Hidden data containers for JS -->
+      <div id="panelData_pending" data-title="📝 Tugas Pending — Belum Dikerjakan" style="display:none">${pendingDetail}</div>
+      <div id="panelData_completed" data-title="✅ Tugas Selesai" style="display:none">${completedDetail}</div>
+      <div id="panelData_expired" data-title="🔒 Tugas Expired" style="display:none">${expiredDetail}</div>
+      <div id="panelData_quiz" data-title="📋 Quiz Progress" style="display:none">${quizDetail}</div>`;
+    })() : ''}
     <div class="el-prt-list">${meetingsHTML}</div>
     ${isDosen ? `<button class="el-prt-add-pertemuan" id="addNewPertemuan" data-class-id="${kelas.id}">＋ Tambah Pertemuan Baru</button>` : ''}
     <!-- Modal Tambah Konten -->
@@ -1384,7 +1644,7 @@ function renderCourseDetail(kelas, activeTab, userRole, userNim) {
 // ============================================
 // SUB-PAGE: Kelas Saya (vertical banner cards)
 // ============================================
-function pageKelas() {
+function pageKelas(user) {
   const avgProgress = Math.round(KELAS_LIST.reduce((a,k) => a + k.progress, 0) / KELAS_LIST.length);
   const totalMateri = KELAS_LIST.reduce((a,k) => a + k.totalMateri, 0);
   const totalSKS = KELAS_LIST.reduce((a,k) => a + k.sks, 0);
@@ -1393,15 +1653,61 @@ function pageKelas() {
     'linear-gradient(135deg, #e67e22, #f39c12, #f9bf3b)',
     'linear-gradient(135deg, #e74c3c, #ef5350, #ff7043)',
     'linear-gradient(135deg, #8e44ad, #9b59b6, #ab68c8)',
-    'linear-gradient(135deg, #16a085, #1abc9c, #48c9b0)'
+    'linear-gradient(135deg, #16a085, #1abc9c, #48c9b0)',
+    'linear-gradient(135deg, #2980b9, #3498db, #5dade2)',
+    'linear-gradient(135deg, #c0392b, #e74c3c, #ec7063)'
   ];
 
+  // Compute grade per class for inline display
+  const myNim = (user && user.nim) || '2024001';
+  const kelasGrades = {};
+  KELAS_LIST.forEach(kelas => {
+    const data = CLASS_CONTENT[kelas.id] || { tugas:[], uts:[], uas:[], quiz:[] };
+    let grades = [];
+    (data.quiz||[]).forEach(q => { if (q.status==='Selesai' && q.nilai!==null) grades.push(q.nilai); });
+    (data.tugas||[]).forEach(t => {
+      const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+      const mySub = subs.find(s => s.nim === myNim);
+      if (mySub && mySub.nilai !== null && mySub.nilai !== undefined) grades.push(mySub.nilai);
+    });
+    (data.uts||[]).forEach(t => {
+      if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); if(m&&m.nilai!=null) grades.push(m.nilai); }
+      else if (t.status==='Selesai'&&t.nilai!=null) grades.push(t.nilai);
+    });
+    (data.uas||[]).forEach(t => {
+      if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); if(m&&m.nilai!=null) grades.push(m.nilai); }
+      else if (t.status==='Selesai'&&t.nilai!=null) grades.push(t.nilai);
+    });
+    kelasGrades[kelas.id] = grades.length ? Math.round(grades.reduce((a,b)=>a+b,0)/grades.length) : null;
+  });
+
+  const allGrades = Object.values(kelasGrades).filter(v => v !== null);
+  const overallAvg = allGrades.length ? Math.round(allGrades.reduce((a,b)=>a+b,0)/allGrades.length) : 0;
+  const avgColor = overallAvg >= 80 ? '#10b981' : overallAvg >= 60 ? '#3b82f6' : '#f59e0b';
+
   return `
+    <!-- Summary Bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:0.82rem;font-weight:700;color:hsl(215 40% 20%);">📚 ${KELAS_LIST.length} Kelas Aktif</span>
+        <span style="font-size:0.68rem;color:hsl(215 15% 55%);">•</span>
+        <span style="font-size:0.72rem;color:hsl(215 15% 50%);">${totalSKS} SKS</span>
+      </div>
+      <button id="toggleNilaiView" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid ${avgColor};background:${avgColor}10;color:${avgColor};font-size:0.72rem;font-weight:600;cursor:pointer;transition:all .2s;">
+        📊 Lihat Semua Nilai <span style="background:${avgColor};color:#fff;padding:1px 7px;border-radius:10px;font-size:0.62rem;">${overallAvg}</span>
+      </button>
+    </div>
+
     <!-- Course List -->
     <div class="el-kelas-list" aria-label="Daftar kelas">
       ${KELAS_LIST.map((k, i) => {
         const bg = bannerColors[i % bannerColors.length];
         const progressColor = k.progress > 70 ? '#10b981' : k.progress > 50 ? '#3b82f6' : '#f59e0b';
+        const grade = kelasGrades[k.id];
+        const gradeColor = grade !== null ? (grade >= 80 ? '#10b981' : grade >= 60 ? '#3b82f6' : '#ef4444') : '#94a3b8';
+        const gradeLabel = grade !== null ? grade : '—';
+        const courseIcons = ['🏛️','📊','🏢','⚖️','👥','💻','📜'];
+        const cIcon = courseIcons[i % courseIcons.length];
         return `
         <div class="el-kelas-card" tabindex="0" role="article" aria-label="${k.nama}">
           <div class="el-kelas-banner" style="background:${bg}">
@@ -1410,7 +1716,7 @@ function pageKelas() {
               <h3 class="el-kelas-banner-title">${k.nama}</h3>
               <p class="el-kelas-banner-sub">${k.dosen} · ${k.sks} SKS · ${k.semester}</p>
             </div>
-            <div class="el-kelas-banner-icon">📚</div>
+            <div class="el-kelas-banner-icon">${cIcon}</div>
           </div>
           <div class="el-kelas-body">
             <div class="el-kelas-info-row">
@@ -1428,12 +1734,28 @@ function pageKelas() {
               </div>
               <div class="progress-wrap"><div class="progress-bar" style="width:${k.progress}%;background:${progressColor}"></div></div>
             </div>
-            <button class="el-kelas-enter enter-course-btn" data-class-id="${k.id}" aria-label="Masuk kelas ${k.nama}">
-              Masuk Kelas →
-            </button>
+            <div style="display:flex;gap:6px;">
+              <button class="el-kelas-enter enter-course-btn" data-class-id="${k.id}" aria-label="Masuk kelas ${k.nama}" style="flex:1;">
+                Masuk Kelas →
+              </button>
+              <button class="el-kelas-nilai-btn" data-class-id="${k.id}" style="flex-shrink:0;padding:8px 12px;border:none;border-radius:8px;background:${gradeColor}15;color:${gradeColor};font-size:0.7rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;" aria-label="Lihat nilai ${k.nama}">
+                📊 <span>${gradeLabel}</span>
+              </button>
+            </div>
           </div>
         </div>`;
       }).join('')}
+    </div>
+
+    <!-- Nilai Modal -->
+    <div class="el-modal-overlay" id="nilaiSayaModal" style="display:none">
+      <div class="el-modal" style="max-width:680px">
+        <div class="el-modal-header">
+          <h3>📊 Nilai Saya — Semester Genap 2025/2026</h3>
+          <button class="el-modal-close" id="closeNilaiModal">✕</button>
+        </div>
+        <div class="el-modal-form" style="max-height:75vh;overflow-y:auto;" id="nilaiModalContent"></div>
+      </div>
     </div>`;
 }
 
@@ -1573,7 +1895,6 @@ function pageNilai(user) {
 const PAGE_MAP = {
   home: null,
   kelas: pageKelas,
-  nilai: pageNilai,
 };
 
 function renderPageContent(pageId, user, courseState) {
@@ -1624,6 +1945,39 @@ export function renderElearning(container) {
   }
 
   function bindMainEvents() {
+    // === Summary card click handlers ===
+    let activeSummaryPanel = null;
+    document.querySelectorAll('.el-summary-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const key = this.dataset.panel;
+        const panel = document.getElementById('summaryDetailPanel');
+        const titleEl = document.getElementById('summaryPanelTitle');
+        const body = document.getElementById('summaryPanelBody');
+        const empty = document.getElementById('summaryPanelEmpty');
+        const dataDiv = document.getElementById('panelData_' + key);
+        if (!panel || !dataDiv) return;
+        // Toggle same panel
+        if (activeSummaryPanel === key) {
+          panel.style.display = 'none'; activeSummaryPanel = null;
+          document.querySelectorAll('.el-summary-card').forEach(c => c.classList.remove('active'));
+          return;
+        }
+        activeSummaryPanel = key;
+        titleEl.textContent = dataDiv.dataset.title;
+        body.innerHTML = dataDiv.innerHTML;
+        empty.style.display = dataDiv.innerHTML.trim() ? 'none' : 'block';
+        body.style.display = dataDiv.innerHTML.trim() ? 'block' : 'none';
+        panel.style.display = 'block';
+        document.querySelectorAll('.el-summary-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+    document.getElementById('closeSummaryPanel')?.addEventListener('click', () => {
+      document.getElementById('summaryDetailPanel').style.display = 'none';
+      activeSummaryPanel = null;
+      document.querySelectorAll('.el-summary-card').forEach(c => c.classList.remove('active'));
+    });
+
     // === Nilai Saya: Grade Detail View ===
     const gradeDetailModal = document.getElementById('gradeDetailModal');
     function closeGradeDetail() { if (gradeDetailModal) gradeDetailModal.style.display = 'none'; }
@@ -1733,11 +2087,102 @@ export function renderElearning(container) {
         }
       });
     });
-    // "Kembali" button
+
+    // === Nilai Integration ===
+    const nilaiModal = document.getElementById('nilaiSayaModal');
+    const nilaiContent = document.getElementById('nilaiModalContent');
+    function closeNilaiModal() { if (nilaiModal) nilaiModal.style.display = 'none'; }
+    document.getElementById('closeNilaiModal')?.addEventListener('click', closeNilaiModal);
+    nilaiModal?.addEventListener('click', (e) => { if (e.target === nilaiModal) closeNilaiModal(); });
+
+    function renderNilaiModalContent(focusClassId) {
+      if (!nilaiContent) return;
+      const myNim = user.nim || '2024001';
+      let allGrades = [];
+      const classRows = KELAS_LIST.map(kelas => {
+        const data = CLASS_CONTENT[kelas.id] || { tugas:[], uts:[], uas:[], quiz:[] };
+        let rows = '';
+        let classGrades = [];
+        (data.quiz||[]).forEach(q => {
+          const score = q.nilai;
+          if (q.status === 'Selesai' && score !== null) { classGrades.push(score); allGrades.push(score); }
+          const statusHtml = q.status === 'Selesai' && score !== null
+            ? '<span style="color:'+(score>=60?'#10b981':'#ef4444')+';font-weight:700">'+score+'</span>'
+            : '<span style="color:#94a3b8">—</span>';
+          rows += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid hsl(215 15% 96%);font-size:0.72rem;"><span style="background:#ef444415;color:#ef4444;padding:1px 6px;border-radius:4px;font-size:0.58rem;font-weight:700">QUIZ</span><span style="flex:1;color:hsl(215 30% 30%)">'+q.judul+'</span>'+statusHtml+'</div>';
+        });
+        (data.tugas||[]).forEach(t => {
+          const subs = TUGAS_SUBMISSIONS[t.judul] || [];
+          const mySub = subs.find(s => s.nim === myNim);
+          const score = mySub?.nilai;
+          if (score !== null && score !== undefined) { classGrades.push(score); allGrades.push(score); }
+          const statusHtml = score !== null && score !== undefined
+            ? '<span style="color:'+(score>=60?'#10b981':'#ef4444')+';font-weight:700">'+score+'</span>'
+            : '<span style="color:#94a3b8">'+(mySub && mySub.file?'Belum dinilai':'—')+'</span>';
+          rows += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid hsl(215 15% 96%);font-size:0.72rem;"><span style="background:#f59e0b15;color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:0.58rem;font-weight:700">TUGAS</span><span style="flex:1;color:hsl(215 30% 30%)">'+t.judul+'</span>'+statusHtml+'</div>';
+        });
+        (data.uts||[]).forEach(t => {
+          let score = null;
+          if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); score = m?.nilai; }
+          else if (t.status==='Selesai') score = t.nilai;
+          if (score !== null && score !== undefined) { classGrades.push(score); allGrades.push(score); }
+          const statusHtml = score !== null && score !== undefined
+            ? '<span style="color:'+(score>=60?'#10b981':'#ef4444')+';font-weight:700">'+score+'</span>'
+            : '<span style="color:#94a3b8">—</span>';
+          rows += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid hsl(215 15% 96%);font-size:0.72rem;"><span style="background:#8b5cf615;color:#8b5cf6;padding:1px 6px;border-radius:4px;font-size:0.58rem;font-weight:700">UTS</span><span style="flex:1;color:hsl(215 30% 30%)">'+t.judul+'</span>'+statusHtml+'</div>';
+        });
+        (data.uas||[]).forEach(t => {
+          let score = null;
+          if (t.mode==='upload') { const subs = TUGAS_SUBMISSIONS[t.judul]||[]; const m = subs.find(s=>s.nim===myNim); score = m?.nilai; }
+          else if (t.status==='Selesai') score = t.nilai;
+          if (score !== null && score !== undefined) { classGrades.push(score); allGrades.push(score); }
+          const statusHtml = score !== null && score !== undefined
+            ? '<span style="color:'+(score>=60?'#10b981':'#ef4444')+';font-weight:700">'+score+'</span>'
+            : '<span style="color:#94a3b8">—</span>';
+          rows += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:0.72rem;"><span style="background:#6366f115;color:#6366f1;padding:1px 6px;border-radius:4px;font-size:0.58rem;font-weight:700">UAS</span><span style="flex:1;color:hsl(215 30% 30%)">'+t.judul+'</span>'+statusHtml+'</div>';
+        });
+        const avg = classGrades.length ? Math.round(classGrades.reduce((a,b)=>a+b,0)/classGrades.length) : null;
+        const avgColor = avg !== null ? (avg >= 80 ? '#10b981' : avg >= 60 ? '#3b82f6' : '#ef4444') : '#94a3b8';
+        const avgLabel = avg !== null ? avg : '—';
+        const isOpen = focusClassId ? kelas.id === focusClassId : true;
+        return '<div style="margin-bottom:10px;border:1px solid hsl(215 15% 92%);border-radius:10px;overflow:hidden;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:hsl(215 20% 98%);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">' +
+            '<div><strong style="font-size:0.78rem;color:hsl(215 40% 18%)">'+kelas.nama+'</strong><br><span style="font-size:0.62rem;color:hsl(215 15% 55%)">'+kelas.kode+' · '+kelas.dosen+'</span></div>' +
+            '<span style="font-size:0.92rem;font-weight:800;color:'+avgColor+'">'+avgLabel+'</span>' +
+          '</div>' +
+          '<div style="padding:8px 14px;'+(isOpen?'':'display:none')+'">'+rows+'</div>' +
+        '</div>';
+      }).join('');
+
+      const totalAvg = allGrades.length ? Math.round(allGrades.reduce((a,b)=>a+b,0)/allGrades.length) : 0;
+      const totalColor = totalAvg >= 80 ? '#10b981' : totalAvg >= 60 ? '#3b82f6' : '#f59e0b';
+      nilaiContent.innerHTML =
+        '<div style="text-align:center;padding:12px 0 16px;">' +
+          '<div style="display:inline-block;position:relative;"><svg viewBox="0 0 36 36" width="64" height="64"><circle cx="18" cy="18" r="16" fill="none" stroke="hsl(215 15% 92%)" stroke-width="3"/><circle cx="18" cy="18" r="16" fill="none" stroke="'+totalColor+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+totalAvg+', 100" transform="rotate(-90 18 18)"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.92rem;font-weight:800;color:'+totalColor+'">'+totalAvg+'</span></div>' +
+          '<p style="font-size:0.68rem;color:hsl(215 15% 55%);margin:6px 0 0">Rata-rata keseluruhan dari '+allGrades.length+' komponen yang dinilai</p>' +
+        '</div>' + classRows;
+    }
+
+    // "Lihat Semua Nilai" button
+    document.getElementById('toggleNilaiView')?.addEventListener('click', () => {
+      renderNilaiModalContent(null);
+      if (nilaiModal) nilaiModal.style.display = 'flex';
+    });
+
+    // Per-card 📊 buttons
+    document.querySelectorAll('.el-kelas-nilai-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const classId = parseInt(btn.dataset.classId);
+        renderNilaiModalContent(classId);
+        if (nilaiModal) nilaiModal.style.display = 'flex';
+      });
+    });
+    // "Kembali" button — back to Dashboard
     document.querySelectorAll('[data-action="back-to-kelas"]').forEach(btn => {
       btn.addEventListener('click', () => {
         courseState = null;
-        currentPage = 'kelas';
+        currentPage = 'home';
         renderMain();
       });
     });

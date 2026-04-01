@@ -29,7 +29,7 @@ export const CAMPUS = {
 export const PRODI_LIST = [
   {
     id: 1,
-    name: 'Administrasi Publik',
+    name: 'Administrasi Negara',
     jenjang: 'S1',
     akreditasi: 'B',
     desc: 'Program studi yang mempelajari teori dan praktik administrasi pemerintahan, kebijakan publik, dan manajemen organisasi publik.',
@@ -39,33 +39,13 @@ export const PRODI_LIST = [
   },
   {
     id: 2,
-    name: 'Administrasi Bisnis',
+    name: 'Administrasi Niaga',
     jenjang: 'S1',
     akreditasi: 'B',
     desc: 'Mempelajari manajemen bisnis, pemasaran, keuangan, dan strategi bisnis untuk menjadi profesional di dunia usaha.',
     mahasiswa: 380,
     dosen: 14,
     icon: '💼'
-  },
-  {
-    id: 3,
-    name: 'Administrasi Publik',
-    jenjang: 'S2',
-    akreditasi: 'B',
-    desc: 'Program magister untuk memperdalam analisis kebijakan publik, good governance, dan inovasi pelayanan publik.',
-    mahasiswa: 120,
-    dosen: 10,
-    icon: '🎓'
-  },
-  {
-    id: 4,
-    name: 'Ilmu Administrasi',
-    jenjang: 'D3',
-    akreditasi: 'B',
-    desc: 'Program diploma untuk mencetak tenaga ahli madya yang kompeten di bidang administrasi perkantoran.',
-    mahasiswa: 330,
-    dosen: 9,
-    icon: '📋'
   }
 ];
 
@@ -188,11 +168,11 @@ export const USERS = {
     nim: '2024101001',
     nama: 'Ahmad Rizky Pratama',
     email: 'ahmad.rizky@student.stiabayuangga.ac.id',
-    prodi: 'Administrasi Publik',
+    prodi: 'Administrasi Negara',
     semester: 4,
     ipk: 3.65,
-    totalSks: 72,
-    maxSks: 144,
+    totalSks: 65,
+    maxSks: 146,
     avatar: null,
     role: 'mahasiswa',
     // Data Pribadi
@@ -230,7 +210,7 @@ export const USERS = {
     nip: '198501012010011001',
     nama: 'Dr. Ir. Bambang Sudarsono, M.Si.',
     email: 'bambang@stiabayuangga.ac.id',
-    prodi: 'Administrasi Publik',
+    prodi: 'Administrasi Negara',
     jabatan: 'Lektor Kepala',
     totalMK: 4,
     totalMahasiswa: 180,
@@ -242,7 +222,7 @@ export const USERS = {
     nip: '197809152005011001',
     nama: 'Prof. Dr. Sri Wahyuni, M.AP.',
     email: 'sri.wahyuni@stiabayuangga.ac.id',
-    prodi: 'Administrasi Publik',
+    prodi: 'Administrasi Negara',
     jabatan: 'Ketua Program Studi',
     totalMahasiswa: 420,
     totalDosen: 15,
@@ -261,110 +241,180 @@ export const USERS = {
 };
 
 export const JADWAL = [
-  { hari: 'Senin', jam: '07:30-09:10', mk: 'Kebijakan Publik', kelas: 'A', ruang: 'R.201', dosen: 'Dr. Bambang S.' },
-  { hari: 'Senin', jam: '09:20-11:00', mk: 'Statistik Sosial', kelas: 'A', ruang: 'R.305', dosen: 'Ir. Siti N.' },
-  { hari: 'Selasa', jam: '07:30-09:10', mk: 'Teori Administrasi', kelas: 'A', ruang: 'R.102', dosen: 'Prof. Sri W.' },
-  { hari: 'Selasa', jam: '13:00-14:40', mk: 'Hukum Administrasi', kelas: 'A', ruang: 'R.201', dosen: 'Dr. Agus R.' },
-  { hari: 'Rabu', jam: '07:30-09:10', mk: 'Manajemen SDM', kelas: 'A', ruang: 'R.204', dosen: 'Dr. Rina K.' },
-  { hari: 'Kamis', jam: '09:20-11:00', mk: 'Sistem Informasi Manajemen', kelas: 'A', ruang: 'Lab', dosen: 'Ir. Andi P.' },
-  { hari: 'Jumat', jam: '07:30-09:10', mk: 'Etika Administrasi', kelas: 'A', ruang: 'R.301', dosen: 'Dr. Bambang S.' }
+  { hari: 'Senin', jam: '07:30-09:10', mk: 'Geopolitik', kelas: 'B', ruang: 'RA-201', dosen: 'Pungky P.J.' },
+  { hari: 'Senin', jam: '09:20-11:00', mk: 'Teori Adm Negara', kelas: 'B', ruang: 'RA-202', dosen: 'Dr. Anton M.' },
+  { hari: 'Selasa', jam: '07:30-09:10', mk: 'Perilaku Organisasi', kelas: 'B', ruang: 'RA-203', dosen: 'Noor Farid' },
+  { hari: 'Selasa', jam: '13:00-14:40', mk: 'Adm Pembangunan', kelas: 'B', ruang: 'RA-204', dosen: 'Pungky P.J.' },
+  { hari: 'Rabu', jam: '07:30-09:10', mk: 'Kepemimpinan', kelas: 'B', ruang: 'RA-201', dosen: 'Nur Aini' },
+  { hari: 'Kamis', jam: '09:20-11:00', mk: 'Sosiologi Masyarakat Kota dan Desa', kelas: 'B', ruang: 'RA-205', dosen: 'Marsinem' },
+  { hari: 'Jumat', jam: '07:30-09:10', mk: 'Teori Komunikasi', kelas: 'B', ruang: 'RA-202', dosen: 'Bambang L.' }
 ];
 
 export const MATA_KULIAH = [
-  { kode: 'AP301', nama: 'Kebijakan Publik', sks: 3, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP302', nama: 'Statistik Sosial', sks: 3, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP303', nama: 'Teori Administrasi', sks: 3, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP304', nama: 'Hukum Administrasi', sks: 2, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP305', nama: 'Manajemen SDM', sks: 3, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP306', nama: 'Sistem Informasi Manajemen', sks: 3, semester: 4, kategori: 'Pilihan' },
-  { kode: 'AP307', nama: 'Etika Administrasi', sks: 2, semester: 4, kategori: 'Wajib' },
-  { kode: 'AP201', nama: 'Pengantar Ilmu Administrasi', sks: 3, semester: 1, kategori: 'Wajib' },
-  { kode: 'AP308', nama: 'Metode Penelitian Sosial', sks: 3, semester: 5, kategori: 'Wajib' },
-  { kode: 'AP309', nama: 'E-Government', sks: 3, semester: 5, kategori: 'Pilihan' }
+  { kode: 'ANA 146', nama: 'Geopolitik', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'ANA 131', nama: 'Teori Adm Negara', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'MDK 120', nama: 'Perilaku Organisasi', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'MDK 126', nama: 'Kepemimpinan', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'ANA 158', nama: 'Adm Pembangunan', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'ANA 151', nama: 'Sosiologi Masyarakat Kota dan Desa', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'ANA 142', nama: 'Teori Komunikasi', sks: 3, semester: 4, kategori: 'Wajib' },
+  { kode: 'ANI 134', nama: 'Pengantar Ilmu Adm', sks: 3, semester: 1, kategori: 'Wajib' },
+  { kode: 'MDK 124', nama: 'Metode Penelitian Adm', sks: 3, semester: 5, kategori: 'Wajib' },
+  { kode: 'MDK 121', nama: 'Sistem Informasi Manajemen', sks: 3, semester: 5, kategori: 'Wajib' }
 ];
 
 export const NILAI = [
-  { kode: 'AP201', nama: 'Pengantar Ilmu Administrasi', sks: 3, nilai: 'A', bobot: 4.0, semester: 1 },
-  { kode: 'AP202', nama: 'Pendidikan Pancasila', sks: 2, nilai: 'A', bobot: 4.0, semester: 1 },
-  { kode: 'AP203', nama: 'Bahasa Indonesia', sks: 2, nilai: 'B+', bobot: 3.5, semester: 1 },
-  { kode: 'AP204', nama: 'Pengantar Ekonomi', sks: 3, nilai: 'B+', bobot: 3.5, semester: 1 },
-  { kode: 'AP205', nama: 'Sosiologi', sks: 3, nilai: 'A-', bobot: 3.7, semester: 1 },
-  { kode: 'AP211', nama: 'Teori Organisasi', sks: 3, nilai: 'A-', bobot: 3.7, semester: 2 },
-  { kode: 'AP212', nama: 'Hukum Tata Negara', sks: 3, nilai: 'B+', bobot: 3.5, semester: 2 },
-  { kode: 'AP213', nama: 'Matematika Dasar', sks: 3, nilai: 'B', bobot: 3.0, semester: 2 },
-  { kode: 'AP214', nama: 'Bahasa Inggris', sks: 2, nilai: 'A', bobot: 4.0, semester: 2 },
-  { kode: 'AP215', nama: 'Ilmu Politik', sks: 3, nilai: 'A', bobot: 4.0, semester: 2 },
-  { kode: 'AP301', nama: 'Kebijakan Publik', sks: 3, nilai: 'A-', bobot: 3.7, semester: 3 },
-  { kode: 'AP302', nama: 'Administrasi Keuangan', sks: 3, nilai: 'B+', bobot: 3.5, semester: 3 },
-  { kode: 'AP303', nama: 'Manajemen Proyek', sks: 3, nilai: 'A', bobot: 4.0, semester: 3 },
-  { kode: 'AP304', nama: 'Metodologi Penelitian', sks: 3, nilai: 'B+', bobot: 3.5, semester: 3 },
-  { kode: 'AP305', nama: 'Psikologi Sosial', sks: 2, nilai: 'A', bobot: 4.0, semester: 3 }
+  // Semester 1 — Administrasi Negara
+  { kode: 'MDU 101', nama: 'Agama', sks: 2, nilai: 'A', bobot: 4.0, semester: 1 },
+  { kode: 'MDU 107', nama: 'Bahasa Inggris I', sks: 2, nilai: 'B+', bobot: 3.5, semester: 1 },
+  { kode: 'MDU 202', nama: 'Pendidikan Pancasila', sks: 3, nilai: 'A', bobot: 4.0, semester: 1 },
+  { kode: 'MDK 111', nama: 'Matematika', sks: 2, nilai: 'B+', bobot: 3.5, semester: 1 },
+  { kode: 'MDK 112', nama: 'Sistem Hukum Indonesia', sks: 3, nilai: 'A-', bobot: 3.7, semester: 1 },
+  { kode: 'MDK 114', nama: 'Pengantar Sosiologi', sks: 3, nilai: 'A-', bobot: 3.7, semester: 1 },
+  { kode: 'ANI 134', nama: 'Pengantar Ilmu Adm', sks: 3, nilai: 'A', bobot: 4.0, semester: 1 },
+  { kode: 'MDK 137', nama: 'Pengantar Ilmu Politik', sks: 3, nilai: 'A', bobot: 4.0, semester: 1 },
+  // Semester 2
+  { kode: 'MDU 105', nama: 'Ilmu Alamiah Dasar', sks: 2, nilai: 'B+', bobot: 3.5, semester: 2 },
+  { kode: 'MDU 207', nama: 'Bahasa Inggris 2', sks: 2, nilai: 'A', bobot: 4.0, semester: 2 },
+  { kode: 'MDK 130', nama: 'Bahasa Indonesia', sks: 3, nilai: 'B+', bobot: 3.5, semester: 2 },
+  { kode: 'MDK 116', nama: 'Statistik', sks: 3, nilai: 'B', bobot: 3.0, semester: 2 },
+  { kode: 'MDK 122', nama: 'Demografi', sks: 2, nilai: 'A-', bobot: 3.7, semester: 2 },
+  { kode: 'MDK 115', nama: 'Asas-Asas Manajemen', sks: 3, nilai: 'A', bobot: 4.0, semester: 2 },
+  { kode: 'MDK 119', nama: 'Sistem Sosial Budaya Indonesia', sks: 3, nilai: 'A-', bobot: 3.7, semester: 2 },
+  { kode: 'MDK 200', nama: 'Dasar-Dasar Logika', sks: 3, nilai: 'B+', bobot: 3.5, semester: 2 },
+  // Semester 3
+  { kode: 'MDK 117', nama: 'Organisasi dan Manajemen', sks: 3, nilai: 'A-', bobot: 3.7, semester: 3 },
+  { kode: 'MDK 128', nama: 'Hubungan Masyarakat', sks: 3, nilai: 'B+', bobot: 3.5, semester: 3 },
+  { kode: 'MDK 217', nama: 'Pengantar Antropologi', sks: 3, nilai: 'A', bobot: 4.0, semester: 3 },
+  { kode: 'MDK 123', nama: 'Adm Perpajakan', sks: 3, nilai: 'B+', bobot: 3.5, semester: 3 },
+  { kode: 'MDK 113', nama: 'Sistem Ekonomi Indonesia', sks: 3, nilai: 'A', bobot: 4.0, semester: 3 },
+  { kode: 'ANA 140', nama: 'Sistem Politik Indonesia', sks: 3, nilai: 'A-', bobot: 3.7, semester: 3 },
+  { kode: 'MDK 136', nama: 'Hukum Adm Negara', sks: 2, nilai: 'A', bobot: 4.0, semester: 3 },
+  { kode: 'MDK 220', nama: 'Pengantar Sistem Informasi Manajemen', sks: 3, nilai: 'B+', bobot: 3.5, semester: 3 }
 ];
+
+// ---- Pertemuan Date Generator ----
+// Generates actual dates for each pertemuan (1-14) based on the day of the week (hari)
+// Semester Genap 2025/2026 starts 24 Feb 2026
+const SEMESTER_START = new Date(2026, 1, 24); // Feb 24, 2026 (Monday)
+const HARI_MAP = { 'Senin': 1, 'Selasa': 2, 'Rabu': 3, 'Kamis': 4, 'Jumat': 5, 'Sabtu': 6 };
+const BULAN_PENDEK = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+
+export function generatePertemuanDates(hari, totalPertemuan = 14) {
+  const dayOfWeek = HARI_MAP[hari] || 1; // Default to Monday
+  // Find first occurrence of this day on or after semester start
+  const firstDay = new Date(SEMESTER_START);
+  while (firstDay.getDay() !== dayOfWeek) {
+    firstDay.setDate(firstDay.getDate() + 1);
+  }
+  const dates = [];
+  for (let i = 0; i < totalPertemuan; i++) {
+    const d = new Date(firstDay);
+    d.setDate(d.getDate() + (i * 7));
+    dates.push(d);
+  }
+  return dates;
+}
+
+export function formatTanggalShort(date) {
+  return date.getDate() + ' ' + BULAN_PENDEK[date.getMonth()];
+}
+
+export function formatTanggalFull(date) {
+  const hariNama = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  return hariNama[date.getDay()] + ', ' + date.getDate() + ' ' + BULAN_PENDEK[date.getMonth()] + ' ' + date.getFullYear();
+}
 
 export const KELAS_LIST = [
   {
     id: 1,
-    nama: 'Kebijakan Publik',
-    kode: 'AP301',
-    dosen: 'Dr. Bambang Sudarsono',
+    nama: 'Geopolitik',
+    kode: 'ANA 146',
+    dosen: 'Pungky Praja Jatmika, S.IP., M.Si.',
     semester: 'Genap 2025/2026',
     progress: 65,
     totalMateri: 14,
     materiSelesai: 9,
-    mahasiswa: 45,
+    mahasiswa: 42,
     jadwal: 'Senin, 07:30-09:10',
     sks: 3
   },
   {
     id: 2,
-    nama: 'Statistik Sosial',
-    kode: 'AP302',
-    dosen: 'Ir. Siti Nurjanah',
+    nama: 'Teori Adm Negara',
+    kode: 'ANA 131',
+    dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.',
     semester: 'Genap 2025/2026',
     progress: 50,
     totalMateri: 14,
     materiSelesai: 7,
-    mahasiswa: 42,
+    mahasiswa: 40,
     jadwal: 'Senin, 09:20-11:00',
     sks: 3
   },
   {
     id: 3,
-    nama: 'Teori Administrasi',
-    kode: 'AP303',
-    dosen: 'Prof. Sri Wahyuni',
+    nama: 'Perilaku Organisasi',
+    kode: 'MDK 120',
+    dosen: 'Noor Farid, S.Sos., M.Si.',
     semester: 'Genap 2025/2026',
     progress: 72,
     totalMateri: 14,
     materiSelesai: 10,
-    mahasiswa: 48,
+    mahasiswa: 45,
     jadwal: 'Selasa, 07:30-09:10',
     sks: 3
   },
   {
     id: 4,
-    nama: 'Hukum Administrasi',
-    kode: 'AP304',
-    dosen: 'Dr. Agus Rahardjo',
+    nama: 'Adm Pembangunan',
+    kode: 'ANA 158',
+    dosen: 'Pungky Praja Jatmika, S.IP., M.Si.',
     semester: 'Genap 2025/2026',
     progress: 43,
     totalMateri: 14,
     materiSelesai: 6,
-    mahasiswa: 45,
+    mahasiswa: 38,
     jadwal: 'Selasa, 13:00-14:40',
-    sks: 2
+    sks: 3
   },
   {
     id: 5,
-    nama: 'Manajemen SDM',
-    kode: 'AP305',
-    dosen: 'Dr. Rina Kartika',
+    nama: 'Kepemimpinan',
+    kode: 'MDK 126',
+    dosen: 'Nur Aini, S.E., M.M.',
     semester: 'Genap 2025/2026',
     progress: 57,
     totalMateri: 14,
     materiSelesai: 8,
     mahasiswa: 40,
     jadwal: 'Rabu, 07:30-09:10',
+    sks: 3
+  },
+  {
+    id: 6,
+    nama: 'Sosiologi Masyarakat Kota dan Desa',
+    kode: 'ANA 151',
+    dosen: 'Marsinem, S.Sos., M.Si.',
+    semester: 'Genap 2025/2026',
+    progress: 60,
+    totalMateri: 14,
+    materiSelesai: 8,
+    mahasiswa: 38,
+    jadwal: 'Kamis, 09:20-11:00',
+    sks: 3
+  },
+  {
+    id: 7,
+    nama: 'Teori Komunikasi',
+    kode: 'ANA 142',
+    dosen: 'Bambang Lasmono, S.E., M.M.',
+    semester: 'Genap 2025/2026',
+    progress: 48,
+    totalMateri: 14,
+    materiSelesai: 7,
+    mahasiswa: 42,
+    jadwal: 'Jumat, 07:30-09:10',
     sks: 3
   }
 ];
@@ -663,3 +713,162 @@ export const KURIKULUM_DATA = {
     ]
   }
 };
+
+// === SIAKAD MAHASISWA DATA ===
+
+export const KRS_DATA = {
+  semester: 'Genap 2025/2026',
+  dosenPA: 'Dr. Moch. Anton Maulana, S.E., M.M.',
+  nipDosenPA: '199209272008013005',
+  periodeMasuk: '2023 - 1',
+  basis: 'Reguler',
+  statusKRS: 'Divalidasi',
+  validatedBy: 'Dr. Moch. Anton Maulana, S.E., M.M.',
+  validatedAt: '25 Maret 2026, 20:39:43',
+  mataKuliah: [
+    { kode: 'ANA 146', nama: 'Geopolitik', kelas: 'B', sks: 3, dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', seksi: 'EU101', waktu: 'Senin, 07:30-09:10', ruang: 'RA-201', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','offline','online','offline','offline','online','offline','offline','offline','online','offline','offline','offline'] },
+    { kode: 'ANA 131', nama: 'Teori Adm Negara', kelas: 'B', sks: 3, dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', seksi: 'EU101', waktu: 'Senin, 09:20-11:00', ruang: 'RA-202', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','online','offline','offline','online','offline','offline','offline','online','offline','offline','offline','offline'] },
+    { kode: 'MDK 120', nama: 'Perilaku Organisasi', kelas: 'B', sks: 3, dosen: 'Noor Farid, S.Sos., M.Si.', seksi: 'EU102', waktu: 'Selasa, 07:30-09:10', ruang: 'RA-203', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','offline','offline','online','offline','offline','online','offline','offline','offline','online','offline','offline'] },
+    { kode: 'ANA 158', nama: 'Adm Pembangunan', kelas: 'B', sks: 3, dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', seksi: 'EU101', waktu: 'Selasa, 13:00-14:40', ruang: 'RA-204', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','offline','offline','offline','offline','offline','offline','offline','offline','offline','offline','offline','offline'] },
+    { kode: 'MDK 126', nama: 'Kepemimpinan', kelas: 'B', sks: 3, dosen: 'Nur Aini, S.E., M.M.', seksi: 'EU101', waktu: 'Rabu, 07:30-09:10', ruang: 'RA-201', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','online','offline','offline','offline','online','offline','offline','offline','offline','online','offline','offline'] },
+    { kode: 'ANA 151', nama: 'Sosiologi Masyarakat Kota dan Desa', kelas: 'B', sks: 3, dosen: 'Marsinem, S.Sos., M.Si.', seksi: 'EU101', waktu: 'Kamis, 09:20-11:00', ruang: 'RA-205', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','online','offline','online','offline','online','offline','online','offline','online','offline','online','offline','offline'] },
+    { kode: 'ANA 142', nama: 'Teori Komunikasi', kelas: 'B', sks: 3, dosen: 'Bambang Lasmono, S.E., M.M.', seksi: 'EU102', waktu: 'Jumat, 07:30-09:10', ruang: 'RA-202', jenisKelas: 'Reguler',
+      modePertemuan: ['offline','offline','offline','online','offline','offline','offline','offline','online','offline','offline','offline','online','offline'] }
+  ]
+};
+
+export const ABSENSI_DATA = [
+  { kode: 'ANA 146', nama: 'Geopolitik', kelas: 'EU101', jenisKuliah: 'Teori', kel: 1, presensiMhs: 13, presensiDosen: 14, pctPresensi: 93, tidakHadirKe: '9' },
+  { kode: 'ANA 131', nama: 'Teori Adm Negara', kelas: 'EU101', jenisKuliah: 'Teori', kel: 1, presensiMhs: 14, presensiDosen: 14, pctPresensi: 100, tidakHadirKe: '-' },
+  { kode: 'MDK 120', nama: 'Perilaku Organisasi', kelas: 'EU102', jenisKuliah: 'Teori', kel: 1, presensiMhs: 12, presensiDosen: 14, pctPresensi: 86, tidakHadirKe: '5, 11' },
+  { kode: 'ANA 158', nama: 'Adm Pembangunan', kelas: 'EU101', jenisKuliah: 'Teori', kel: 1, presensiMhs: 13, presensiDosen: 14, pctPresensi: 93, tidakHadirKe: '7' },
+  { kode: 'MDK 126', nama: 'Kepemimpinan', kelas: 'EU101', jenisKuliah: 'Teori', kel: 1, presensiMhs: 14, presensiDosen: 14, pctPresensi: 100, tidakHadirKe: '-' },
+  { kode: 'ANA 151', nama: 'Sosiologi Masyarakat Kota dan Desa', kelas: 'EU101', jenisKuliah: 'Teori', kel: 1, presensiMhs: 13, presensiDosen: 14, pctPresensi: 93, tidakHadirKe: '3' },
+  { kode: 'ANA 142', nama: 'Teori Komunikasi', kelas: 'EU102', jenisKuliah: 'Teori', kel: 1, presensiMhs: 12, presensiDosen: 14, pctPresensi: 86, tidakHadirKe: '6, 10' }
+];
+
+export const EVALUASI_DATA = [
+  { kode: 'ANA 146', nama: 'Geopolitik', kelas: 'EU101', sks: 3, dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sudahEvaluasi: true },
+  { kode: 'ANA 131', nama: 'Teori Adm Negara', kelas: 'EU101', sks: 3, dosen: 'Dr. Moch. Anton Maulana, S.E., M.M.', sudahEvaluasi: true },
+  { kode: 'MDK 120', nama: 'Perilaku Organisasi', kelas: 'EU102', sks: 3, dosen: 'Noor Farid, S.Sos., M.Si.', sudahEvaluasi: false },
+  { kode: 'ANA 158', nama: 'Adm Pembangunan', kelas: 'EU101', sks: 3, dosen: 'Pungky Praja Jatmika, S.IP., M.Si.', sudahEvaluasi: true },
+  { kode: 'MDK 126', nama: 'Kepemimpinan', kelas: 'EU101', sks: 3, dosen: 'Nur Aini, S.E., M.M.', sudahEvaluasi: false },
+  { kode: 'ANA 151', nama: 'Sosiologi Masyarakat Kota dan Desa', kelas: 'EU101', sks: 3, dosen: 'Marsinem, S.Sos., M.Si.', sudahEvaluasi: true },
+  { kode: 'ANA 142', nama: 'Teori Komunikasi', kelas: 'EU102', sks: 3, dosen: 'Bambang Lasmono, S.E., M.M.', sudahEvaluasi: false }
+];
+
+export const JADWAL_UTS_UAS = [
+  { tanggal: 'Senin, 13 April 2026', mulai: '07:30', selesai: '09:10', kode: 'ANA 146', nama: 'Geopolitik', sesi: 'EU101', jenis: 'UTS', kelompok: 1 },
+  { tanggal: 'Selasa, 14 April 2026', mulai: '07:30', selesai: '09:10', kode: 'MDK 120', nama: 'Perilaku Organisasi', sesi: 'EU102', jenis: 'UTS', kelompok: 1 },
+  { tanggal: 'Rabu, 15 April 2026', mulai: '07:30', selesai: '09:10', kode: 'MDK 126', nama: 'Kepemimpinan', sesi: 'EU101', jenis: 'UTS', kelompok: 1 },
+  { tanggal: 'Kamis, 16 April 2026', mulai: '09:20', selesai: '11:00', kode: 'ANA 131', nama: 'Teori Adm Negara', sesi: 'EU101', jenis: 'UTS', kelompok: 1 },
+  { tanggal: 'Senin, 8 Juni 2026', mulai: '07:30', selesai: '09:10', kode: 'ANA 146', nama: 'Geopolitik', sesi: 'EU101', jenis: 'UAS', kelompok: 1 },
+  { tanggal: 'Selasa, 9 Juni 2026', mulai: '07:30', selesai: '09:10', kode: 'MDK 120', nama: 'Perilaku Organisasi', sesi: 'EU102', jenis: 'UAS', kelompok: 1 },
+  { tanggal: 'Rabu, 10 Juni 2026', mulai: '07:30', selesai: '09:10', kode: 'MDK 126', nama: 'Kepemimpinan', sesi: 'EU101', jenis: 'UAS', kelompok: 1 },
+  { tanggal: 'Kamis, 11 Juni 2026', mulai: '09:20', selesai: '11:00', kode: 'ANA 131', nama: 'Teori Adm Negara', sesi: 'EU101', jenis: 'UAS', kelompok: 1 }
+];
+
+// === DOSEN DATA ===
+
+export const DOSEN_KELAS_MAHASISWA = [
+  { kode: 'ANA 161', nama: 'Kebijakan Publik', sks: 3, kelas: 'A', semester: 'Genap 2025/2026', hari: 'Senin', jam: '07:30-09:10', ruang: 'R.201',
+    bobot: { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 },
+    mahasiswa: [
+      { nim: '2024101001', nama: 'Ahmad Rizky Pratama', angkatan: 2023, nilaiUTS: 82, nilaiUAS: 88, nilaiTugas: 85, nilaiQuiz: 80, kehadiran: 13 },
+      { nim: '2024101002', nama: 'Siti Nurhaliza', angkatan: 2023, nilaiUTS: 78, nilaiUAS: 82, nilaiTugas: 80, nilaiQuiz: 85, kehadiran: 14 },
+      { nim: '2024101003', nama: 'Budi Santoso', angkatan: 2023, nilaiUTS: 90, nilaiUAS: 92, nilaiTugas: 88, nilaiQuiz: 95, kehadiran: 14 },
+      { nim: '2024101004', nama: 'Dewi Lestari', angkatan: 2023, nilaiUTS: 75, nilaiUAS: 78, nilaiTugas: 82, nilaiQuiz: 70, kehadiran: 12 },
+      { nim: '2024101005', nama: 'Eko Prasetyo', angkatan: 2023, nilaiUTS: 85, nilaiUAS: 87, nilaiTugas: 90, nilaiQuiz: 88, kehadiran: 14 },
+      { nim: '2024101006', nama: 'Fitri Handayani', angkatan: 2023, nilaiUTS: 70, nilaiUAS: 75, nilaiTugas: 72, nilaiQuiz: 68, kehadiran: 11 },
+      { nim: '2024101007', nama: 'Gani Setiawan', angkatan: 2023, nilaiUTS: 88, nilaiUAS: 85, nilaiTugas: 90, nilaiQuiz: 82, kehadiran: 13 },
+      { nim: '2024101008', nama: 'Hana Permata', angkatan: 2024, nilaiUTS: 92, nilaiUAS: 95, nilaiTugas: 93, nilaiQuiz: 90, kehadiran: 14 },
+    ]
+  },
+  { kode: 'ANA 156', nama: 'Pengembangan Organisasi', sks: 3, kelas: 'A', semester: 'Genap 2025/2026', hari: 'Selasa', jam: '09:20-11:50', ruang: 'R.302',
+    bobot: { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 },
+    mahasiswa: [
+      { nim: '2024101009', nama: 'Irfan Hakim', angkatan: 2023, nilaiUTS: 72, nilaiUAS: 78, nilaiTugas: 75, nilaiQuiz: 70, kehadiran: 13 },
+      { nim: '2024101010', nama: 'Julia Putri', angkatan: 2024, nilaiUTS: 88, nilaiUAS: 90, nilaiTugas: 85, nilaiQuiz: 92, kehadiran: 14 },
+      { nim: '2024101011', nama: 'Kurniawan', angkatan: 2024, nilaiUTS: 65, nilaiUAS: 70, nilaiTugas: 68, nilaiQuiz: 60, kehadiran: 10 },
+      { nim: '2024101012', nama: 'Lina Marlina', angkatan: 2024, nilaiUTS: 82, nilaiUAS: 80, nilaiTugas: 85, nilaiQuiz: 78, kehadiran: 14 },
+      { nim: '2024101013', nama: 'Muhammad Faisal', angkatan: 2023, nilaiUTS: 77, nilaiUAS: 80, nilaiTugas: 79, nilaiQuiz: 75, kehadiran: 12 },
+      { nim: '2024101014', nama: 'Nadia Rahmawati', angkatan: 2024, nilaiUTS: 90, nilaiUAS: 88, nilaiTugas: 92, nilaiQuiz: 88, kehadiran: 14 },
+    ]
+  },
+  { kode: 'MDK 120', nama: 'Perilaku Organisasi', sks: 3, kelas: 'B', semester: 'Genap 2025/2026', hari: 'Kamis', jam: '07:30-09:10', ruang: 'R.201',
+    bobot: { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 },
+    mahasiswa: [
+      { nim: '2024101001', nama: 'Ahmad Rizky Pratama', angkatan: 2023, nilaiUTS: 80, nilaiUAS: 85, nilaiTugas: 78, nilaiQuiz: 82, kehadiran: 12 },
+      { nim: '2024101015', nama: 'Rudi Hermawan', angkatan: 2022, nilaiUTS: 75, nilaiUAS: 80, nilaiTugas: 82, nilaiQuiz: 78, kehadiran: 13 },
+      { nim: '2024101016', nama: 'Yeni Fitriani', angkatan: 2022, nilaiUTS: 85, nilaiUAS: 88, nilaiTugas: 87, nilaiQuiz: 90, kehadiran: 14 },
+      { nim: '2024101002', nama: 'Siti Nurhaliza', angkatan: 2023, nilaiUTS: 70, nilaiUAS: 74, nilaiTugas: 72, nilaiQuiz: 68, kehadiran: 11 },
+      { nim: '2024101005', nama: 'Eko Prasetyo', angkatan: 2023, nilaiUTS: 88, nilaiUAS: 90, nilaiTugas: 85, nilaiQuiz: 92, kehadiran: 14 },
+      { nim: '2024101010', nama: 'Julia Putri', angkatan: 2024, nilaiUTS: 82, nilaiUAS: 84, nilaiTugas: 80, nilaiQuiz: 85, kehadiran: 13 },
+      { nim: '2024101013', nama: 'Muhammad Faisal', angkatan: 2023, nilaiUTS: 68, nilaiUAS: 72, nilaiTugas: 70, nilaiQuiz: 65, kehadiran: 12 },
+    ]
+  },
+  { kode: 'MDK 126', nama: 'Kepemimpinan', sks: 3, kelas: 'A', semester: 'Genap 2025/2026', hari: 'Jumat', jam: '07:30-09:10', ruang: 'R.305',
+    bobot: { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 },
+    mahasiswa: [
+      { nim: '2024101001', nama: 'Ahmad Rizky Pratama', angkatan: 2023, nilaiUTS: 80, nilaiUAS: 85, nilaiTugas: 78, nilaiQuiz: 76, kehadiran: 12 },
+      { nim: '2024101009', nama: 'Irfan Hakim', angkatan: 2023, nilaiUTS: 72, nilaiUAS: 78, nilaiTugas: 75, nilaiQuiz: 70, kehadiran: 13 },
+      { nim: '2024101010', nama: 'Julia Putri', angkatan: 2024, nilaiUTS: 88, nilaiUAS: 90, nilaiTugas: 85, nilaiQuiz: 88, kehadiran: 14 },
+      { nim: '2024101011', nama: 'Kurniawan', angkatan: 2024, nilaiUTS: 65, nilaiUAS: 70, nilaiTugas: 68, nilaiQuiz: 62, kehadiran: 10 },
+      { nim: '2024101012', nama: 'Lina Marlina', angkatan: 2024, nilaiUTS: 82, nilaiUAS: 80, nilaiTugas: 85, nilaiQuiz: 80, kehadiran: 14 },
+    ]
+  }
+];
+
+export const DOSEN_BIMBINGAN = [
+  { nim: '2024101001', nama: 'Ahmad Rizky Pratama', prodi: 'Administrasi Negara', angkatan: 2023, semester: 4, ipk: 3.69, sksLulus: 41, status: 'Aktif' },
+  { nim: '2024101002', nama: 'Siti Nurhaliza', prodi: 'Administrasi Negara', angkatan: 2023, semester: 4, ipk: 3.52, sksLulus: 39, status: 'Aktif' },
+  { nim: '2024101003', nama: 'Budi Santoso', prodi: 'Administrasi Negara', angkatan: 2023, semester: 4, ipk: 3.85, sksLulus: 43, status: 'Aktif' },
+  { nim: '2024101004', nama: 'Dewi Lestari', prodi: 'Administrasi Negara', angkatan: 2023, semester: 4, ipk: 3.21, sksLulus: 38, status: 'Aktif' },
+  { nim: '2023101015', nama: 'Rudi Hermawan', prodi: 'Administrasi Negara', angkatan: 2022, semester: 6, ipk: 3.45, sksLulus: 98, status: 'Aktif' },
+  { nim: '2023101016', nama: 'Yeni Fitriani', prodi: 'Administrasi Negara', angkatan: 2022, semester: 6, ipk: 3.78, sksLulus: 102, status: 'Aktif' },
+];
+
+// === BAP DATA ===
+
+export const KALENDER_AKADEMIK = [
+  { no: 1, kegiatan: 'Registrasi & Herregistrasi', mulai: '1 Feb 2026', selesai: '14 Feb 2026', status: 'Selesai' },
+  { no: 2, kegiatan: 'Pengisian KRS Online', mulai: '10 Feb 2026', selesai: '21 Feb 2026', status: 'Selesai' },
+  { no: 3, kegiatan: 'Perwalian Akademik', mulai: '15 Feb 2026', selesai: '21 Feb 2026', status: 'Selesai' },
+  { no: 4, kegiatan: 'Perkuliahan Semester Genap', mulai: '24 Feb 2026', selesai: '6 Jun 2026', status: 'Berjalan' },
+  { no: 5, kegiatan: 'Ujian Tengah Semester (UTS)', mulai: '13 Apr 2026', selesai: '25 Apr 2026', status: 'Mendatang' },
+  { no: 6, kegiatan: 'Perkuliahan Setelah UTS', mulai: '27 Apr 2026', selesai: '6 Jun 2026', status: 'Mendatang' },
+  { no: 7, kegiatan: 'Ujian Akhir Semester (UAS)', mulai: '8 Jun 2026', selesai: '20 Jun 2026', status: 'Mendatang' },
+  { no: 8, kegiatan: 'Input Nilai oleh Dosen', mulai: '22 Jun 2026', selesai: '4 Jul 2026', status: 'Mendatang' },
+  { no: 9, kegiatan: 'Pengumuman KHS', mulai: '6 Jul 2026', selesai: '6 Jul 2026', status: 'Mendatang' },
+  { no: 10, kegiatan: 'Libur Semester', mulai: '7 Jul 2026', selesai: '30 Aug 2026', status: 'Mendatang' },
+];
+
+export const WISUDA_DATA = {
+  periode: 'Periode I Tahun Akademik 2025/2026',
+  tanggal: 'Sabtu, 25 Juli 2026',
+  tempat: 'Gedung Serbaguna STIA Bayuangga',
+  calon: [
+    { nim: '2021101001', nama: 'Rina Wulandari', prodi: 'Administrasi Negara', ipk: 3.82, judulSkripsi: 'Analisis Kebijakan Publik dalam Pengelolaan Sampah Kota', statusToga: 'Sudah' },
+    { nim: '2021101002', nama: 'Agung Prasetya', prodi: 'Administrasi Negara', ipk: 3.65, judulSkripsi: 'Implementasi E-Government di Pemerintah Kabupaten Malang', statusToga: 'Sudah' },
+    { nim: '2021101003', nama: 'Mega Safitri', prodi: 'Administrasi Negara', ipk: 3.91, judulSkripsi: 'Efektivitas Program BPJS dalam Pelayanan Kesehatan', statusToga: 'Belum' },
+    { nim: '2021101004', nama: 'Dimas Nugroho', prodi: 'Administrasi Negara', ipk: 3.55, judulSkripsi: 'Partisipasi Masyarakat dalam Pembangunan Desa', statusToga: 'Sudah' },
+    { nim: '2021101005', nama: 'Putri Ayu', prodi: 'Administrasi Negara', ipk: 3.72, judulSkripsi: 'Reformasi Birokrasi di Lingkungan Pemerintah Daerah', statusToga: 'Belum' },
+  ]
+};
+
+export const SURAT_TEMPLATES = [
+  { id: 1, jenis: 'Surat Keterangan Aktif Kuliah', kode: 'SKA', count: 45 },
+  { id: 2, jenis: 'Surat Keterangan Lulus', kode: 'SKL', count: 12 },
+  { id: 3, jenis: 'Surat Pengantar Magang', kode: 'SPM', count: 23 },
+  { id: 4, jenis: 'Surat Keterangan Kelakuan Baik', kode: 'SKKB', count: 18 },
+  { id: 5, jenis: 'Surat Rekomendasi Beasiswa', kode: 'SRB', count: 8 },
+  { id: 6, jenis: 'Legalisir Ijazah', kode: 'LGI', count: 35 },
+  { id: 7, jenis: 'Legalisir Transkrip Nilai', kode: 'LGT', count: 32 },
+  { id: 8, jenis: 'Surat Cuti Akademik', kode: 'SCA', count: 5 },
+];
