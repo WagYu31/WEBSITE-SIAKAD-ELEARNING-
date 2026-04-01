@@ -22,9 +22,9 @@ func generateNIM(prodiPilihan string) string {
 	
 	// Prodi code mapping
 	prodiCodes := map[string]string{
-		"S1 Administrasi Publik":  "101",
-		"S1 Administrasi Bisnis":  "102",
-		"S2 Administrasi Publik":  "201",
+		"S1 Administrasi Negara":  "101",
+		"S1 Administrasi Niaga":  "102",
+		"S2 Administrasi Negara":  "201",
 		"D3 Ilmu Administrasi":   "301",
 	}
 	code, ok := prodiCodes[prodiPilihan]

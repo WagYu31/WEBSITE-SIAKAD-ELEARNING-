@@ -23,10 +23,8 @@ const I = {
 };
 
 const PRODI_LIST = [
-  'S1 Administrasi Publik',
-  'S1 Administrasi Bisnis',
-  'S2 Administrasi Publik',
-  'D3 Ilmu Administrasi',
+  'S1 Administrasi Niaga',
+  'S1 Administrasi Negara',
 ];
 
 const AGAMA_LIST = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha', 'Konghucu'];

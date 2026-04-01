@@ -27,31 +27,31 @@ func SeedAkademik(c *gin.Context) {
 	// ============ MATA KULIAH (Semester 1-4) ============
 	mataKuliah := []models.MataKuliah{
 		// Semester 1
-		{Kode: "AP201", Nama: "Pengantar Ilmu Administrasi", SKS: 3, Semester: 1, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP202", Nama: "Pendidikan Pancasila", SKS: 2, Semester: 1, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP203", Nama: "Bahasa Indonesia", SKS: 2, Semester: 1, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP204", Nama: "Pengantar Ekonomi", SKS: 3, Semester: 1, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP205", Nama: "Sosiologi", SKS: 3, Semester: 1, Prodi: "Administrasi Publik", CreatedAt: now},
+		{Kode: "AP201", Nama: "Pengantar Ilmu Administrasi", SKS: 3, Semester: 1, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP202", Nama: "Pendidikan Pancasila", SKS: 2, Semester: 1, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP203", Nama: "Bahasa Indonesia", SKS: 2, Semester: 1, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP204", Nama: "Pengantar Ekonomi", SKS: 3, Semester: 1, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP205", Nama: "Sosiologi", SKS: 3, Semester: 1, Prodi: "Administrasi Negara", CreatedAt: now},
 		// Semester 2
-		{Kode: "AP211", Nama: "Teori Organisasi", SKS: 3, Semester: 2, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP212", Nama: "Hukum Tata Negara", SKS: 3, Semester: 2, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP213", Nama: "Matematika Dasar", SKS: 3, Semester: 2, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP214", Nama: "Bahasa Inggris", SKS: 2, Semester: 2, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP215", Nama: "Ilmu Politik", SKS: 3, Semester: 2, Prodi: "Administrasi Publik", CreatedAt: now},
+		{Kode: "AP211", Nama: "Teori Organisasi", SKS: 3, Semester: 2, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP212", Nama: "Hukum Tata Negara", SKS: 3, Semester: 2, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP213", Nama: "Matematika Dasar", SKS: 3, Semester: 2, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP214", Nama: "Bahasa Inggris", SKS: 2, Semester: 2, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP215", Nama: "Ilmu Politik", SKS: 3, Semester: 2, Prodi: "Administrasi Negara", CreatedAt: now},
 		// Semester 3
-		{Kode: "AP301", Nama: "Kebijakan Publik", SKS: 3, Semester: 3, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP302", Nama: "Administrasi Keuangan", SKS: 3, Semester: 3, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP303", Nama: "Manajemen Proyek", SKS: 3, Semester: 3, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP304", Nama: "Metodologi Penelitian", SKS: 3, Semester: 3, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP305", Nama: "Psikologi Sosial", SKS: 2, Semester: 3, Prodi: "Administrasi Publik", CreatedAt: now},
+		{Kode: "AP301", Nama: "Kebijakan Publik", SKS: 3, Semester: 3, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP302", Nama: "Administrasi Keuangan", SKS: 3, Semester: 3, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP303", Nama: "Manajemen Proyek", SKS: 3, Semester: 3, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP304", Nama: "Metodologi Penelitian", SKS: 3, Semester: 3, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP305", Nama: "Psikologi Sosial", SKS: 2, Semester: 3, Prodi: "Administrasi Negara", CreatedAt: now},
 		// Semester 4 (current KRS)
-		{Kode: "AP401", Nama: "Kebijakan Publik Lanjutan", SKS: 3, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP402", Nama: "Statistik Sosial", SKS: 3, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP403", Nama: "Teori Administrasi", SKS: 3, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP404", Nama: "Hukum Administrasi", SKS: 2, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP405", Nama: "Manajemen SDM", SKS: 3, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP406", Nama: "Sistem Informasi Manajemen", SKS: 3, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
-		{Kode: "AP407", Nama: "Etika Administrasi", SKS: 2, Semester: 4, Prodi: "Administrasi Publik", CreatedAt: now},
+		{Kode: "AP401", Nama: "Kebijakan Publik Lanjutan", SKS: 3, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP402", Nama: "Statistik Sosial", SKS: 3, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP403", Nama: "Teori Administrasi", SKS: 3, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP404", Nama: "Hukum Administrasi", SKS: 2, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP405", Nama: "Manajemen SDM", SKS: 3, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP406", Nama: "Sistem Informasi Manajemen", SKS: 3, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
+		{Kode: "AP407", Nama: "Etika Administrasi", SKS: 2, Semester: 4, Prodi: "Administrasi Negara", CreatedAt: now},
 	}
 
 	if err := config.DB.Create(&mataKuliah).Error; err != nil {
