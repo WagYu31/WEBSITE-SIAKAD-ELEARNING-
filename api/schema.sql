@@ -91,13 +91,22 @@ CREATE TABLE IF NOT EXISTS jadwal_ujian (
 CREATE TABLE IF NOT EXISTS dosen (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nip VARCHAR(30) NOT NULL UNIQUE,
+    nidn VARCHAR(20) DEFAULT '',
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) DEFAULT '',
-    phone VARCHAR(20) DEFAULT '',
+    telepon VARCHAR(20) DEFAULT '',
     prodi VARCHAR(50) DEFAULT '',
-    jabatan VARCHAR(50) DEFAULT '',
-    status VARCHAR(20) DEFAULT 'Aktif',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    jabatan_fungsional VARCHAR(50) DEFAULT '',
+    jabatan_struktural VARCHAR(100) DEFAULT '',
+    golongan VARCHAR(10) DEFAULT '',
+    pendidikan VARCHAR(200) DEFAULT '',
+    bidang_keahlian VARCHAR(500) DEFAULT '',
+    avatar_url VARCHAR(255) DEFAULT '',
+    status VARCHAR(15) DEFAULT 'Aktif',
+    username VARCHAR(50) DEFAULT '' UNIQUE,
+    password VARCHAR(255) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS profiles (
