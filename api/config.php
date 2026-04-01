@@ -3,7 +3,7 @@
 // Database Configuration
 // ============================================
 
-define('DB_HOST', 'localhost');
+define('DB_HOST', 'arzano-db.id.rapidplex.com');
 define('DB_NAME', 'pitiagic_stia');  // Akan dibuat di phpMyAdmin
 define('DB_USER', 'pitiagic_stia');  // Akan dibuat di phpMyAdmin
 define('DB_PASS', 'StiaSecure2026!'); // Ganti sesuai password yang dibuat
