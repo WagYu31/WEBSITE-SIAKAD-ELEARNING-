@@ -122,7 +122,7 @@ if (preg_match('#^/dosen/(\d+)$#', $path, $m) && $method === 'DELETE') {
 }
 
 // ===================== SEED (Dev) =====================
-if ($path === '/seed/akademik' && $method === 'POST') {
+if ($path === '/seed/akademik' && ($method === 'POST' || $method === 'GET')) {
     require_once __DIR__ . '/seed.php';
     seedAkademik();
 }
