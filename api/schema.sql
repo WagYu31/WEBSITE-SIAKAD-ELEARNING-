@@ -1,5 +1,5 @@
 -- ============================================
--- STIA Bayuangga — MySQL Database Schema
+-- STIA Bayuangga — Complete MySQL Database Schema
 -- Untuk hosting stiabayuanggajobs.online
 -- ============================================
 
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS krs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nim VARCHAR(20) NOT NULL,
     semester INT NOT NULL,
-    tahun_ajaran VARCHAR(15) NOT NULL,
+    tahun_ajaran VARCHAR(15) NOT NULL DEFAULT '',
     mata_kuliah_id INT NOT NULL,
     kelas VARCHAR(5) DEFAULT '',
     seksi VARCHAR(10) DEFAULT '',
@@ -49,4 +49,87 @@ CREATE TABLE IF NOT EXISTS krs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_nim (nim),
     FOREIGN KEY (mata_kuliah_id) REFERENCES mata_kuliah(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS nilai (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nim VARCHAR(20) NOT NULL,
+    mata_kuliah_id INT NOT NULL,
+    semester INT NOT NULL,
+    nilai VARCHAR(5) DEFAULT '',
+    bobot DOUBLE DEFAULT 0,
+    kelas VARCHAR(10) DEFAULT '',
+    INDEX idx_nim (nim),
+    UNIQUE KEY uq_nim_mk (nim, mata_kuliah_id),
+    FOREIGN KEY (mata_kuliah_id) REFERENCES mata_kuliah(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS absensi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    krs_id INT NOT NULL,
+    nim VARCHAR(20) NOT NULL,
+    pertemuan INT NOT NULL,
+    status VARCHAR(5) DEFAULT 'H',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_nim (nim),
+    UNIQUE KEY uq_krs_pertemuan (krs_id, pertemuan),
+    FOREIGN KEY (krs_id) REFERENCES krs(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS jadwal_ujian (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    mata_kuliah_id INT NOT NULL,
+    tanggal VARCHAR(50) DEFAULT '',
+    mulai VARCHAR(10) DEFAULT '',
+    selesai VARCHAR(10) DEFAULT '',
+    sesi VARCHAR(10) DEFAULT '',
+    jenis VARCHAR(5) DEFAULT 'UTS',
+    kelompok INT DEFAULT 0,
+    FOREIGN KEY (mata_kuliah_id) REFERENCES mata_kuliah(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dosen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nip VARCHAR(30) NOT NULL UNIQUE,
+    nama VARCHAR(100) NOT NULL,
+    email VARCHAR(100) DEFAULT '',
+    phone VARCHAR(20) DEFAULT '',
+    prodi VARCHAR(50) DEFAULT '',
+    jabatan VARCHAR(50) DEFAULT '',
+    status VARCHAR(20) DEFAULT 'Aktif',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nim VARCHAR(20) NOT NULL UNIQUE,
+    nama VARCHAR(100) DEFAULT '',
+    email VARCHAR(100) DEFAULT '',
+    phone VARCHAR(20) DEFAULT '',
+    alamat TEXT,
+    avatar VARCHAR(200) DEFAULT '',
+    prodi VARCHAR(50) DEFAULT '',
+    password VARCHAR(255) DEFAULT '',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pmb_registrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    no_pendaftaran VARCHAR(20) NOT NULL UNIQUE,
+    nama VARCHAR(100) NOT NULL,
+    email VARCHAR(100) DEFAULT '',
+    phone VARCHAR(20) DEFAULT '',
+    nik VARCHAR(20) DEFAULT '',
+    tempat_lahir VARCHAR(50) DEFAULT '',
+    tanggal_lahir VARCHAR(15) DEFAULT '',
+    jenis_kelamin VARCHAR(10) DEFAULT '',
+    alamat TEXT,
+    asal_sekolah VARCHAR(100) DEFAULT '',
+    jurusan_pilihan VARCHAR(50) DEFAULT '',
+    jalur VARCHAR(20) DEFAULT 'online',
+    status VARCHAR(20) DEFAULT 'Menunggu',
+    catatan TEXT,
+    dokumen TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
