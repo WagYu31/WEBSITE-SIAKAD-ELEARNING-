@@ -1,7 +1,7 @@
 <?php
 // ============================================
 // API Router — stiabayuanggajobs.online
-// Full port of Go backend routes
+// Complete port of ALL Go backend routes
 // ============================================
 
 require_once __DIR__ . '/config.php';
@@ -119,6 +119,62 @@ if (preg_match('#^/dosen/(\d+)$#', $path, $m) && $method === 'PUT') {
 if (preg_match('#^/dosen/(\d+)$#', $path, $m) && $method === 'DELETE') {
     require_once __DIR__ . '/dosen.php';
     deleteDosen((int)$m[1]);
+}
+
+// ===================== PMB =====================
+if ($path === '/pmb/register' && $method === 'POST') {
+    require_once __DIR__ . '/pmb.php';
+    registerOnline();
+}
+if ($path === '/pmb/register/offline' && $method === 'POST') {
+    require_once __DIR__ . '/pmb.php';
+    registerOffline();
+}
+if ($path === '/pmb/stats' && $method === 'GET') {
+    require_once __DIR__ . '/pmb.php';
+    getPmbStats();
+}
+if (preg_match('#^/pmb/status/(.+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/pmb.php';
+    checkPmbStatus($m[1]);
+}
+if ($path === '/pmb/registrations' && $method === 'GET') {
+    require_once __DIR__ . '/pmb.php';
+    getRegistrations();
+}
+if (preg_match('#^/pmb/registration/(\d+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/pmb.php';
+    getRegistration((int)$m[1]);
+}
+if (preg_match('#^/pmb/registration/(\d+)/status$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/pmb.php';
+    updatePmbStatus((int)$m[1]);
+}
+if (preg_match('#^/pmb/registration/(\d+)$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/pmb.php';
+    updateRegistration((int)$m[1]);
+}
+if (preg_match('#^/pmb/registration/(\d+)$#', $path, $m) && $method === 'DELETE') {
+    require_once __DIR__ . '/pmb.php';
+    deleteRegistration((int)$m[1]);
+}
+
+// ===================== PROFILE =====================
+if (preg_match('#^/profile/([^/]+)/avatar$#', $path, $m) && $method === 'POST') {
+    require_once __DIR__ . '/profile.php';
+    uploadAvatar($m[1]);
+}
+if (preg_match('#^/profile/([^/]+)/password$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/profile.php';
+    changePassword($m[1]);
+}
+if (preg_match('#^/profile/([^/]+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/profile.php';
+    getProfile($m[1]);
+}
+if (preg_match('#^/profile/([^/]+)$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/profile.php';
+    updateProfile($m[1]);
 }
 
 // ===================== SEED (Dev) =====================
