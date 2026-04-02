@@ -3727,6 +3727,13 @@ function transkripContent() {
 }
 
 function validasiKrsContent() {
+  // Check if coming from Bimbingan PA with a selected mahasiswa
+  const sel = window._paSelectedMhs;
+  if (sel) {
+    window._paSelectedMhs = null; // clear after use
+    return _krsDetailContent(sel);
+  }
+
   const krsRequests = [
     { nim: '2024101001', nama: 'Ahmad Rizky Pratama', prodi: 'Adm. Publik', semester: 4, sks: 19, tanggal: '10 Feb 2026', status: 'Divalidasi' },
     { nim: '2024101002', nama: 'Siti Nurhaliza', prodi: 'Adm. Publik', semester: 4, sks: 18, tanggal: '11 Feb 2026', status: 'Divalidasi' },
@@ -3766,6 +3773,114 @@ function validasiKrsContent() {
             }).join('')}
           </tbody>
         </table>
+      </div>
+    </div>`;
+}
+
+function _krsDetailContent(mhs) {
+  const semNum = parseInt(mhs.sem) || 4;
+  const year = new Date().getFullYear();
+  // Generate realistic KRS based on semester and prodi
+  const mkPool = [
+    { kode:'AP101', nama:'Pengantar Ilmu Administrasi', sks:3, hari:'Senin', jam:'08:00-10:30', ruang:'A201', dosen:'Prof. Dr. H. Mulyadi, M.AP.' },
+    { kode:'AP102', nama:'Teori Organisasi', sks:3, hari:'Selasa', jam:'10:00-12:30', ruang:'A202', dosen:'Dr. Ir. Bambang Sudarsono, M.Si.' },
+    { kode:'AP201', nama:'Kebijakan Publik', sks:3, hari:'Rabu', jam:'08:00-10:30', ruang:'B101', dosen:'Dr. Hendra Wijaya, S.E., M.M.' },
+    { kode:'AP202', nama:'Manajemen SDM Publik', sks:3, hari:'Kamis', jam:'13:00-15:30', ruang:'B102', dosen:'Prof. Dr. Sri Wahyuni, M.AP.' },
+    { kode:'AP301', nama:'Hukum Administrasi Negara', sks:3, hari:'Jumat', jam:'08:00-10:30', ruang:'A301', dosen:'Dr. Agus Rahardjo, S.H., M.H.' },
+    { kode:'AP302', nama:'Statistik Sosial', sks:3, hari:'Senin', jam:'13:00-15:30', ruang:'Lab 1', dosen:'Ir. Siti Nurjanah, M.T.' },
+    { kode:'AP303', nama:'Sistem Informasi Manajemen', sks:3, hari:'Selasa', jam:'08:00-10:30', ruang:'Lab 2', dosen:'Ir. Andi Prasetyo, M.Kom.' },
+    { kode:'AP304', nama:'Etika Administrasi Publik', sks:2, hari:'Rabu', jam:'13:00-14:40', ruang:'A202', dosen:'Dr. Rina Kartika, M.M.' },
+    { kode:'AP401', nama:'Metodologi Penelitian', sks:3, hari:'Kamis', jam:'08:00-10:30', ruang:'A301', dosen:'Dr. Achmad Fauzi, M.AP.' },
+    { kode:'AP402', nama:'Keuangan Publik', sks:3, hari:'Jumat', jam:'10:00-12:30', ruang:'B101', dosen:'Dewi Lestari, S.AP., M.AP.' },
+    { kode:'AN101', nama:'Pengantar Bisnis', sks:3, hari:'Senin', jam:'10:00-12:30', ruang:'C101', dosen:'Dr. Wahyu Hidayat, S.IP., M.Si.' },
+    { kode:'AN201', nama:'Manajemen Pemasaran', sks:3, hari:'Selasa', jam:'13:00-15:30', ruang:'C102', dosen:'Fitri Handayani, S.E., M.M.' },
+  ];
+  const isNiaga = (mhs.prodi || '').toLowerCase().includes('niaga');
+  const baseMk = isNiaga ? mkPool.filter(m => m.kode.startsWith('AN') || m.kode.startsWith('AP3') || m.kode.startsWith('AP4')) : mkPool.filter(m => m.kode.startsWith('AP'));
+  const selectedMk = baseMk.slice(0, Math.min(6 + (semNum % 3), baseMk.length));
+  const totalSks = selectedMk.reduce((s, m) => s + m.sks, 0);
+  const mhsIni = mhs.nama.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+
+  return `
+    <style>
+      .krs-detail{animation:el-fadeInUp .35s ease}
+      .krs-back{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;background:hsl(215 15% 93%);color:hsl(215 30% 35%);transition:all .2s;margin-bottom:16px}
+      .krs-back:hover{background:hsl(215 20% 87%);transform:translateX(-2px)}
+      .krs-profile{background:#fff;border-radius:16px;border:1px solid hsl(215 15% 92%);padding:24px;display:flex;align-items:center;gap:20px;margin-bottom:20px}
+      .krs-profile-av{width:56px;height:56px;border-radius:14px;background:hsl(215 55% 50%);color:white;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0}
+      .krs-profile-info h3{margin:0 0 4px;font-size:1rem;font-weight:700;color:hsl(215 40% 18%)}
+      .krs-profile-meta{display:flex;gap:16px;flex-wrap:wrap}
+      .krs-profile-meta span{font-size:.72rem;color:hsl(215 15% 50%);display:flex;align-items:center;gap:4px}
+      .krs-profile-meta strong{color:hsl(215 35% 30%)}
+      .krs-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+      .krs-stat{background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:16px;text-align:center;transition:all .25s}
+      .krs-stat:hover{box-shadow:0 3px 14px rgba(0,0,0,.05);transform:translateY(-2px)}
+      .krs-stat-val{font-size:1.4rem;font-weight:800;color:hsl(215 40% 18%)}
+      .krs-stat-lbl{font-size:.65rem;color:hsl(215 15% 55%);margin-top:2px}
+      .krs-table-wrap{background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);overflow:hidden}
+      .krs-table-head{padding:16px 20px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center}
+      .krs-table-head h4{margin:0;font-size:.88rem;font-weight:700;color:hsl(215 40% 18%)}
+      .krs-tbl{width:100%;border-collapse:collapse;font-size:.78rem}
+      .krs-tbl th{background:hsl(215 20% 97%);padding:10px 14px;text-align:left;font-weight:700;font-size:.7rem;color:hsl(215 20% 40%);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid hsl(215 15% 92%)}
+      .krs-tbl td{padding:12px 14px;border-bottom:1px solid hsl(215 10% 95%);color:hsl(215 25% 30%)}
+      .krs-tbl tbody tr:hover{background:hsl(215 30% 98%)}
+      .krs-tbl .sks-badge{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;border-radius:6px;font-weight:700;font-size:.72rem}
+      .krs-hari{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:.68rem;font-weight:600}
+      .krs-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+      .krs-btn{padding:8px 20px;border:none;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s}
+      .krs-btn-primary{background:hsl(150 55% 45%);color:white}.krs-btn-primary:hover{background:hsl(150 55% 38%)}
+      .krs-btn-danger{background:hsl(0 55% 55%);color:white}.krs-btn-danger:hover{background:hsl(0 55% 48%)}
+      .krs-btn-outline{background:transparent;border:1.5px solid hsl(215 15% 85%);color:hsl(215 30% 40%)}.krs-btn-outline:hover{background:hsl(215 15% 95%)}
+      @media(max-width:768px){.krs-profile{flex-direction:column;text-align:center}.krs-profile-meta{justify-content:center}}
+    </style>
+    <div class="krs-detail">
+      <button class="krs-back" onclick="window.location.hash='#/bimbingan-pa'">← Kembali ke Bimbingan PA</button>
+      <div class="krs-profile">
+        <div class="krs-profile-av">${mhsIni}</div>
+        <div class="krs-profile-info">
+          <h3>${mhs.nama}</h3>
+          <div class="krs-profile-meta">
+            <span>📋 NIM: <strong>${mhs.nim}</strong></span>
+            <span>🎓 Semester: <strong>${mhs.sem}</strong></span>
+            <span>📊 IPK: <strong>${mhs.ipk}</strong></span>
+            <span>🏛️ Prodi: <strong>${mhs.prodi}</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="krs-stats">
+        <div class="krs-stat"><div class="krs-stat-val">${selectedMk.length}</div><div class="krs-stat-lbl">Mata Kuliah</div></div>
+        <div class="krs-stat"><div class="krs-stat-val">${totalSks}</div><div class="krs-stat-lbl">Total SKS</div></div>
+        <div class="krs-stat"><div class="krs-stat-val" style="color:hsl(150 55% 38%)">Aktif</div><div class="krs-stat-lbl">Status KRS</div></div>
+        <div class="krs-stat"><div class="krs-stat-val">Genap ${year}</div><div class="krs-stat-lbl">Semester</div></div>
+      </div>
+      <div class="krs-table-wrap">
+        <div class="krs-table-head">
+          <h4>📚 Kartu Rencana Studi — Semester ${mhs.sem}</h4>
+          <span style="font-size:.7rem;color:hsl(215 15% 55%)">${selectedMk.length} mata kuliah • ${totalSks} SKS</span>
+        </div>
+        <table class="krs-tbl">
+          <thead><tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>SKS</th><th>Hari</th><th>Jam</th><th>Ruang</th><th>Dosen Pengampu</th></tr></thead>
+          <tbody>
+            ${selectedMk.map((mk, i) => {
+              const hariColors = { Senin:'hsl(215 55% 94%)', Selasa:'hsl(150 45% 93%)', Rabu:'hsl(280 40% 94%)', Kamis:'hsl(35 60% 93%)', Jumat:'hsl(0 40% 94%)' };
+              const hariTxtColors = { Senin:'hsl(215 55% 40%)', Selasa:'hsl(150 50% 32%)', Rabu:'hsl(280 45% 40%)', Kamis:'hsl(35 60% 35%)', Jumat:'hsl(0 45% 40%)' };
+              return `<tr>
+                <td style="text-align:center;font-weight:600;color:hsl(215 15% 55%)">${i+1}</td>
+                <td><strong style="font-family:var(--font-mono);font-size:.72rem;">${mk.kode}</strong></td>
+                <td style="font-weight:600">${mk.nama}</td>
+                <td style="text-align:center"><span class="sks-badge" style="background:hsl(215 50% 94%);color:hsl(215 55% 42%)">${mk.sks}</span></td>
+                <td><span class="krs-hari" style="background:${hariColors[mk.hari]||'hsl(215 15% 94%)'};color:${hariTxtColors[mk.hari]||'hsl(215 30% 40%)'}">${mk.hari}</span></td>
+                <td style="font-family:var(--font-mono);font-size:.72rem;">${mk.jam}</td>
+                <td style="font-weight:600">${mk.ruang}</td>
+                <td style="font-size:.72rem;">${mk.dosen}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="krs-actions">
+        <button class="krs-btn krs-btn-outline" onclick="window.print()">🖨️ Cetak KRS</button>
+        <button class="krs-btn krs-btn-primary" onclick="alert('KRS berhasil divalidasi!');window.location.hash='#/bimbingan-pa'">✅ Validasi KRS</button>
       </div>
     </div>`;
 }
@@ -3962,7 +4077,7 @@ function _paRenderMhsGrid(dsnId, mhsList) {
   if (!mhsList.length) return '<div style="text-align:center;padding:24px;color:hsl(215 15% 60%);font-size:0.8rem;">Belum ada mahasiswa bimbingan</div>';
   return mhsList.map((m, mi) => {
     const mIni = m.nama.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-    return '<div class="pa-mhs-item"><div class="pa-mhs-av">' + mIni + '</div><div style="flex:1;min-width:0;"><div class="pa-mhs-name">' + m.nama + '</div><div class="pa-mhs-meta"><span style="font-family:var(--font-mono);">' + m.nim + '</span><div class="pa-sep"></div><span>Sem ' + m.sem + '</span><div class="pa-sep"></div><span class="pa-ipk" style="color:' + (m.ipk >= 3.5 ? 'hsl(150 55% 38%)' : m.ipk >= 3.0 ? 'hsl(215 50% 45%)' : 'hsl(35 65% 42%)') + ';">IPK ' + m.ipk.toFixed(2) + '</span></div></div><div class="pa-mhs-actions"><button class="pa-mhs-btn edit" title="Edit" onclick="event.stopPropagation();_paShowModal(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="pa-mhs-btn del" title="Hapus" onclick="event.stopPropagation();_paDeleteMhs(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>';
+    return '<div class="pa-mhs-item"><div class="pa-mhs-av">' + mIni + '</div><div style="flex:1;min-width:0;"><div class="pa-mhs-name pa-mhs-link" onclick="event.stopPropagation();_paOpenKrs(\'' + m.nim + '\',\'' + m.nama.replace(/'/g,"\\'") + '\',\'' + m.sem + '\',\'' + m.ipk.toFixed(2) + '\',\'' + (m.prodi||'Administrasi Negara').replace(/'/g,"\\'") + '\')" title="Lihat KRS ' + m.nama + '">' + m.nama + '</div><div class="pa-mhs-meta"><span style="font-family:var(--font-mono);">' + m.nim + '</span><div class="pa-sep"></div><span>Sem ' + m.sem + '</span><div class="pa-sep"></div><span class="pa-ipk" style="color:' + (m.ipk >= 3.5 ? 'hsl(150 55% 38%)' : m.ipk >= 3.0 ? 'hsl(215 50% 45%)' : 'hsl(35 65% 42%)') + ';">IPK ' + m.ipk.toFixed(2) + '</span></div></div><div class="pa-mhs-actions"><button class="pa-mhs-btn edit" title="Edit" onclick="event.stopPropagation();_paShowModal(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="pa-mhs-btn del" title="Hapus" onclick="event.stopPropagation();_paDeleteMhs(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>';
   }).join('');
 }
 
@@ -4020,6 +4135,11 @@ function _paToast(msg) {
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
 }
 
+function _paOpenKrs(nim, nama, sem, ipk, prodi) {
+  window._paSelectedMhs = { nim, nama, sem, ipk, prodi };
+  window.location.hash = '#/validasi-krs';
+}
+
 function bimbinganPAContent() {
   const bimb = _getPaBimbingan();
   const dosenList = DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0);
@@ -4029,7 +4149,7 @@ function bimbinganPAContent() {
 
   return `
     <style>
-      .pa-page{animation:el-fadeInUp .35s ease}.pa-header{display:flex;gap:20px;margin-bottom:20px}.pa-stat-card{flex:1;background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);padding:20px;display:flex;align-items:center;gap:14px;transition:all .25s}.pa-stat-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px)}.pa-stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}.pa-stat-num{font-size:1.6rem;font-weight:800;line-height:1;color:hsl(215 40% 18%)}.pa-stat-label{font-size:.68rem;color:hsl(215 15% 55%);margin-top:2px}.pa-search-bar{background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px}.pa-search-bar input{flex:1;border:none;outline:none;font-size:.85rem;color:hsl(215 40% 18%);font-family:inherit;background:transparent}.pa-search-bar input::placeholder{color:hsl(215 15% 65%)}.pa-count{font-size:.72rem;color:hsl(215 15% 55%);flex-shrink:0}.pa-card{background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);margin-bottom:10px;overflow:hidden;transition:all .25s}.pa-card:hover{border-color:hsl(215 30% 85%);box-shadow:0 2px 12px rgba(0,0,0,.04)}.pa-card-head{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;user-select:none}.pa-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:white;flex-shrink:0}.pa-info{flex:1;min-width:0}.pa-info h4{margin:0;font-size:.85rem;font-weight:700;color:hsl(215 40% 18%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-badge{display:flex;align-items:center;gap:6px;flex-shrink:0}.pa-badge-num{min-width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800}.pa-arrow{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:hsl(215 15% 65%);transition:all .25s}.pa-arrow svg{pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1)}.pa-panel{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}.pa-panel-inner{padding:0 18px 16px}.pa-panel-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-top:4px}.pa-btn-add{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;background:hsl(215 55% 50%);color:white;transition:all .2s}.pa-btn-add:hover{background:hsl(215 55% 42%);transform:scale(1.03)}.pa-mhs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}.pa-mhs-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:hsl(215 20% 98%);border:1px solid hsl(215 15% 94%);transition:all .2s}.pa-mhs-item:hover{background:hsl(215 30% 96%);border-color:hsl(215 30% 87%)}.pa-mhs-item:hover .pa-mhs-actions{opacity:1}.pa-mhs-av{width:32px;height:32px;border-radius:8px;background:hsl(215 15% 90%);color:hsl(215 30% 40%);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0}.pa-mhs-name{font-size:.78rem;font-weight:600;color:hsl(215 35% 22%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-mhs-meta{font-size:.65rem;color:hsl(215 15% 55%);display:flex;gap:8px;margin-top:1px}.pa-mhs-meta span{white-space:nowrap}.pa-ipk{font-weight:700}.pa-sep{width:1px;height:14px;background:hsl(215 15% 88%);margin:0 2px}.pa-mhs-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .2s}.pa-mhs-btn{width:26px;height:26px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.pa-mhs-btn.edit{background:hsl(215 50% 94%);color:hsl(215 50% 45%)}.pa-mhs-btn.edit:hover{background:hsl(215 50% 88%)}.pa-mhs-btn.del{background:hsl(0 50% 95%);color:hsl(0 50% 45%)}.pa-mhs-btn.del:hover{background:hsl(0 50% 88%)}.pa-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center;animation:el-fadeInUp .2s ease}.pa-modal{background:white;border-radius:16px;width:480px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}.pa-modal-head{padding:20px 24px 16px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center}.pa-modal-head h3{margin:0;font-size:.95rem;font-weight:700;color:hsl(215 40% 18%)}.pa-modal-close{width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}.pa-modal-close:hover{background:hsl(0 50% 94%);color:hsl(0 50% 45%)}.pa-modal-body{padding:20px 24px}.pa-modal-body label{display:block;font-size:.72rem;font-weight:700;color:hsl(215 20% 40%);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}.pa-modal-body input,.pa-modal-body select{width:100%;padding:10px 14px;border:1px solid hsl(215 15% 88%);border-radius:10px;font-size:.82rem;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s;margin-bottom:14px}.pa-modal-body input:focus,.pa-modal-body select:focus{border-color:hsl(215 55% 55%)}.pa-modal-foot{padding:14px 24px 20px;display:flex;gap:8px;justify-content:flex-end}.pa-modal-foot button{padding:8px 20px;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}.pa-modal-foot .pa-cancel{background:hsl(215 15% 93%);color:hsl(215 20% 40%)}.pa-modal-foot .pa-cancel:hover{background:hsl(215 15% 87%)}.pa-modal-foot .pa-save{background:hsl(215 55% 50%);color:white}.pa-modal-foot .pa-save:hover{background:hsl(215 55% 42%)}@media(max-width:768px){.pa-header{flex-direction:column;gap:10px}.pa-mhs-grid{grid-template-columns:1fr}.pa-info h4{font-size:.8rem}.pa-mhs-actions{opacity:1}}
+      .pa-page{animation:el-fadeInUp .35s ease}.pa-mhs-link{cursor:pointer;transition:color .2s}.pa-mhs-link:hover{color:hsl(215 55% 50%)!important;text-decoration:underline}.pa-header{display:flex;gap:20px;margin-bottom:20px}.pa-stat-card{flex:1;background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);padding:20px;display:flex;align-items:center;gap:14px;transition:all .25s}.pa-stat-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px)}.pa-stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}.pa-stat-num{font-size:1.6rem;font-weight:800;line-height:1;color:hsl(215 40% 18%)}.pa-stat-label{font-size:.68rem;color:hsl(215 15% 55%);margin-top:2px}.pa-search-bar{background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px}.pa-search-bar input{flex:1;border:none;outline:none;font-size:.85rem;color:hsl(215 40% 18%);font-family:inherit;background:transparent}.pa-search-bar input::placeholder{color:hsl(215 15% 65%)}.pa-count{font-size:.72rem;color:hsl(215 15% 55%);flex-shrink:0}.pa-card{background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);margin-bottom:10px;overflow:hidden;transition:all .25s}.pa-card:hover{border-color:hsl(215 30% 85%);box-shadow:0 2px 12px rgba(0,0,0,.04)}.pa-card-head{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;user-select:none}.pa-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:white;flex-shrink:0}.pa-info{flex:1;min-width:0}.pa-info h4{margin:0;font-size:.85rem;font-weight:700;color:hsl(215 40% 18%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-badge{display:flex;align-items:center;gap:6px;flex-shrink:0}.pa-badge-num{min-width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800}.pa-arrow{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:hsl(215 15% 65%);transition:all .25s}.pa-arrow svg{pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1)}.pa-panel{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}.pa-panel-inner{padding:0 18px 16px}.pa-panel-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-top:4px}.pa-btn-add{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;background:hsl(215 55% 50%);color:white;transition:all .2s}.pa-btn-add:hover{background:hsl(215 55% 42%);transform:scale(1.03)}.pa-mhs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}.pa-mhs-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:hsl(215 20% 98%);border:1px solid hsl(215 15% 94%);transition:all .2s}.pa-mhs-item:hover{background:hsl(215 30% 96%);border-color:hsl(215 30% 87%)}.pa-mhs-item:hover .pa-mhs-actions{opacity:1}.pa-mhs-av{width:32px;height:32px;border-radius:8px;background:hsl(215 15% 90%);color:hsl(215 30% 40%);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0}.pa-mhs-name{font-size:.78rem;font-weight:600;color:hsl(215 35% 22%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-mhs-meta{font-size:.65rem;color:hsl(215 15% 55%);display:flex;gap:8px;margin-top:1px}.pa-mhs-meta span{white-space:nowrap}.pa-ipk{font-weight:700}.pa-sep{width:1px;height:14px;background:hsl(215 15% 88%);margin:0 2px}.pa-mhs-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .2s}.pa-mhs-btn{width:26px;height:26px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.pa-mhs-btn.edit{background:hsl(215 50% 94%);color:hsl(215 50% 45%)}.pa-mhs-btn.edit:hover{background:hsl(215 50% 88%)}.pa-mhs-btn.del{background:hsl(0 50% 95%);color:hsl(0 50% 45%)}.pa-mhs-btn.del:hover{background:hsl(0 50% 88%)}.pa-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center;animation:el-fadeInUp .2s ease}.pa-modal{background:white;border-radius:16px;width:480px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}.pa-modal-head{padding:20px 24px 16px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center}.pa-modal-head h3{margin:0;font-size:.95rem;font-weight:700;color:hsl(215 40% 18%)}.pa-modal-close{width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}.pa-modal-close:hover{background:hsl(0 50% 94%);color:hsl(0 50% 45%)}.pa-modal-body{padding:20px 24px}.pa-modal-body label{display:block;font-size:.72rem;font-weight:700;color:hsl(215 20% 40%);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}.pa-modal-body input,.pa-modal-body select{width:100%;padding:10px 14px;border:1px solid hsl(215 15% 88%);border-radius:10px;font-size:.82rem;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s;margin-bottom:14px}.pa-modal-body input:focus,.pa-modal-body select:focus{border-color:hsl(215 55% 55%)}.pa-modal-foot{padding:14px 24px 20px;display:flex;gap:8px;justify-content:flex-end}.pa-modal-foot button{padding:8px 20px;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}.pa-modal-foot .pa-cancel{background:hsl(215 15% 93%);color:hsl(215 20% 40%)}.pa-modal-foot .pa-cancel:hover{background:hsl(215 15% 87%)}.pa-modal-foot .pa-save{background:hsl(215 55% 50%);color:white}.pa-modal-foot .pa-save:hover{background:hsl(215 55% 42%)}@media(max-width:768px){.pa-header{flex-direction:column;gap:10px}.pa-mhs-grid{grid-template-columns:1fr}.pa-info h4{font-size:.8rem}.pa-mhs-actions{opacity:1}}
     </style>
     <div class="pa-page">
       <div class="pa-header">
@@ -4083,6 +4203,7 @@ function initBimbinganPA() {
   window._paDeleteMhs = _paDeleteMhs;
   window._paCloseModal = _paCloseModal;
   window._paSaveMhs = _paSaveMhs;
+  window._paOpenKrs = _paOpenKrs;
 }
 
 
