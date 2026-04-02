@@ -4330,10 +4330,14 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
       </div>
     </div>`}function yn(e){return`
     <div class="pmb-nav">
-      <h3>Navigasi</h3>
-      ${[{id:`info`,text:`Informasi PMB`,icon:Z.clipboard},{id:`daftar`,text:`Daftar PMB`,icon:Z.users},{id:`status`,text:`Cek Status`,icon:Z.search},{id:`bayar`,text:`Pembayaran`,icon:Z.creditCard}].map(t=>`
-        <a href="#" class="pmb-nav-link${e===t.id?` active`:``}" data-pmb-page="${t.id}">
-          ${t.text}
+      <h3>📋 Navigasi</h3>
+      ${[{id:`info`,text:`Informasi PMB`,icon:Z.clipboard,desc:`Jadwal & Persyaratan`},{id:`daftar`,text:`Daftar PMB`,icon:Z.users,desc:`Formulir Pendaftaran`},{id:`status`,text:`Cek Status`,icon:Z.search,desc:`Tracking Pendaftaran`},{id:`bayar`,text:`Pembayaran`,icon:Z.creditCard,desc:`Biaya & Metode`}].map((t,n)=>`
+        <a href="#" class="pmb-nav-link${e===t.id?` active`:``}" data-pmb-page="${t.id}" style="animation-delay:${.05*(n+1)}s">
+          <span class="pmb-nav-icon">${t.icon}</span>
+          <span class="pmb-nav-text">
+            <span class="pmb-nav-title">${t.text}</span>
+            <span class="pmb-nav-desc">${t.desc}</span>
+          </span>
         </a>
       `).join(``)}
     </div>`}function Q(e,t,n=`text`,r=!1,i=null,a={}){let o=Object.entries(a).map(([e,t])=>`${e}="${t}"`).join(` `);return i?`

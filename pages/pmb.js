@@ -64,17 +64,21 @@ function renderStats(stats) {
 // ---- Navigation Sidebar ----
 function renderPMBNav(activePage) {
   const items = [
-    { id: 'info', text: 'Informasi PMB', icon: I.clipboard },
-    { id: 'daftar', text: 'Daftar PMB', icon: I.users },
-    { id: 'status', text: 'Cek Status', icon: I.search },
-    { id: 'bayar', text: 'Pembayaran', icon: I.creditCard },
+    { id: 'info', text: 'Informasi PMB', icon: I.clipboard, desc: 'Jadwal & Persyaratan' },
+    { id: 'daftar', text: 'Daftar PMB', icon: I.users, desc: 'Formulir Pendaftaran' },
+    { id: 'status', text: 'Cek Status', icon: I.search, desc: 'Tracking Pendaftaran' },
+    { id: 'bayar', text: 'Pembayaran', icon: I.creditCard, desc: 'Biaya & Metode' },
   ];
   return `
     <div class="pmb-nav">
-      <h3>Navigasi</h3>
-      ${items.map(item => `
-        <a href="#" class="pmb-nav-link${activePage === item.id ? ' active' : ''}" data-pmb-page="${item.id}">
-          ${item.text}
+      <h3>📋 Navigasi</h3>
+      ${items.map((item, idx) => `
+        <a href="#" class="pmb-nav-link${activePage === item.id ? ' active' : ''}" data-pmb-page="${item.id}" style="animation-delay:${0.05 * (idx + 1)}s">
+          <span class="pmb-nav-icon">${item.icon}</span>
+          <span class="pmb-nav-text">
+            <span class="pmb-nav-title">${item.text}</span>
+            <span class="pmb-nav-desc">${item.desc}</span>
+          </span>
         </a>
       `).join('')}
     </div>`;
