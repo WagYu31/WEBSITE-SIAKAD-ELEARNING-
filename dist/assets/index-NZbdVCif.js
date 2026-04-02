@@ -4575,9 +4575,10 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
         <div class="pmb-header-inner">
           <a href="#/" class="pmb-back">${Z.arrowLeft}</a>
           <div>
-            <h1>Pendaftaran Mahasiswa Baru</h1>
+            <h1>🎓 Pendaftaran Mahasiswa Baru</h1>
             <p>STIA Bayuangga Probolinggo — Tahun Akademik 2026/2027</p>
           </div>
+          <span class="pmb-header-tag">✨ PMB OPEN</span>
           <img src="/assets/images/logo.png" alt="Logo" class="pmb-header-logo">
         </div>
       </header>
