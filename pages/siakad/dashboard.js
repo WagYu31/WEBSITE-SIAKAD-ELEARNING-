@@ -5403,7 +5403,7 @@ function profilSayaContent(user) {
     + '<span style="background:rgba(255,255,255,.15);padding:3px 10px;border-radius:16px;font-size:0.7rem;border:1px solid rgba(255,255,255,.15);">Semester ' + user.semester + '</span>'
     + '<span style="background:hsl(145 65% 38%);padding:3px 10px;border-radius:16px;font-size:0.7rem;font-weight:700;" role="status">\u2713 Aktif</span>'
     + '</div></div>'
-    + '<button class="profil-edit-btn" id="editProfilToggle" style="background:rgba(255,255,255,.15);color:white;border-color:rgba(255,255,255,.3);padding:6px 16px;border-radius:8px;" aria-label="Edit profil">\u270f\ufe0f Edit Profil</button>'
+    + '<button class="profil-edit-btn" id="editProfilToggle" aria-label="Edit profil" style="background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.08));color:white;border:1.5px solid rgba(255,255,255,.3);padding:10px 22px;border-radius:12px;font-size:0.82rem;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);display:inline-flex;align-items:center;gap:8px;transition:all .3s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 15px rgba(0,0,0,.15);letter-spacing:0.3px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Profil</button>'
     + '</div>'
 
     // Edit Form (hidden)
@@ -6343,14 +6343,46 @@ export function renderDashboard(container) {
         const editToggle = document.getElementById('editProfilToggle');
         const editSection = document.getElementById('editProfilSection');
         const cancelBtn = document.getElementById('cancelEditProfil');
+
+        // Prepare edit section for animation
+        if (editSection) {
+          editSection.style.cssText = 'overflow:hidden;max-height:0;opacity:0;transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease,margin .3s ease;margin-bottom:0;';
+        }
+
         editToggle?.addEventListener('click', () => {
-          const showing = editSection.style.display !== 'none';
-          editSection.style.display = showing ? 'none' : 'block';
-          editToggle.textContent = showing ? '\u270f\ufe0f Edit Profil' : '\u274c Tutup Form';
+          const showing = editSection.dataset.open === 'true';
+          // Button press animation
+          editToggle.style.transform = 'scale(0.93)';
+          setTimeout(() => { editToggle.style.transform = ''; }, 150);
+
+          if (showing) {
+            // Close
+            editSection.style.maxHeight = '0';
+            editSection.style.opacity = '0';
+            editSection.style.marginBottom = '0';
+            editSection.dataset.open = 'false';
+            editToggle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Profil';
+            editToggle.style.background = 'linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.08))';
+          } else {
+            // Open
+            editSection.style.display = 'block';
+            editSection.style.maxHeight = editSection.scrollHeight + 800 + 'px';
+            editSection.style.opacity = '1';
+            editSection.style.marginBottom = '16px';
+            editSection.dataset.open = 'true';
+            editToggle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Tutup Form';
+            editToggle.style.background = 'linear-gradient(135deg,rgba(239,68,68,.5),rgba(220,38,38,.3))';
+            // Scroll to form
+            setTimeout(() => editSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+          }
         });
         cancelBtn?.addEventListener('click', () => {
-          editSection.style.display = 'none';
-          editToggle.textContent = '\u270f\ufe0f Edit Profil';
+          editSection.style.maxHeight = '0';
+          editSection.style.opacity = '0';
+          editSection.style.marginBottom = '0';
+          editSection.dataset.open = 'false';
+          editToggle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Profil';
+          editToggle.style.background = 'linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.08))';
         });
 
         // --- Edit Form -> PUT /api/profile/:nim ---
