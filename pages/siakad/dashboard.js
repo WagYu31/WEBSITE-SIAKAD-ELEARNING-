@@ -4052,7 +4052,6 @@ function bimbinganPAContent() {
             <div class="pa-avatar" style="background:${bgSolid};">${ini}</div>
             <div class="pa-info">
               <h4>${d.nama}</h4>
-              <p>${d.bidangKeahlian ? d.bidangKeahlian.slice(0,2).join(' · ') : d.jabatanFungsional}</p>
             </div>
             <div class="pa-badge">
               <div class="pa-badge-num" style="background:${bgLight};color:${txtColor};">${d.totalMahasiswaBimbingan}</div>

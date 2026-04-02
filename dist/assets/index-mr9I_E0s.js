@@ -2496,7 +2496,6 @@
             <div class="pa-avatar" style="background:${s};">${n}</div>
             <div class="pa-info">
               <h4>${e.nama}</h4>
-              <p>${e.bidangKeahlian?e.bidangKeahlian.slice(0,2).join(` · `):e.jabatanFungsional}</p>
             </div>
             <div class="pa-badge">
               <div class="pa-badge-num" style="background:${o};color:${c};">${e.totalMahasiswaBimbingan}</div>
