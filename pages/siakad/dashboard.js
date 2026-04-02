@@ -5377,6 +5377,13 @@ function profilSayaContent(user) {
   const vv = (val) => val ? '<span class="profil-row-value">' + val + '</span>' : '<span class="profil-row-value muted">Belum diisi</span>';
   const vm = (val) => val ? '<span class="profil-row-value mono">' + val + '</span>' : '<span class="profil-row-value muted">Belum diisi</span>';
   const row = (label, value, cls) => '<div class="profil-row' + (cls ? ' '+cls : '') + '"><div class="profil-row-label">' + label + '</div>' + value + '</div>';
+  const dokRow = (label, filePath) => {
+    if (filePath) {
+      const apiUrl = '/api/' + filePath;
+      return row(label, '<span class="profil-row-value"><a href="' + apiUrl + '" target="_blank" style="color:hsl(215 70% 50%);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:4px;">📄 Lihat Dokumen</a></span>');
+    }
+    return row(label, '<span class="profil-row-value muted" style="display:inline-flex;align-items:center;gap:4px;">⚠️ Belum diupload</span>');
+  };
 
   const agamaOpts = ['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => '<option value="'+a+'" '+(user.agama===a?'selected':'')+'>'+a+'</option>').join('');
 
@@ -5485,6 +5492,17 @@ function profilSayaContent(user) {
     + row('Program Studi', vv(user.prodi))
     + row('Jenjang', '<span class="profil-row-value">Strata 1 (S1)</span>')
     + row('Status', '<span class="profil-row-value"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">\u2713 Aktif</span></span>')
+    + '</div></div>'
+
+    // Dokumen Persyaratan Section
+    + '<div class="profil-section" role="region" aria-labelledby="secDokumen">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secDokumen"><span class="pst-icon" style="background:hsl(35 80% 93%);color:hsl(35 70% 42%);">\ud83d\udcc2</span> Dokumen Persyaratan</h3></div>'
+    + '<div class="profil-2col">'
+    + dokRow('Ijazah SMA/SMK/MA', user.file_ijazah)
+    + dokRow('Fotokopi KTP / KK', user.file_ktp)
+    + dokRow('Pas Foto 3×4', user.file_pasfoto)
+    + dokRow('Transkip Nilai Rapor', user.file_rapor)
+    + dokRow('Surat Keterangan Sehat', user.file_surat_sehat)
     + '</div></div>'
 
     // Pengaturan Akun Section
