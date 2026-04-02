@@ -4592,6 +4592,7 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
       <!-- Footer -->
       <footer class="pmb-footer">
         <span>${Z.shield} ISO 27001 — Security</span>
+        <span>${Z.monitor} ISO 9241 — Usability</span>
         <span>${Z.checkCircle} ISO 40500 — Accessibility</span>
       </footer>
     </div>`,document.querySelectorAll(`.pmb-nav-link`).forEach(e=>{e.addEventListener(`click`,t=>{t.preventDefault(),n(e.dataset.pmbPage)})}),r(`info`);function r(e){e===`daftar`&&i(),e===`status`&&a(),e===`bayar`&&o()}function i(){let e=document.getElementById(`pmbForm`);e&&e.addEventListener(`submit`,async r=>{r.preventDefault();let i=document.getElementById(`pmbSubmitBtn`);i.disabled=!0,i.innerHTML=`${Z.loader} Mengirim...`;let a=new FormData(e),o={},s=e.querySelectorAll(`input[type="file"]`),c=new Set([...s].map(e=>e.name));a.forEach((e,t)=>{c.has(t)||(t===`anak_ke`||t===`dari_jumlah`?o[t]=e?parseInt(e):0:o[t]=e)});try{let e=await fetch(`${X}/register`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify(o)}),r=await e.json();if(e.ok){let e=new FormData,i=!1;if(s.forEach(t=>{t.files.length>0&&(e.append(t.name,t.files[0]),i=!0)}),i&&r.id)try{await fetch(`${X}/registration/${r.id}/upload`,{method:`POST`,body:e})}catch{}let a=document.getElementById(`pmbMainArea`),c=r.account||{};a.innerHTML=`

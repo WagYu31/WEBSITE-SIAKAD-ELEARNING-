@@ -402,6 +402,7 @@ export async function renderPMB(container) {
       <!-- Footer -->
       <footer class="pmb-footer">
         <span>${I.shield} ISO 27001 — Security</span>
+        <span>${I.monitor} ISO 9241 — Usability</span>
         <span>${I.checkCircle} ISO 40500 — Accessibility</span>
       </footer>
     </div>`;
