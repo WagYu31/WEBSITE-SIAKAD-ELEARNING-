@@ -158,6 +158,13 @@ if (preg_match('#^/pmb/registration/(\d+)$#', $path, $m) && $method === 'DELETE'
     require_once __DIR__ . '/pmb.php';
     deleteRegistration((int)$m[1]);
 }
+if (preg_match('#^/pmb/registration/(\d+)/upload$#', $path, $m) && $method === 'POST') {
+    require_once __DIR__ . '/pmb.php';
+    uploadPmbFiles((int)$m[1]);
+}
+if ($path === '/pmb/migrate' && $method === 'GET') {
+    require_once __DIR__ . '/migrate_pmb.php';
+}
 
 // ===================== PROFILE =====================
 if (preg_match('#^/profile/([^/]+)/avatar$#', $path, $m) && $method === 'POST') {

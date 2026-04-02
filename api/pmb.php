@@ -1,7 +1,7 @@
 <?php
 // ============================================
 // PMB (Pendaftaran Mahasiswa Baru) API Handlers
-// Port of Go pmb.go → PHP + MySQL
+// Full version — saves ALL form fields + file uploads
 // ============================================
 
 function generateNoPendaftaran() {
@@ -29,12 +29,67 @@ function registerOnline() {
     }
 
     $noPendaftaran = generateNoPendaftaran();
-    $stmt = $db->prepare("INSERT INTO pmb_registrations (no_pendaftaran,nama,email,phone,nik,tempat_lahir,tanggal_lahir,jenis_kelamin,alamat,asal_sekolah,jurusan_pilihan,jalur,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+    $stmt = $db->prepare("INSERT INTO pmb_registrations (
+        no_pendaftaran, nama, email, phone, nik, tempat_lahir, tanggal_lahir,
+        jenis_kelamin, gender, alamat, asal_sekolah, jurusan_pilihan, prodi_pilihan,
+        jalur, status,
+        nisn, kip, kks, agama, telepon_1, telepon_2,
+        provinsi, kota, kecamatan, kelurahan, kode_pos,
+        anak_ke, dari_jumlah,
+        nama_ayah, nama_ibu, pekerjaan_ayah, pekerjaan_ibu,
+        nik_ayah, nik_ibu, no_kk
+    ) VALUES (
+        ?,?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,
+        ?,?,
+        ?,?,?,?,
+        ?,?,?
+    )");
+
+    $gender = $input['gender'] ?? $input['jenis_kelamin'] ?? '';
+    $prodi = $input['prodi_pilihan'] ?? $input['jurusan_pilihan'] ?? '';
+
     $stmt->execute([
-        $noPendaftaran, $input['nama'], $input['email'] ?? '', $input['phone'] ?? '',
-        $input['nik'], $input['tempat_lahir'] ?? '', $input['tanggal_lahir'] ?? '',
-        $input['jenis_kelamin'] ?? '', $input['alamat'] ?? '', $input['asal_sekolah'] ?? '',
-        $input['jurusan_pilihan'] ?? '', 'online', 'Menunggu'
+        $noPendaftaran,
+        $input['nama'],
+        $input['email'] ?? '',
+        $input['telepon_1'] ?? $input['phone'] ?? '',
+        $input['nik'],
+        $input['tempat_lahir'] ?? '',
+        $input['tanggal_lahir'] ?? '',
+        $gender,
+        $gender,
+        $input['alamat'] ?? '',
+        $input['asal_sekolah'] ?? '',
+        $prodi,
+        $prodi,
+        'online',
+        'Menunggu',
+        // Extended fields
+        $input['nisn'] ?? '',
+        $input['kip'] ?? '',
+        $input['kks'] ?? '',
+        $input['agama'] ?? '',
+        $input['telepon_1'] ?? '',
+        $input['telepon_2'] ?? '',
+        $input['provinsi'] ?? '',
+        $input['kota'] ?? '',
+        $input['kecamatan'] ?? '',
+        $input['kelurahan'] ?? '',
+        $input['kode_pos'] ?? '',
+        intval($input['anak_ke'] ?? 0),
+        intval($input['dari_jumlah'] ?? 0),
+        $input['nama_ayah'] ?? '',
+        $input['nama_ibu'] ?? '',
+        $input['pekerjaan_ayah'] ?? '',
+        $input['pekerjaan_ibu'] ?? '',
+        $input['nik_ayah'] ?? '',
+        $input['nik_ibu'] ?? '',
+        $input['no_kk'] ?? '',
     ]);
 
     jsonResponse(['message' => 'Pendaftaran berhasil!', 'no_pendaftaran' => $noPendaftaran, 'id' => $db->lastInsertId()], 201);
@@ -57,15 +112,109 @@ function registerOffline() {
     }
 
     $noPendaftaran = generateNoPendaftaran();
-    $stmt = $db->prepare("INSERT INTO pmb_registrations (no_pendaftaran,nama,email,phone,nik,tempat_lahir,tanggal_lahir,jenis_kelamin,alamat,asal_sekolah,jurusan_pilihan,jalur,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    $gender = $input['gender'] ?? $input['jenis_kelamin'] ?? '';
+    $prodi = $input['prodi_pilihan'] ?? $input['jurusan_pilihan'] ?? '';
+
+    $stmt = $db->prepare("INSERT INTO pmb_registrations (
+        no_pendaftaran, nama, email, phone, nik, tempat_lahir, tanggal_lahir,
+        jenis_kelamin, gender, alamat, asal_sekolah, jurusan_pilihan, prodi_pilihan,
+        jalur, status,
+        nisn, kip, kks, agama, telepon_1, telepon_2,
+        provinsi, kota, kecamatan, kelurahan, kode_pos,
+        anak_ke, dari_jumlah,
+        nama_ayah, nama_ibu, pekerjaan_ayah, pekerjaan_ibu,
+        nik_ayah, nik_ibu, no_kk
+    ) VALUES (
+        ?,?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,
+        ?,?,
+        ?,?,?,?,
+        ?,?,?
+    )");
+
     $stmt->execute([
-        $noPendaftaran, $input['nama'], $input['email'] ?? '', $input['phone'] ?? '',
+        $noPendaftaran, $input['nama'], $input['email'] ?? '',
+        $input['telepon_1'] ?? $input['phone'] ?? '',
         $input['nik'], $input['tempat_lahir'] ?? '', $input['tanggal_lahir'] ?? '',
-        $input['jenis_kelamin'] ?? '', $input['alamat'] ?? '', $input['asal_sekolah'] ?? '',
-        $input['jurusan_pilihan'] ?? '', 'offline', 'Menunggu'
+        $gender, $gender, $input['alamat'] ?? '', $input['asal_sekolah'] ?? '',
+        $prodi, $prodi, 'offline', 'Menunggu',
+        $input['nisn'] ?? '', $input['kip'] ?? '', $input['kks'] ?? '',
+        $input['agama'] ?? '', $input['telepon_1'] ?? '', $input['telepon_2'] ?? '',
+        $input['provinsi'] ?? '', $input['kota'] ?? '', $input['kecamatan'] ?? '',
+        $input['kelurahan'] ?? '', $input['kode_pos'] ?? '',
+        intval($input['anak_ke'] ?? 0), intval($input['dari_jumlah'] ?? 0),
+        $input['nama_ayah'] ?? '', $input['nama_ibu'] ?? '',
+        $input['pekerjaan_ayah'] ?? '', $input['pekerjaan_ibu'] ?? '',
+        $input['nik_ayah'] ?? '', $input['nik_ibu'] ?? '', $input['no_kk'] ?? '',
     ]);
 
     jsonResponse(['message' => 'Pendaftaran offline berhasil!', 'no_pendaftaran' => $noPendaftaran, 'id' => $db->lastInsertId()], 201);
+}
+
+// POST /api/pmb/registration/:id/upload
+function uploadPmbFiles($id) {
+    $db = getDB();
+
+    // Verify registration exists
+    $stmt = $db->prepare('SELECT id FROM pmb_registrations WHERE id = ?');
+    $stmt->execute([$id]);
+    if (!$stmt->fetch()) {
+        jsonResponse(['error' => 'Pendaftaran tidak ditemukan'], 404);
+    }
+
+    // Create uploads directory
+    $uploadDir = __DIR__ . '/uploads/pmb/' . $id . '/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $fieldMap = [
+        'file_ijazah' => 'file_ijazah',
+        'file_ktp' => 'file_ktp',
+        'file_pasfoto' => 'file_pasfoto',
+        'file_rapor' => 'file_rapor',
+        'file_surat_sehat' => 'file_surat_sehat',
+    ];
+
+    $saved = [];
+    $maxSize = 5 * 1024 * 1024; // 5MB
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+
+    foreach ($fieldMap as $inputName => $dbColumn) {
+        if (!empty($_FILES[$inputName]) && $_FILES[$inputName]['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES[$inputName];
+
+            // Validate size
+            if ($file['size'] > $maxSize) {
+                continue;
+            }
+
+            // Validate type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            if (!in_array($mimeType, $allowedTypes)) {
+                continue;
+            }
+
+            // Generate safe filename
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $safeName = $dbColumn . '_' . time() . '.' . strtolower($ext);
+            $destPath = $uploadDir . $safeName;
+
+            if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                // Save relative path to DB
+                $relativePath = 'uploads/pmb/' . $id . '/' . $safeName;
+                $db->prepare("UPDATE pmb_registrations SET `$dbColumn` = ? WHERE id = ?")->execute([$relativePath, $id]);
+                $saved[] = $dbColumn;
+            }
+        }
+    }
+
+    jsonResponse(['message' => 'Upload berhasil', 'saved_files' => $saved, 'total' => count($saved)]);
 }
 
 // GET /api/pmb/stats
@@ -138,7 +287,7 @@ function updateRegistration($id) {
     unset($input['id'], $input['no_pendaftaran'], $input['created_at']);
 
     $sets = []; $vals = [];
-    foreach ($input as $key => $val) { $sets[] = "$key = ?"; $vals[] = $val; }
+    foreach ($input as $key => $val) { $sets[] = "`$key` = ?"; $vals[] = $val; }
     $sets[] = "updated_at = NOW()";
     $vals[] = $id;
 
@@ -149,6 +298,12 @@ function updateRegistration($id) {
 // DELETE /api/pmb/registration/:id
 function deleteRegistration($id) {
     $db = getDB();
+    // Delete uploaded files
+    $uploadDir = __DIR__ . '/uploads/pmb/' . $id . '/';
+    if (is_dir($uploadDir)) {
+        array_map('unlink', glob($uploadDir . '*'));
+        rmdir($uploadDir);
+    }
     $db->prepare('DELETE FROM pmb_registrations WHERE id = ?')->execute([$id]);
     jsonResponse(['message' => 'Data pendaftaran berhasil dihapus']);
 }
