@@ -4078,6 +4078,11 @@ function initBimbinganPA() {
     document.querySelectorAll('.pa-card').forEach(card => { const show = card.dataset.dosen.includes(q); card.style.display = show ? '' : 'none'; if (show) c++; });
     document.getElementById('paCount').textContent = c;
   });
+  // Expose to window for inline onclick handlers (ES module scope)
+  window._paShowModal = _paShowModal;
+  window._paDeleteMhs = _paDeleteMhs;
+  window._paCloseModal = _paCloseModal;
+  window._paSaveMhs = _paSaveMhs;
 }
 
 
