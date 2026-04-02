@@ -77,7 +77,7 @@
 
     <!-- ====== HERO ====== -->
     <section class="hero" id="hero" role="banner">
-      <div class="hero-bg"><img src="/assets/images/campus-building.jpg" alt="" role="presentation"></div>
+      <div class="hero-bg"><img src="/assets/images/campus-front.jpg" alt="" role="presentation"></div>
       <div class="hero-overlay"></div>
       
       <div class="container hero-grid">
