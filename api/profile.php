@@ -105,3 +105,65 @@ function changePassword($nim) {
 
     jsonResponse(['message' => '✅ Password berhasil diubah']);
 }
+
+// POST /api/profile/:nim/documents
+function uploadDocuments($nim) {
+    $db = getDB();
+
+    // Verify profile exists
+    $stmt = $db->prepare('SELECT id FROM profiles WHERE nim = ?');
+    $stmt->execute([$nim]);
+    if (!$stmt->fetch()) {
+        jsonResponse(['error' => 'Profil tidak ditemukan'], 404);
+    }
+
+    // Create uploads directory
+    $uploadDir = __DIR__ . '/../uploads/documents/' . $nim . '/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $fieldMap = [
+        'file_ijazah' => 'file_ijazah',
+        'file_ktp' => 'file_ktp',
+        'file_pasfoto' => 'file_pasfoto',
+        'file_rapor' => 'file_rapor',
+        'file_surat_sehat' => 'file_surat_sehat',
+    ];
+
+    $saved = [];
+    $maxSize = 5 * 1024 * 1024; // 5MB
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+
+    foreach ($fieldMap as $inputName => $dbColumn) {
+        if (!empty($_FILES[$inputName]) && $_FILES[$inputName]['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES[$inputName];
+
+            // Validate size
+            if ($file['size'] > $maxSize) {
+                continue;
+            }
+
+            // Validate type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            if (!in_array($mimeType, $allowedTypes)) {
+                continue;
+            }
+
+            // Generate safe filename
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $safeName = $dbColumn . '_' . time() . '.' . strtolower($ext);
+            $destPath = $uploadDir . $safeName;
+
+            if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                $relativePath = 'uploads/documents/' . $nim . '/' . $safeName;
+                $db->prepare("UPDATE profiles SET `$dbColumn` = ?, updated_at = NOW() WHERE nim = ?")->execute([$relativePath, $nim]);
+                $saved[] = $dbColumn;
+            }
+        }
+    }
+
+    jsonResponse(['message' => '✅ Dokumen berhasil diupload', 'saved_files' => $saved, 'total' => count($saved)]);
+}

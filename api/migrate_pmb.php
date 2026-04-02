@@ -61,9 +61,38 @@ foreach ($columns as $name => $type) {
 }
 
 header('Content-Type: application/json');
+
+// ---- Also migrate profiles table ----
+$profileCols = [
+    'file_ijazah' => 'VARCHAR(255) DEFAULT NULL',
+    'file_ktp' => 'VARCHAR(255) DEFAULT NULL',
+    'file_pasfoto' => 'VARCHAR(255) DEFAULT NULL',
+    'file_rapor' => 'VARCHAR(255) DEFAULT NULL',
+    'file_surat_sehat' => 'VARCHAR(255) DEFAULT NULL',
+];
+
+$existingProfile = [];
+$result2 = $db->query("SHOW COLUMNS FROM profiles");
+while ($row2 = $result2->fetch()) {
+    $existingProfile[] = $row2['Field'];
+}
+
+$addedProfile = [];
+foreach ($profileCols as $name => $type) {
+    if (!in_array($name, $existingProfile)) {
+        try {
+            $db->exec("ALTER TABLE profiles ADD COLUMN `$name` $type");
+            $addedProfile[] = $name;
+        } catch (Exception $e) {
+            // skip
+        }
+    }
+}
+
 echo json_encode([
     'message' => 'Migration complete',
-    'added_columns' => $added,
-    'total_existing' => count($existing),
-    'total_added' => count($added),
+    'pmb_added' => $added,
+    'pmb_total_existing' => count($existing),
+    'profiles_added' => $addedProfile,
+    'profiles_total_existing' => count($existingProfile),
 ]);

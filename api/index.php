@@ -171,6 +171,10 @@ if (preg_match('#^/profile/([^/]+)/avatar$#', $path, $m) && $method === 'POST') 
     require_once __DIR__ . '/profile.php';
     uploadAvatar($m[1]);
 }
+if (preg_match('#^/profile/([^/]+)/documents$#', $path, $m) && $method === 'POST') {
+    require_once __DIR__ . '/profile.php';
+    uploadDocuments($m[1]);
+}
 if (preg_match('#^/profile/([^/]+)/password$#', $path, $m) && $method === 'PUT') {
     require_once __DIR__ . '/profile.php';
     changePassword($m[1]);

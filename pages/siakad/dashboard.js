@@ -5433,6 +5433,13 @@ function profilSayaContent(user) {
     + '<div class="form-group"><label class="form-label" for="ep_pkayah">Pekerjaan Ayah</label><input type="text" id="ep_pkayah" name="pekerjaan_ayah" value="' + (user.pekerjaan_ayah||'') + '" class="form-input"></div></div>'
     + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_ibu">Nama Ibu</label><input type="text" id="ep_ibu" name="nama_ibu" value="' + (user.nama_ibu||'') + '" class="form-input"></div>'
     + '<div class="form-group"><label class="form-label" for="ep_pkibu">Pekerjaan Ibu</label><input type="text" id="ep_pkibu" name="pekerjaan_ibu" value="' + (user.pekerjaan_ibu||'') + '" class="form-input"></div></div></div>'
+    + '<div class="off-section"><h5 class="off-section-title">\ud83d\udcc2 Upload Dokumen Persyaratan</h5>'
+    + '<p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 12px;">Format: JPG, PNG, PDF — Maks. 5MB per file</p>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_ijazah">Ijazah SMA/SMK/MA ' + (user.file_ijazah ? '<span style="color:hsl(150 55% 42%);font-size:0.7rem;">✅ Sudah ada</span>' : '<span style="color:hsl(40 70% 45%);font-size:0.7rem;">⚠️ Belum</span>') + '</label><input type="file" id="ep_ijazah" name="file_ijazah" accept=".jpg,.jpeg,.png,.pdf" class="form-input" style="padding:8px;"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_ktp">Fotokopi KTP / KK ' + (user.file_ktp ? '<span style="color:hsl(150 55% 42%);font-size:0.7rem;">✅ Sudah ada</span>' : '<span style="color:hsl(40 70% 45%);font-size:0.7rem;">⚠️ Belum</span>') + '</label><input type="file" id="ep_ktp" name="file_ktp" accept=".jpg,.jpeg,.png,.pdf" class="form-input" style="padding:8px;"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_pasfoto">Pas Foto 3×4 ' + (user.file_pasfoto ? '<span style="color:hsl(150 55% 42%);font-size:0.7rem;">✅ Sudah ada</span>' : '<span style="color:hsl(40 70% 45%);font-size:0.7rem;">⚠️ Belum</span>') + '</label><input type="file" id="ep_pasfoto" name="file_pasfoto" accept=".jpg,.jpeg,.png,.pdf" class="form-input" style="padding:8px;"></div>'
+    + '<div class="form-group"><label class="form-label" for="ep_rapor">Transkip Nilai Rapor ' + (user.file_rapor ? '<span style="color:hsl(150 55% 42%);font-size:0.7rem;">✅ Sudah ada</span>' : '') + '</label><input type="file" id="ep_rapor" name="file_rapor" accept=".jpg,.jpeg,.png,.pdf" class="form-input" style="padding:8px;"></div></div>'
+    + '<div class="off-row"><div class="form-group"><label class="form-label" for="ep_sehat">Surat Keterangan Sehat ' + (user.file_surat_sehat ? '<span style="color:hsl(150 55% 42%);font-size:0.7rem;">✅ Sudah ada</span>' : '') + '</label><input type="file" id="ep_sehat" name="file_surat_sehat" accept=".jpg,.jpeg,.png,.pdf" class="form-input" style="padding:8px;"></div><div class="form-group"></div></div></div>'
     + '<div style="display:flex;gap:10px;margin-top:16px;">'
     + '<button type="submit" class="btn btn-primary" style="flex:1;border-radius:10px;padding:10px;">\ud83d\udcbe Simpan Perubahan</button>'
     + '<button type="button" class="btn btn-secondary" id="cancelEditProfil" style="border-radius:10px;padding:10px 20px;">Batal</button>'
@@ -6356,7 +6363,20 @@ export function renderDashboard(container) {
 
           const fd = new FormData(ev.target);
           const payload = {};
-          fd.forEach((val, key) => { payload[key] = val; });
+          const fileFields = ['file_ijazah','file_ktp','file_pasfoto','file_rapor','file_surat_sehat'];
+          const uploadData = new FormData();
+          let hasFiles = false;
+
+          fd.forEach((val, key) => {
+            if (fileFields.includes(key)) {
+              if (val instanceof File && val.size > 0) {
+                uploadData.append(key, val);
+                hasFiles = true;
+              }
+            } else {
+              payload[key] = val;
+            }
+          });
 
           try {
             const res = await fetch(PROFILE_API + '/' + user.nim, {
@@ -6365,9 +6385,25 @@ export function renderDashboard(container) {
               body: JSON.stringify(payload)
             });
             const data = await res.json();
+
+            // Upload files if any selected
+            if (hasFiles) {
+              try {
+                await fetch('/api/profile/' + user.nim + '/documents', {
+                  method: 'POST',
+                  body: uploadData
+                });
+              } catch(e) { console.log('File upload note:', e); }
+            }
+
             if (res.ok) {
               alert('\u2705 ' + (data.message || 'Profil berhasil diperbarui!'));
               Object.assign(profileUser, payload);
+              if (hasFiles) {
+                fileFields.forEach(f => {
+                  if (uploadData.has(f)) profileUser[f] = 'uploaded';
+                });
+              }
               sessionStorage.setItem('user', JSON.stringify(profileUser));
               mainContent.innerHTML = profilSayaContent(profileUser) + isoFooter;
             } else {
