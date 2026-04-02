@@ -3939,149 +3939,119 @@ function wisudaContent() {
 // BIMBINGAN AKADEMIK (PA) — BAP Content
 // ============================================
 
-function bimbinganPAContent() {
-  const dosenList = DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0);
-  const totalMhs = dosenList.reduce((s, d) => s + d.totalMahasiswaBimbingan, 0);
-  const avgMhs = (totalMhs / dosenList.length).toFixed(1);
-  const maxMhs = Math.max(...dosenList.map(d => d.totalMahasiswaBimbingan));
+function _getPaBimbingan() {
+  if (!window._paBimbingan) {
+    const mhsPool = ['Ahmad Rizky Pratama','Siti Nurhaliza','Budi Santoso','Dewi Lestari','Eko Prasetyo','Fitri Handayani','Gani Setiawan','Hana Permata','Irfan Hakim','Julia Putri','Kurniawan Adi','Lina Marlina','M. Faisal','Nadia Rahmawati','Rudi Hermawan','Yeni Fitriani','Rina Wulandari','Agung Prasetya','Mega Safitri','Dimas Nugroho','Putri Ayu K.','Sari Indah','Bagas Firmansyah','Nurul Aini','Rizal Mahendra','Winda Sari','Fajar Nugroho','Aisyah Putri','Doni Setiawan','Ratna Dewi'];
+    const prodiArr = ['Administrasi Negara','Administrasi Niaga'];
+    window._paBimbingan = {};
+    DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0).forEach((d, idx) => {
+      const list = [];
+      for (let i = 0; i < d.totalMahasiswaBimbingan; i++) {
+        const nm = mhsPool[(idx * 3 + i) % mhsPool.length];
+        const ank = 2021 + (i % 4); const sem = (2026 - ank) * 2;
+        const ipk = parseFloat((3.1 + ((idx * 7 + i * 13) % 80) / 100).toFixed(2));
+        list.push({ nim: ank + '10' + String(1000 + idx * 10 + i).substring(1), nama: nm, ank, sem, ipk, prodi: prodiArr[idx % 2] });
+      }
+      window._paBimbingan[d.id] = list;
+    });
+  }
+  return window._paBimbingan;
+}
 
-  const mhsNames = [
-    'Ahmad Rizky Pratama','Siti Nurhaliza','Budi Santoso','Dewi Lestari','Eko Prasetyo',
-    'Fitri Handayani','Gani Setiawan','Hana Permata','Irfan Hakim','Julia Putri',
-    'Kurniawan Adi','Lina Marlina','M. Faisal','Nadia Rahmawati','Rudi Hermawan',
-    'Yeni Fitriani','Rina Wulandari','Agung Prasetya','Mega Safitri','Dimas Nugroho',
-    'Putri Ayu K.','Sari Indah','Bagas Firmansyah','Nurul Aini','Rizal Mahendra',
-    'Winda Sari','Fajar Nugroho','Aisyah Putri','Doni Setiawan','Ratna Dewi'
-  ];
-  const prodiArr = ['Administrasi Negara','Administrasi Niaga'];
+function _paRenderMhsGrid(dsnId, mhsList) {
+  if (!mhsList.length) return '<div style="text-align:center;padding:24px;color:hsl(215 15% 60%);font-size:0.8rem;">Belum ada mahasiswa bimbingan</div>';
+  return mhsList.map((m, mi) => {
+    const mIni = m.nama.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+    return '<div class="pa-mhs-item"><div class="pa-mhs-av">' + mIni + '</div><div style="flex:1;min-width:0;"><div class="pa-mhs-name">' + m.nama + '</div><div class="pa-mhs-meta"><span style="font-family:var(--font-mono);">' + m.nim + '</span><div class="pa-sep"></div><span>Sem ' + m.sem + '</span><div class="pa-sep"></div><span class="pa-ipk" style="color:' + (m.ipk >= 3.5 ? 'hsl(150 55% 38%)' : m.ipk >= 3.0 ? 'hsl(215 50% 45%)' : 'hsl(35 65% 42%)') + ';">IPK ' + m.ipk.toFixed(2) + '</span></div></div><div class="pa-mhs-actions"><button class="pa-mhs-btn edit" title="Edit" onclick="event.stopPropagation();_paShowModal(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="pa-mhs-btn del" title="Hapus" onclick="event.stopPropagation();_paDeleteMhs(\'' + dsnId + '\',' + mi + ')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div></div>';
+  }).join('');
+}
+
+function _paRefreshGrid(dsnId) {
+  const bimb = _getPaBimbingan(); const mhsList = bimb[dsnId] || [];
+  const grid = document.getElementById('paGrid_' + dsnId);
+  if (grid) grid.innerHTML = _paRenderMhsGrid(dsnId, mhsList);
+  const badge = document.getElementById('paBadge_' + dsnId);
+  if (badge) badge.textContent = mhsList.length;
+  const cnt = document.getElementById('paMhsCount_' + dsnId);
+  if (cnt) cnt.textContent = mhsList.length + ' mahasiswa bimbingan';
+  const allMhs = Object.values(bimb).reduce((s, a) => s + a.length, 0);
+  const dc = Object.keys(bimb).length;
+  const e1 = document.getElementById('paStat_mhs'); if (e1) e1.textContent = allMhs;
+  const e2 = document.getElementById('paStat_avg'); if (e2) e2.textContent = dc ? (allMhs / dc).toFixed(1) : 0;
+  const e3 = document.getElementById('paStat_max'); if (e3) e3.textContent = Math.max(...Object.values(bimb).map(a => a.length), 0);
+  const panel = grid?.closest('.pa-panel');
+  if (panel && panel.dataset.open === 'true') panel.style.maxHeight = panel.scrollHeight + 50 + 'px';
+}
+
+function _paDeleteMhs(dsnId, i) {
+  const bimb = _getPaBimbingan(); const mhs = bimb[dsnId]?.[i]; if (!mhs) return;
+  if (!confirm('Hapus ' + mhs.nama + ' dari bimbingan dosen ini?')) return;
+  bimb[dsnId].splice(i, 1); _paRefreshGrid(dsnId); _paToast('Mahasiswa berhasil dihapus');
+}
+
+function _paShowModal(dsnId, mhsIdx) {
+  const bimb = _getPaBimbingan(); const isEdit = mhsIdx !== null && mhsIdx !== undefined;
+  const mhs = isEdit ? bimb[dsnId]?.[mhsIdx] : null;
+  const dosen = DOSEN_LIST.find(d => d.id === dsnId);
+  const t = isEdit ? 'Edit Mahasiswa Bimbingan' : 'Tambah Mahasiswa Bimbingan';
+  document.getElementById('paModalContainer').innerHTML = '<div class="pa-modal-overlay" id="paModalOverlay"><div class="pa-modal"><div class="pa-modal-head"><h3>' + t + '</h3><button class="pa-modal-close" onclick="_paCloseModal()">×</button></div><div class="pa-modal-body"><div style="background:hsl(215 20% 97%);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:0.78rem;color:hsl(215 30% 35%);"><strong>Dosen PA:</strong> ' + (dosen ? dosen.nama : '') + '</div><label>Nama Mahasiswa</label><input type="text" id="paFormNama" value="' + (mhs ? mhs.nama : '') + '" placeholder="Masukkan nama lengkap" /><label>NIM</label><input type="text" id="paFormNim" value="' + (mhs ? mhs.nim : '') + '" placeholder="Contoh: 202410001" /><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><label>Angkatan</label><select id="paFormAnk"><option value="2021"' + (mhs?.ank===2021?' selected':'') + '>2021</option><option value="2022"' + (mhs?.ank===2022?' selected':'') + '>2022</option><option value="2023"' + (mhs?.ank===2023?' selected':'') + '>2023</option><option value="2024"' + (mhs?.ank===2024?' selected':'') + '>2024</option><option value="2025"' + (mhs?.ank===2025?' selected':'') + '>2025</option></select></div><div><label>Semester</label><input type="number" id="paFormSem" value="' + (mhs ? mhs.sem : '2') + '" min="1" max="14" /></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><label>IPK</label><input type="number" id="paFormIpk" value="' + (mhs ? mhs.ipk : '3.00') + '" min="0" max="4" step="0.01" /></div><div><label>Prodi</label><select id="paFormProdi"><option value="Administrasi Negara"' + (mhs?.prodi==='Administrasi Negara'?' selected':'') + '>Adm. Negara</option><option value="Administrasi Niaga"' + (mhs?.prodi==='Administrasi Niaga'?' selected':'') + '>Adm. Niaga</option></select></div></div></div><div class="pa-modal-foot"><button class="pa-cancel" onclick="_paCloseModal()">Batal</button><button class="pa-save" onclick="_paSaveMhs(\'' + dsnId + '\',' + (isEdit ? mhsIdx : 'null') + ')">' + (isEdit ? 'Simpan' : 'Tambah') + '</button></div></div></div>';
+  document.getElementById('paModalOverlay').addEventListener('click', function(e) { if (e.target === this) _paCloseModal(); });
+  setTimeout(() => document.getElementById('paFormNama')?.focus(), 100);
+}
+
+function _paCloseModal() { document.getElementById('paModalContainer').innerHTML = ''; }
+
+function _paSaveMhs(dsnId, mhsIdx) {
+  const nama = document.getElementById('paFormNama')?.value.trim();
+  const nim = document.getElementById('paFormNim')?.value.trim();
+  if (!nama) { alert('Nama mahasiswa wajib diisi'); return; }
+  if (!nim) { alert('NIM wajib diisi'); return; }
+  const bimb = _getPaBimbingan(); if (!bimb[dsnId]) bimb[dsnId] = [];
+  const entry = { nim, nama, ank: parseInt(document.getElementById('paFormAnk')?.value)||2024, sem: parseInt(document.getElementById('paFormSem')?.value)||2, ipk: parseFloat(document.getElementById('paFormIpk')?.value)||3.0, prodi: document.getElementById('paFormProdi')?.value||'Administrasi Negara' };
+  if (mhsIdx !== null && mhsIdx !== undefined) { bimb[dsnId][mhsIdx] = entry; _paToast('Data mahasiswa diperbarui'); }
+  else { bimb[dsnId].push(entry); _paToast('Mahasiswa berhasil ditambahkan'); }
+  _paCloseModal(); _paRefreshGrid(dsnId);
+}
+
+function _paToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(150 50% 35%);color:white;padding:12px 20px;border-radius:10px;font-size:0.8rem;font-weight:600;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:el-fadeInUp .25s ease;';
+  t.textContent = '\u2713 ' + msg; document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+function bimbinganPAContent() {
+  const bimb = _getPaBimbingan();
+  const dosenList = DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0);
+  const totalMhs = Object.values(bimb).reduce((s, a) => s + a.length, 0);
+  const avgMhs = dosenList.length ? (totalMhs / dosenList.length).toFixed(1) : 0;
+  const maxMhs = Math.max(...Object.values(bimb).map(a => a.length), 0);
 
   return `
     <style>
-      .pa-page { animation: el-fadeInUp .35s ease; }
-      .pa-header { display:flex;gap:20px;margin-bottom:20px; }
-      .pa-stat-card { flex:1;background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);padding:20px;display:flex;align-items:center;gap:14px;transition:all .25s; }
-      .pa-stat-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px); }
-      .pa-stat-icon { width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0; }
-      .pa-stat-num { font-size:1.6rem;font-weight:800;line-height:1;color:hsl(215 40% 18%); }
-      .pa-stat-label { font-size:0.68rem;color:hsl(215 15% 55%);margin-top:2px; }
-      .pa-search-bar { background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px; }
-      .pa-search-bar input { flex:1;border:none;outline:none;font-size:0.85rem;color:hsl(215 40% 18%);font-family:inherit;background:transparent; }
-      .pa-search-bar input::placeholder { color:hsl(215 15% 65%); }
-      .pa-search-icon { color:hsl(215 15% 60%);flex-shrink:0; }
-      .pa-count { font-size:0.72rem;color:hsl(215 15% 55%);flex-shrink:0; }
-      .pa-card { background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);margin-bottom:10px;overflow:hidden;transition:all .25s; }
-      .pa-card:hover { border-color:hsl(215 30% 85%);box-shadow:0 2px 12px rgba(0,0,0,.04); }
-      .pa-card-head { display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;user-select:none; }
-      .pa-avatar { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;color:white;flex-shrink:0; }
-      .pa-info { flex:1;min-width:0; }
-      .pa-info h4 { margin:0;font-size:0.85rem;font-weight:700;color:hsl(215 40% 18%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-      .pa-info p { margin:2px 0 0;font-size:0.7rem;color:hsl(215 15% 55%); }
-      .pa-badge { display:flex;align-items:center;gap:6px;flex-shrink:0; }
-      .pa-badge-num { min-width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800; }
-      .pa-arrow { width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:hsl(215 15% 65%);transition:all .25s; }
-      .pa-arrow svg { pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1); }
-      .pa-panel { max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1); }
-      .pa-panel-inner { padding:0 18px 16px; }
-      .pa-mhs-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px; }
-      .pa-mhs-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:hsl(215 20% 98%);border:1px solid hsl(215 15% 94%);transition:all .2s; }
-      .pa-mhs-item:hover { background:hsl(215 30% 96%);border-color:hsl(215 30% 87%); }
-      .pa-mhs-av { width:32px;height:32px;border-radius:8px;background:hsl(215 15% 90%);color:hsl(215 30% 40%);display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;flex-shrink:0; }
-      .pa-mhs-name { font-size:0.78rem;font-weight:600;color:hsl(215 35% 22%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-      .pa-mhs-meta { font-size:0.65rem;color:hsl(215 15% 55%);display:flex;gap:8px;margin-top:1px; }
-      .pa-mhs-meta span { white-space:nowrap; }
-      .pa-ipk { font-weight:700; }
-      .pa-sep { width:1px;height:14px;background:hsl(215 15% 88%);margin:0 2px; }
-      @media (max-width:768px) {
-        .pa-header { flex-direction:column;gap:10px; }
-        .pa-mhs-grid { grid-template-columns:1fr; }
-        .pa-info h4 { font-size:0.8rem; }
-      }
+      .pa-page{animation:el-fadeInUp .35s ease}.pa-header{display:flex;gap:20px;margin-bottom:20px}.pa-stat-card{flex:1;background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);padding:20px;display:flex;align-items:center;gap:14px;transition:all .25s}.pa-stat-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px)}.pa-stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}.pa-stat-num{font-size:1.6rem;font-weight:800;line-height:1;color:hsl(215 40% 18%)}.pa-stat-label{font-size:.68rem;color:hsl(215 15% 55%);margin-top:2px}.pa-search-bar{background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px}.pa-search-bar input{flex:1;border:none;outline:none;font-size:.85rem;color:hsl(215 40% 18%);font-family:inherit;background:transparent}.pa-search-bar input::placeholder{color:hsl(215 15% 65%)}.pa-count{font-size:.72rem;color:hsl(215 15% 55%);flex-shrink:0}.pa-card{background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);margin-bottom:10px;overflow:hidden;transition:all .25s}.pa-card:hover{border-color:hsl(215 30% 85%);box-shadow:0 2px 12px rgba(0,0,0,.04)}.pa-card-head{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;user-select:none}.pa-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:white;flex-shrink:0}.pa-info{flex:1;min-width:0}.pa-info h4{margin:0;font-size:.85rem;font-weight:700;color:hsl(215 40% 18%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-badge{display:flex;align-items:center;gap:6px;flex-shrink:0}.pa-badge-num{min-width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800}.pa-arrow{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:hsl(215 15% 65%);transition:all .25s}.pa-arrow svg{pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1)}.pa-panel{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}.pa-panel-inner{padding:0 18px 16px}.pa-panel-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-top:4px}.pa-btn-add{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;background:hsl(215 55% 50%);color:white;transition:all .2s}.pa-btn-add:hover{background:hsl(215 55% 42%);transform:scale(1.03)}.pa-mhs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}.pa-mhs-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:hsl(215 20% 98%);border:1px solid hsl(215 15% 94%);transition:all .2s}.pa-mhs-item:hover{background:hsl(215 30% 96%);border-color:hsl(215 30% 87%)}.pa-mhs-item:hover .pa-mhs-actions{opacity:1}.pa-mhs-av{width:32px;height:32px;border-radius:8px;background:hsl(215 15% 90%);color:hsl(215 30% 40%);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0}.pa-mhs-name{font-size:.78rem;font-weight:600;color:hsl(215 35% 22%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa-mhs-meta{font-size:.65rem;color:hsl(215 15% 55%);display:flex;gap:8px;margin-top:1px}.pa-mhs-meta span{white-space:nowrap}.pa-ipk{font-weight:700}.pa-sep{width:1px;height:14px;background:hsl(215 15% 88%);margin:0 2px}.pa-mhs-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .2s}.pa-mhs-btn{width:26px;height:26px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.pa-mhs-btn.edit{background:hsl(215 50% 94%);color:hsl(215 50% 45%)}.pa-mhs-btn.edit:hover{background:hsl(215 50% 88%)}.pa-mhs-btn.del{background:hsl(0 50% 95%);color:hsl(0 50% 45%)}.pa-mhs-btn.del:hover{background:hsl(0 50% 88%)}.pa-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center;animation:el-fadeInUp .2s ease}.pa-modal{background:white;border-radius:16px;width:480px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}.pa-modal-head{padding:20px 24px 16px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center}.pa-modal-head h3{margin:0;font-size:.95rem;font-weight:700;color:hsl(215 40% 18%)}.pa-modal-close{width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}.pa-modal-close:hover{background:hsl(0 50% 94%);color:hsl(0 50% 45%)}.pa-modal-body{padding:20px 24px}.pa-modal-body label{display:block;font-size:.72rem;font-weight:700;color:hsl(215 20% 40%);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}.pa-modal-body input,.pa-modal-body select{width:100%;padding:10px 14px;border:1px solid hsl(215 15% 88%);border-radius:10px;font-size:.82rem;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s;margin-bottom:14px}.pa-modal-body input:focus,.pa-modal-body select:focus{border-color:hsl(215 55% 55%)}.pa-modal-foot{padding:14px 24px 20px;display:flex;gap:8px;justify-content:flex-end}.pa-modal-foot button{padding:8px 20px;border:none;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}.pa-modal-foot .pa-cancel{background:hsl(215 15% 93%);color:hsl(215 20% 40%)}.pa-modal-foot .pa-cancel:hover{background:hsl(215 15% 87%)}.pa-modal-foot .pa-save{background:hsl(215 55% 50%);color:white}.pa-modal-foot .pa-save:hover{background:hsl(215 55% 42%)}@media(max-width:768px){.pa-header{flex-direction:column;gap:10px}.pa-mhs-grid{grid-template-columns:1fr}.pa-info h4{font-size:.8rem}.pa-mhs-actions{opacity:1}}
     </style>
-
     <div class="pa-page">
-      <!-- Stats -->
       <div class="pa-header">
-        <div class="pa-stat-card">
-          <div class="pa-stat-icon" style="background:hsl(215 60% 95%);color:hsl(215 55% 45%);">👨‍🏫</div>
-          <div><div class="pa-stat-num">${dosenList.length}</div><div class="pa-stat-label">Dosen PA Aktif</div></div>
-        </div>
-        <div class="pa-stat-card">
-          <div class="pa-stat-icon" style="background:hsl(150 50% 94%);color:hsl(150 50% 35%);">👨‍🎓</div>
-          <div><div class="pa-stat-num">${totalMhs}</div><div class="pa-stat-label">Total Mahasiswa</div></div>
-        </div>
-        <div class="pa-stat-card">
-          <div class="pa-stat-icon" style="background:hsl(280 40% 94%);color:hsl(280 45% 45%);">📊</div>
-          <div><div class="pa-stat-num">${avgMhs}</div><div class="pa-stat-label">Rata-rata / Dosen</div></div>
-        </div>
-        <div class="pa-stat-card">
-          <div class="pa-stat-icon" style="background:hsl(35 70% 94%);color:hsl(35 70% 42%);">🏆</div>
-          <div><div class="pa-stat-num">${maxMhs}</div><div class="pa-stat-label">Mhs Terbanyak</div></div>
-        </div>
+        <div class="pa-stat-card"><div class="pa-stat-icon" style="background:hsl(215 60% 95%);color:hsl(215 55% 45%);">👨‍🏫</div><div><div class="pa-stat-num" id="paStat_dosen">${dosenList.length}</div><div class="pa-stat-label">Dosen PA Aktif</div></div></div>
+        <div class="pa-stat-card"><div class="pa-stat-icon" style="background:hsl(150 50% 94%);color:hsl(150 50% 35%);">👨‍🎓</div><div><div class="pa-stat-num" id="paStat_mhs">${totalMhs}</div><div class="pa-stat-label">Total Mahasiswa</div></div></div>
+        <div class="pa-stat-card"><div class="pa-stat-icon" style="background:hsl(280 40% 94%);color:hsl(280 45% 45%);">📊</div><div><div class="pa-stat-num" id="paStat_avg">${avgMhs}</div><div class="pa-stat-label">Rata-rata / Dosen</div></div></div>
+        <div class="pa-stat-card"><div class="pa-stat-icon" style="background:hsl(35 70% 94%);color:hsl(35 70% 42%);">🏆</div><div><div class="pa-stat-num" id="paStat_max">${maxMhs}</div><div class="pa-stat-label">Mhs Terbanyak</div></div></div>
       </div>
-
-      <!-- Search -->
       <div class="pa-search-bar">
         <svg class="pa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="paSearchInput" placeholder="Cari nama dosen PA..." />
         <div class="pa-count"><span id="paCount">${dosenList.length}</span> dosen</div>
       </div>
-
-      <!-- Dosen Cards -->
       ${dosenList.map((d, idx) => {
         const ini = d.nama.split(' ').filter(w => w.length > 2 && !w.includes('.')).map(n => n[0]).join('').substring(0,2).toUpperCase();
         const hue = (idx * 37 + 200) % 360;
-        const bgLight = 'hsl(' + hue + ' 50% 94%)';
-        const bgSolid = 'hsl(' + hue + ' 45% 50%)';
-        const txtColor = 'hsl(' + hue + ' 50% 38%)';
-
-        // Generate mhs
-        const mhsList = [];
-        for (let i = 0; i < d.totalMahasiswaBimbingan; i++) {
-          const nm = mhsNames[(idx * 3 + i) % mhsNames.length];
-          const ank = 2021 + (i % 4);
-          const sem = (2026 - ank) * 2;
-          const ipk = (3.1 + ((idx * 7 + i * 13) % 80) / 100).toFixed(2);
-          const prodi = prodiArr[idx % 2];
-          const nim = ank + '10' + String(1000 + idx * 10 + i).substring(1);
-          const mIni = nm.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-          mhsList.push({ nim, nama: nm, ank, sem, ipk, prodi, ini: mIni });
-        }
-
-        return `<div class="pa-card" data-dosen="${d.nama.toLowerCase()}">
-          <div class="pa-card-head" data-idx="${idx}">
-            <div class="pa-avatar" style="background:${bgSolid};">${ini}</div>
-            <div class="pa-info">
-              <h4>${d.nama}</h4>
-            </div>
-            <div class="pa-badge">
-              <div class="pa-badge-num" style="background:${bgLight};color:${txtColor};">${d.totalMahasiswaBimbingan}</div>
-              <div class="pa-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-            </div>
-          </div>
-          <div class="pa-panel" id="paMhs_${idx}">
-            <div class="pa-panel-inner">
-              <div class="pa-mhs-grid">
-                ${mhsList.map(m => `
-                  <div class="pa-mhs-item">
-                    <div class="pa-mhs-av">${m.ini}</div>
-                    <div style="flex:1;min-width:0;">
-                      <div class="pa-mhs-name">${m.nama}</div>
-                      <div class="pa-mhs-meta">
-                        <span style="font-family:var(--font-mono);">${m.nim}</span>
-                        <div class="pa-sep"></div>
-                        <span>Sem ${m.sem}</span>
-                        <div class="pa-sep"></div>
-                        <span class="pa-ipk" style="color:${m.ipk >= 3.5 ? 'hsl(150 55% 38%)' : m.ipk >= 3.0 ? 'hsl(215 50% 45%)' : 'hsl(35 65% 42%)'};">IPK ${m.ipk}</span>
-                      </div>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        </div>`;
+        const bgSolid = 'hsl(' + hue + ' 45% 50%)'; const bgLight = 'hsl(' + hue + ' 50% 94%)'; const txtColor = 'hsl(' + hue + ' 50% 38%)';
+        const mhsList = bimb[d.id] || [];
+        return '<div class="pa-card" data-dosen="' + d.nama.toLowerCase() + '" data-dsn-id="' + d.id + '"><div class="pa-card-head" data-idx="' + idx + '"><div class="pa-avatar" style="background:' + bgSolid + ';">' + ini + '</div><div class="pa-info"><h4>' + d.nama + '</h4></div><div class="pa-badge"><div class="pa-badge-num" style="background:' + bgLight + ';color:' + txtColor + ';" id="paBadge_' + d.id + '">' + mhsList.length + '</div><div class="pa-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div></div></div><div class="pa-panel" id="paMhs_' + idx + '"><div class="pa-panel-inner"><div class="pa-panel-toolbar"><span style="font-size:0.72rem;color:hsl(215 15% 55%);" id="paMhsCount_' + d.id + '">' + mhsList.length + ' mahasiswa bimbingan</span><button class="pa-btn-add" onclick="event.stopPropagation();_paShowModal(\'' + d.id + '\',null)">+ Tambah</button></div><div class="pa-mhs-grid" id="paGrid_' + d.id + '">' + _paRenderMhsGrid(d.id, mhsList) + '</div></div></div></div>';
       }).join('')}
-    </div>`;
+    </div>
+    <div id="paModalContainer"></div>`;
 }
 
 function initBimbinganPA() {
@@ -4092,43 +4062,24 @@ function initBimbinganPA() {
       const arrow = header.querySelector('.pa-arrow svg');
       const card = header.closest('.pa-card');
       const isOpen = panel.dataset.open === 'true';
-
-      // Close all others first
       document.querySelectorAll('.pa-panel').forEach(p => {
         if (p.id !== 'paMhs_' + idx && p.dataset.open === 'true') {
-          p.style.maxHeight = '0';
-          p.dataset.open = 'false';
+          p.style.maxHeight = '0'; p.dataset.open = 'false';
           p.closest('.pa-card').querySelector('.pa-arrow svg').style.transform = '';
           p.closest('.pa-card').style.borderColor = '';
         }
       });
-
-      if (isOpen) {
-        panel.style.maxHeight = '0';
-        panel.dataset.open = 'false';
-        arrow.style.transform = '';
-        card.style.borderColor = '';
-      } else {
-        panel.style.maxHeight = panel.scrollHeight + 50 + 'px';
-        panel.dataset.open = 'true';
-        arrow.style.transform = 'rotate(180deg)';
-        card.style.borderColor = 'hsl(215 40% 80%)';
-        setTimeout(() => header.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
-      }
+      if (isOpen) { panel.style.maxHeight = '0'; panel.dataset.open = 'false'; arrow.style.transform = ''; card.style.borderColor = ''; }
+      else { panel.style.maxHeight = panel.scrollHeight + 50 + 'px'; panel.dataset.open = 'true'; arrow.style.transform = 'rotate(180deg)'; card.style.borderColor = 'hsl(215 40% 80%)'; setTimeout(() => header.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200); }
     });
   });
-
   document.getElementById('paSearchInput')?.addEventListener('input', function() {
-    const q = this.value.toLowerCase();
-    let c = 0;
-    document.querySelectorAll('.pa-card').forEach(card => {
-      const show = card.dataset.dosen.includes(q);
-      card.style.display = show ? '' : 'none';
-      if (show) c++;
-    });
+    const q = this.value.toLowerCase(); let c = 0;
+    document.querySelectorAll('.pa-card').forEach(card => { const show = card.dataset.dosen.includes(q); card.style.display = show ? '' : 'none'; if (show) c++; });
     document.getElementById('paCount').textContent = c;
   });
 }
+
 
 
 // ---- PMB Management Page (BAP) ----
