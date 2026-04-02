@@ -3943,133 +3943,140 @@ function bimbinganPAContent() {
   const dosenList = DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0);
   const totalMhs = dosenList.reduce((s, d) => s + d.totalMahasiswaBimbingan, 0);
   const avgMhs = (totalMhs / dosenList.length).toFixed(1);
+  const maxMhs = Math.max(...dosenList.map(d => d.totalMahasiswaBimbingan));
 
-  // Generate dummy mahasiswa bimbingan for each dosen
   const mhsNames = [
-    'Ahmad Rizky P.','Siti Nurhaliza','Budi Santoso','Dewi Lestari','Eko Prasetyo',
+    'Ahmad Rizky Pratama','Siti Nurhaliza','Budi Santoso','Dewi Lestari','Eko Prasetyo',
     'Fitri Handayani','Gani Setiawan','Hana Permata','Irfan Hakim','Julia Putri',
-    'Kurniawan','Lina Marlina','M. Faisal','Nadia Rahmawati','Rudi Hermawan',
+    'Kurniawan Adi','Lina Marlina','M. Faisal','Nadia Rahmawati','Rudi Hermawan',
     'Yeni Fitriani','Rina Wulandari','Agung Prasetya','Mega Safitri','Dimas Nugroho',
-    'Putri Ayu','Sari Indah','Bagas Firmansyah','Nurul Aini','Rizal Mahendra',
+    'Putri Ayu K.','Sari Indah','Bagas Firmansyah','Nurul Aini','Rizal Mahendra',
     'Winda Sari','Fajar Nugroho','Aisyah Putri','Doni Setiawan','Ratna Dewi'
   ];
-  const prodiList = ['Administrasi Negara','Administrasi Niaga'];
+  const prodiArr = ['Administrasi Negara','Administrasi Niaga'];
 
   return `
-    <!-- Stats Header -->
-    <div style="background:var(--gradient-primary);border-radius:16px;padding:24px 28px;color:white;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%;"></div>
-      <div>
-        <h2 style="margin:0 0 4px;font-size:1.2rem;font-weight:800;font-family:var(--font-heading);">🎓 Bimbingan Akademik (PA)</h2>
-        <p style="margin:0;opacity:.85;font-size:0.82rem;">Pengelolaan Penasehat Akademik — Semester Genap ${new Date().getFullYear()}</p>
-      </div>
-      <div style="display:flex;gap:16px;">
-        <div style="text-align:center;background:rgba(255,255,255,.12);padding:12px 20px;border-radius:12px;backdrop-filter:blur(8px);">
-          <div style="font-size:1.4rem;font-weight:800;">${dosenList.length}</div>
-          <div style="font-size:0.68rem;opacity:.8;">Dosen PA</div>
-        </div>
-        <div style="text-align:center;background:rgba(255,255,255,.12);padding:12px 20px;border-radius:12px;backdrop-filter:blur(8px);">
-          <div style="font-size:1.4rem;font-weight:800;">${totalMhs}</div>
-          <div style="font-size:0.68rem;opacity:.8;">Total Mahasiswa</div>
-        </div>
-        <div style="text-align:center;background:rgba(255,255,255,.12);padding:12px 20px;border-radius:12px;backdrop-filter:blur(8px);">
-          <div style="font-size:1.4rem;font-weight:800;">${avgMhs}</div>
-          <div style="font-size:0.68rem;opacity:.8;">Rata-rata / Dosen</div>
-        </div>
-      </div>
-    </div>
+    <style>
+      .pa-page { animation: el-fadeInUp .35s ease; }
+      .pa-header { display:flex;gap:20px;margin-bottom:20px; }
+      .pa-stat-card { flex:1;background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);padding:20px;display:flex;align-items:center;gap:14px;transition:all .25s; }
+      .pa-stat-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.06);transform:translateY(-2px); }
+      .pa-stat-icon { width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0; }
+      .pa-stat-num { font-size:1.6rem;font-weight:800;line-height:1;color:hsl(215 40% 18%); }
+      .pa-stat-label { font-size:0.68rem;color:hsl(215 15% 55%);margin-top:2px; }
+      .pa-search-bar { background:#fff;border-radius:12px;border:1px solid hsl(215 15% 92%);padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px; }
+      .pa-search-bar input { flex:1;border:none;outline:none;font-size:0.85rem;color:hsl(215 40% 18%);font-family:inherit;background:transparent; }
+      .pa-search-bar input::placeholder { color:hsl(215 15% 65%); }
+      .pa-search-icon { color:hsl(215 15% 60%);flex-shrink:0; }
+      .pa-count { font-size:0.72rem;color:hsl(215 15% 55%);flex-shrink:0; }
+      .pa-card { background:#fff;border-radius:14px;border:1px solid hsl(215 15% 92%);margin-bottom:10px;overflow:hidden;transition:all .25s; }
+      .pa-card:hover { border-color:hsl(215 30% 85%);box-shadow:0 2px 12px rgba(0,0,0,.04); }
+      .pa-card-head { display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;user-select:none; }
+      .pa-avatar { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;color:white;flex-shrink:0; }
+      .pa-info { flex:1;min-width:0; }
+      .pa-info h4 { margin:0;font-size:0.85rem;font-weight:700;color:hsl(215 40% 18%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+      .pa-info p { margin:2px 0 0;font-size:0.7rem;color:hsl(215 15% 55%); }
+      .pa-badge { display:flex;align-items:center;gap:6px;flex-shrink:0; }
+      .pa-badge-num { min-width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800; }
+      .pa-arrow { width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:hsl(215 15% 65%);transition:all .25s; }
+      .pa-arrow svg { pointer-events:none;transition:transform .3s cubic-bezier(.4,0,.2,1); }
+      .pa-panel { max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1); }
+      .pa-panel-inner { padding:0 18px 16px; }
+      .pa-mhs-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px; }
+      .pa-mhs-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:hsl(215 20% 98%);border:1px solid hsl(215 15% 94%);transition:all .2s; }
+      .pa-mhs-item:hover { background:hsl(215 30% 96%);border-color:hsl(215 30% 87%); }
+      .pa-mhs-av { width:32px;height:32px;border-radius:8px;background:hsl(215 15% 90%);color:hsl(215 30% 40%);display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;flex-shrink:0; }
+      .pa-mhs-name { font-size:0.78rem;font-weight:600;color:hsl(215 35% 22%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+      .pa-mhs-meta { font-size:0.65rem;color:hsl(215 15% 55%);display:flex;gap:8px;margin-top:1px; }
+      .pa-mhs-meta span { white-space:nowrap; }
+      .pa-ipk { font-weight:700; }
+      .pa-sep { width:1px;height:14px;background:hsl(215 15% 88%);margin:0 2px; }
+      @media (max-width:768px) {
+        .pa-header { flex-direction:column;gap:10px; }
+        .pa-mhs-grid { grid-template-columns:1fr; }
+        .pa-info h4 { font-size:0.8rem; }
+      }
+    </style>
 
-    <!-- Search & Filter -->
-    <div class="dash-card" style="margin-bottom:16px;">
-      <div style="padding:16px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;position:relative;">
-          <input type="text" id="paSearchInput" placeholder="Cari nama dosen..." style="width:100%;padding:10px 14px 10px 36px;border:1px solid var(--gray-200);border-radius:10px;font-size:0.82rem;outline:none;transition:border-color .2s;box-sizing:border-box;" />
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem;">${I.search}</span>
+    <div class="pa-page">
+      <!-- Stats -->
+      <div class="pa-header">
+        <div class="pa-stat-card">
+          <div class="pa-stat-icon" style="background:hsl(215 60% 95%);color:hsl(215 55% 45%);">👨‍🏫</div>
+          <div><div class="pa-stat-num">${dosenList.length}</div><div class="pa-stat-label">Dosen PA Aktif</div></div>
         </div>
-        <select id="paFilterProdi" style="padding:10px 14px;border:1px solid var(--gray-200);border-radius:10px;font-size:0.82rem;background:white;cursor:pointer;">
-          <option value="">Semua Prodi</option>
-          <option value="publik">Adm. Publik</option>
-          <option value="niaga">Adm. Niaga</option>
-        </select>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-left:auto;">Menampilkan <strong id="paCount">${dosenList.length}</strong> dosen</div>
+        <div class="pa-stat-card">
+          <div class="pa-stat-icon" style="background:hsl(150 50% 94%);color:hsl(150 50% 35%);">👨‍🎓</div>
+          <div><div class="pa-stat-num">${totalMhs}</div><div class="pa-stat-label">Total Mahasiswa</div></div>
+        </div>
+        <div class="pa-stat-card">
+          <div class="pa-stat-icon" style="background:hsl(280 40% 94%);color:hsl(280 45% 45%);">📊</div>
+          <div><div class="pa-stat-num">${avgMhs}</div><div class="pa-stat-label">Rata-rata / Dosen</div></div>
+        </div>
+        <div class="pa-stat-card">
+          <div class="pa-stat-icon" style="background:hsl(35 70% 94%);color:hsl(35 70% 42%);">🏆</div>
+          <div><div class="pa-stat-num">${maxMhs}</div><div class="pa-stat-label">Mhs Terbanyak</div></div>
+        </div>
       </div>
-    </div>
 
-    <!-- Dosen List -->
-    <div id="paDosenList">
+      <!-- Search -->
+      <div class="pa-search-bar">
+        <svg class="pa-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="paSearchInput" placeholder="Cari nama dosen PA..." />
+        <div class="pa-count"><span id="paCount">${dosenList.length}</span> dosen</div>
+      </div>
+
+      <!-- Dosen Cards -->
       ${dosenList.map((d, idx) => {
-        const initials = d.nama.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        const colors = ['hsl(215 55% 50%)','hsl(150 50% 42%)','hsl(280 45% 50%)','hsl(35 70% 48%)','hsl(350 55% 50%)','hsl(180 45% 40%)'];
-        const color = colors[idx % colors.length];
-        // Generate mahasiswa for this dosen
+        const ini = d.nama.split(' ').filter(w => w.length > 2 && !w.includes('.')).map(n => n[0]).join('').substring(0,2).toUpperCase();
+        const hue = (idx * 37 + 200) % 360;
+        const bgLight = 'hsl(' + hue + ' 50% 94%)';
+        const bgSolid = 'hsl(' + hue + ' 45% 50%)';
+        const txtColor = 'hsl(' + hue + ' 50% 38%)';
+
+        // Generate mhs
         const mhsList = [];
         for (let i = 0; i < d.totalMahasiswaBimbingan; i++) {
           const nm = mhsNames[(idx * 3 + i) % mhsNames.length];
-          const angkatan = 2021 + (i % 4);
-          const sem = (2026 - angkatan) * 2;
-          const ipk = (3.2 + Math.random() * 0.7).toFixed(2);
-          const sks = 20 + sem * 10 + Math.floor(Math.random() * 10);
-          const prodi = prodiList[idx % 2];
-          const nim = `${angkatan}10${String(1000 + idx * 10 + i).substring(1)}`;
-          mhsList.push({ nim, nama: nm, angkatan, semester: sem, ipk, sks, prodi, status: ipk > 2.5 ? 'Aktif' : 'Probasi' });
+          const ank = 2021 + (i % 4);
+          const sem = (2026 - ank) * 2;
+          const ipk = (3.1 + ((idx * 7 + i * 13) % 80) / 100).toFixed(2);
+          const prodi = prodiArr[idx % 2];
+          const nim = ank + '10' + String(1000 + idx * 10 + i).substring(1);
+          const mIni = nm.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+          mhsList.push({ nim, nama: nm, ank, sem, ipk, prodi, ini: mIni });
         }
-        
-        return `
-        <div class="dash-card pa-dosen-card" data-dosen="${d.nama.toLowerCase()}" style="margin-bottom:12px;transition:all .3s ease;">
-          <div style="padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;" class="pa-dosen-header" data-idx="${idx}">
-            <div style="width:48px;height:48px;border-radius:14px;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;flex-shrink:0;">${initials}</div>
-            <div style="flex:1;min-width:0;">
-              <h4 style="margin:0 0 2px;font-size:0.88rem;font-weight:700;color:var(--text-primary);">${d.nama}</h4>
-              <p style="margin:0;font-size:0.72rem;color:var(--text-muted);">NIP: ${d.nip} · ${d.jabatanFungsional} · ${d.golongan}</p>
+
+        return `<div class="pa-card" data-dosen="${d.nama.toLowerCase()}">
+          <div class="pa-card-head" data-idx="${idx}">
+            <div class="pa-avatar" style="background:${bgSolid};">${ini}</div>
+            <div class="pa-info">
+              <h4>${d.nama}</h4>
+              <p>${d.bidangKeahlian ? d.bidangKeahlian.slice(0,2).join(' · ') : d.jabatanFungsional}</p>
             </div>
-            <div style="display:flex;gap:12px;align-items:center;flex-shrink:0;">
-              <div style="text-align:center;">
-                <div style="font-size:1.15rem;font-weight:800;color:${color};">${d.totalMahasiswaBimbingan}</div>
-                <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;">Mahasiswa</div>
-              </div>
-              <div class="pa-chevron" data-idx="${idx}" style="width:28px;height:28px;border-radius:8px;background:var(--gray-50);display:flex;align-items:center;justify-content:center;transition:all .3s;color:var(--text-muted);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;transition:transform .3s;"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
+            <div class="pa-badge">
+              <div class="pa-badge-num" style="background:${bgLight};color:${txtColor};">${d.totalMahasiswaBimbingan}</div>
+              <div class="pa-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
             </div>
           </div>
-          <!-- Mahasiswa Table (hidden) -->
-          <div class="pa-mhs-panel" id="paMhs_${idx}" style="max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;">
-            <div style="border-top:1px solid var(--gray-100);padding:16px 20px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h5 style="margin:0;font-size:0.8rem;font-weight:700;color:var(--text-primary);">👨‍🎓 Daftar Mahasiswa Bimbingan</h5>
-                <span style="font-size:0.68rem;color:var(--text-muted);background:var(--gray-50);padding:3px 10px;border-radius:6px;">${d.totalMahasiswaBimbingan} mahasiswa</span>
-              </div>
-              <div style="overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
-                  <thead>
-                    <tr style="background:var(--gray-50);">
-                      <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">No</th>
-                      <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">NIM</th>
-                      <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">Nama Mahasiswa</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">Prodi</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">Angkatan</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">Semester</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">IPK</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">SKS</th>
-                      <th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--gray-100);">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${mhsList.map((m, mi) => `
-                      <tr style="border-bottom:1px solid var(--gray-50);transition:background .15s;" onmouseover="this.style.background='hsl(215 30% 98%)'" onmouseout="this.style.background=''">
-                        <td style="padding:10px 12px;color:var(--text-muted);">${mi + 1}</td>
-                        <td style="padding:10px 12px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-primary);font-weight:500;">${m.nim}</td>
-                        <td style="padding:10px 12px;font-weight:600;color:var(--text-primary);">${m.nama}</td>
-                        <td style="padding:10px 12px;text-align:center;font-size:0.72rem;">${m.prodi.includes('Negara') ? 'Adm. Negara' : 'Adm. Niaga'}</td>
-                        <td style="padding:10px 12px;text-align:center;">${m.angkatan}</td>
-                        <td style="padding:10px 12px;text-align:center;">${m.semester}</td>
-                        <td style="padding:10px 12px;text-align:center;font-weight:700;color:${m.ipk >= 3.5 ? 'hsl(150 55% 40%)' : m.ipk >= 3.0 ? 'hsl(215 55% 45%)' : 'hsl(35 70% 45%)'};">${m.ipk}</td>
-                        <td style="padding:10px 12px;text-align:center;">${m.sks}</td>
-                        <td style="padding:10px 12px;text-align:center;"><span style="padding:3px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;${m.status === 'Aktif' ? 'background:hsl(150 50% 94%);color:hsl(150 50% 30%);' : 'background:hsl(0 50% 95%);color:hsl(0 50% 40%);'}">${m.status}</span></td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
+          <div class="pa-panel" id="paMhs_${idx}">
+            <div class="pa-panel-inner">
+              <div class="pa-mhs-grid">
+                ${mhsList.map(m => `
+                  <div class="pa-mhs-item">
+                    <div class="pa-mhs-av">${m.ini}</div>
+                    <div style="flex:1;min-width:0;">
+                      <div class="pa-mhs-name">${m.nama}</div>
+                      <div class="pa-mhs-meta">
+                        <span style="font-family:var(--font-mono);">${m.nim}</span>
+                        <div class="pa-sep"></div>
+                        <span>Sem ${m.sem}</span>
+                        <div class="pa-sep"></div>
+                        <span class="pa-ipk" style="color:${m.ipk >= 3.5 ? 'hsl(150 55% 38%)' : m.ipk >= 3.0 ? 'hsl(215 50% 45%)' : 'hsl(35 65% 42%)'};">IPK ${m.ipk}</span>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
@@ -4079,42 +4086,51 @@ function bimbinganPAContent() {
 }
 
 function initBimbinganPA() {
-  // Toggle expand/collapse
-  document.querySelectorAll('.pa-dosen-header').forEach(header => {
+  document.querySelectorAll('.pa-card-head').forEach(header => {
     header.addEventListener('click', () => {
       const idx = header.dataset.idx;
       const panel = document.getElementById('paMhs_' + idx);
-      const chevron = header.querySelector('.pa-chevron svg');
+      const arrow = header.querySelector('.pa-arrow svg');
+      const card = header.closest('.pa-card');
       const isOpen = panel.dataset.open === 'true';
+
+      // Close all others first
+      document.querySelectorAll('.pa-panel').forEach(p => {
+        if (p.id !== 'paMhs_' + idx && p.dataset.open === 'true') {
+          p.style.maxHeight = '0';
+          p.dataset.open = 'false';
+          p.closest('.pa-card').querySelector('.pa-arrow svg').style.transform = '';
+          p.closest('.pa-card').style.borderColor = '';
+        }
+      });
 
       if (isOpen) {
         panel.style.maxHeight = '0';
-        panel.style.opacity = '0';
         panel.dataset.open = 'false';
-        chevron.style.transform = 'rotate(0deg)';
+        arrow.style.transform = '';
+        card.style.borderColor = '';
       } else {
-        panel.style.maxHeight = panel.scrollHeight + 200 + 'px';
-        panel.style.opacity = '1';
+        panel.style.maxHeight = panel.scrollHeight + 50 + 'px';
         panel.dataset.open = 'true';
-        chevron.style.transform = 'rotate(180deg)';
+        arrow.style.transform = 'rotate(180deg)';
+        card.style.borderColor = 'hsl(215 40% 80%)';
+        setTimeout(() => header.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
       }
     });
   });
 
-  // Search
-  const searchInput = document.getElementById('paSearchInput');
-  searchInput?.addEventListener('input', () => {
-    const q = searchInput.value.toLowerCase();
-    let count = 0;
-    document.querySelectorAll('.pa-dosen-card').forEach(card => {
-      const match = card.dataset.dosen.includes(q);
-      card.style.display = match ? '' : 'none';
-      if (match) count++;
+  document.getElementById('paSearchInput')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    let c = 0;
+    document.querySelectorAll('.pa-card').forEach(card => {
+      const show = card.dataset.dosen.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) c++;
     });
-    const countEl = document.getElementById('paCount');
-    if (countEl) countEl.textContent = count;
+    document.getElementById('paCount').textContent = c;
   });
 }
+
 
 // ---- PMB Management Page (BAP) ----
 const PMB_API = '/api/pmb';
