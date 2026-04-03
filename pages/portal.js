@@ -180,7 +180,7 @@ export function renderPortal(container) {
             `).join('')}
           </div>
         </div>
-        <img class="portal-welcome-img" src="/assets/images/portal-welcome.png" alt="Welcome illustration" loading="lazy">
+        <img class="portal-welcome-img" src="/assets/images/${user.gender === 'Laki-laki' ? 'portal-welcome-male' : 'portal-welcome'}.png" alt="Welcome illustration" loading="lazy">
       </div>
 
       <!-- Ticker -->

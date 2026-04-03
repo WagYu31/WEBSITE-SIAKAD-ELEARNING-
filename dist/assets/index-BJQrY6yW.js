@@ -3560,7 +3560,7 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
             `).join(``)}
           </div>
         </div>
-        <img class="portal-welcome-img" src="/assets/images/portal-welcome.png" alt="Welcome illustration" loading="lazy">
+        <img class="portal-welcome-img" src="/assets/images/${t.gender===`Laki-laki`?`portal-welcome-male`:`portal-welcome`}.png" alt="Welcome illustration" loading="lazy">
       </div>
 
       <!-- Ticker -->
