@@ -166,6 +166,42 @@ if ($path === '/pmb/migrate' && $method === 'GET') {
     require_once __DIR__ . '/migrate_pmb.php';
 }
 
+// ===================== PMB PAYMENT (Midtrans) =====================
+if ($path === '/pmb/payment' && $method === 'POST') {
+    require_once __DIR__ . '/payment.php';
+    createPayment();
+}
+if (preg_match('#^/pmb/payment/notification$#', $path) && $method === 'POST') {
+    require_once __DIR__ . '/payment.php';
+    handlePaymentNotification();
+}
+if (preg_match('#^/pmb/payment/(\d+)/confirm$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/payment.php';
+    confirmPayment((int)$m[1]);
+}
+if (preg_match('#^/pmb/payment/(\d+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/payment.php';
+    getPaymentStatus((int)$m[1]);
+}
+
+// ===================== PMB ACCOUNT =====================
+if ($path === '/pmb/account/create' && $method === 'POST') {
+    require_once __DIR__ . '/account.php';
+    bapCreateAccount();
+}
+if (preg_match('#^/pmb/account/(\d+)/validate$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/account.php';
+    validateAccountByBAP((int)$m[1]);
+}
+if (preg_match('#^/pmb/account/(\d+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/account.php';
+    getAccountByRegistration((int)$m[1]);
+}
+if (preg_match('#^/pmb/validate/(.+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/account.php';
+    validateAccountByEmail($m[1]);
+}
+
 // ===================== PROFILE =====================
 if (preg_match('#^/profile/([^/]+)/avatar$#', $path, $m) && $method === 'POST') {
     require_once __DIR__ . '/profile.php';

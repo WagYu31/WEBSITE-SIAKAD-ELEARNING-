@@ -89,10 +89,55 @@ foreach ($profileCols as $name => $type) {
     }
 }
 
+// ---- Create pmb_payments table ----
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS pmb_payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        registration_id INT NOT NULL,
+        order_id VARCHAR(50) NOT NULL UNIQUE,
+        metode_bayar VARCHAR(15) NOT NULL DEFAULT 'online',
+        jumlah DOUBLE NOT NULL DEFAULT 350000,
+        status VARCHAR(15) NOT NULL DEFAULT 'pending',
+        snap_token VARCHAR(255) DEFAULT NULL,
+        snap_url VARCHAR(500) DEFAULT NULL,
+        payment_type VARCHAR(50) DEFAULT NULL,
+        transaction_id VARCHAR(100) DEFAULT NULL,
+        paid_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_reg (registration_id),
+        INDEX idx_order (order_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $paymentTableCreated = true;
+} catch (Exception $e) {
+    $paymentTableCreated = $e->getMessage();
+}
+
+// ---- Create pmb_accounts table ----
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS pmb_accounts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        registration_id INT NOT NULL UNIQUE,
+        nim VARCHAR(20) NOT NULL UNIQUE,
+        email VARCHAR(100) DEFAULT '',
+        password_hash VARCHAR(255) NOT NULL,
+        plain_password VARCHAR(50) DEFAULT NULL,
+        is_validated TINYINT(1) NOT NULL DEFAULT 0,
+        validated_by VARCHAR(10) DEFAULT NULL,
+        validated_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $accountTableCreated = true;
+} catch (Exception $e) {
+    $accountTableCreated = $e->getMessage();
+}
+
 echo json_encode([
     'message' => 'Migration complete',
     'pmb_added' => $added,
     'pmb_total_existing' => count($existing),
     'profiles_added' => $addedProfile,
     'profiles_total_existing' => count($existingProfile),
+    'pmb_payments_table' => $paymentTableCreated,
+    'pmb_accounts_table' => $accountTableCreated,
 ]);

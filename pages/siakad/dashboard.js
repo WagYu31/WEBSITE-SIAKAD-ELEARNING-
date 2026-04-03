@@ -4844,31 +4844,54 @@ async function handleMgmtAction(action, data) {
         }
         break;
 
-      case 'confirm-pay':
-        // First create payment if needed
+      case 'confirm-pay': {
+        const reg = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        const nama = reg ? reg.nama : 'Pendaftar';
+        const metode = prompt(`💰 Pembayaran untuk: ${nama}\n\nPilih metode:\n1 = Cash (langsung konfirmasi)\n2 = Online (Midtrans)\n\nKetik 1 atau 2:`);
+        if (!metode || !['1','2'].includes(metode.trim())) { alert('Dibatalkan'); return; }
+
+        const metodeBayar = metode.trim() === '1' ? 'cash' : 'online';
         const payCreateRes = await fetch(`${PMB_API}/payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ registration_id: parseInt(data.id), metode_bayar: 'cash', jumlah: 350000 }),
+          body: JSON.stringify({ registration_id: parseInt(data.id), metode_bayar: metodeBayar, jumlah: 350000 }),
         });
-        if (payCreateRes.ok) {
-          const payData = await payCreateRes.json();
-          // Confirm cash payment
+        const payData = await payCreateRes.json();
+
+        if (!payCreateRes.ok) {
+          if (payData.error && payData.error.includes('sudah lunas')) {
+            alert('ℹ️ Pembayaran sudah lunas.');
+          } else if (payData.snap_token) {
+            // Existing pending online payment — open Snap
+            window.open(payData.snap_url || `https://app.sandbox.midtrans.com/snap/v2/vtweb/${payData.snap_token}`, '_blank');
+          } else {
+            alert('❌ ' + (payData.error || 'Gagal'));
+          }
+          return;
+        }
+
+        if (metodeBayar === 'cash') {
+          // Confirm cash immediately
           const confirmRes = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
           if (confirmRes.ok) {
-            alert('✅ Pembayaran cash dikonfirmasi!');
+            alert('✅ Pembayaran cash dikonfirmasi!\nRp 350.000');
             loadRegistrationList();
+          } else {
+            alert('❌ Gagal konfirmasi pembayaran');
           }
         } else {
-          const payErr = await payCreateRes.json();
-          // If payment already exists, try to get and confirm
-          if (payErr.error && payErr.error.includes('sudah')) {
-            alert('ℹ️ Pembayaran sudah tercatat.');
+          // Online — open Midtrans Snap
+          if (payData.snap_url) {
+            window.open(payData.snap_url, '_blank');
+            alert('🔗 Halaman pembayaran Midtrans sudah dibuka di tab baru.\n\nSetelah mahasiswa bayar, status akan otomatis terupdate.');
+          } else if (payData.snap_token) {
+            window.open(`https://app.sandbox.midtrans.com/snap/v2/vtweb/${payData.snap_token}`, '_blank');
           } else {
-            alert('❌ ' + (payErr.error || 'Gagal'));
+            alert('⚠️ Snap token gagal dibuat. Cek konfigurasi Midtrans.');
           }
         }
         break;
+      }
 
       case 'edit':
         showEditForm(parseInt(data.id));
