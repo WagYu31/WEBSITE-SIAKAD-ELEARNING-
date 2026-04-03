@@ -148,6 +148,9 @@ function validateAccountByBAP($regId) {
     }
 
     if ($account['is_validated']) {
+        // Ensure registration status is also Diterima
+        $db->prepare('UPDATE pmb_registrations SET status = ?, updated_at = NOW() WHERE id = ? AND status != ?')
+           ->execute(['Diterima', $regId, 'Diterima']);
         jsonResponse(['message' => 'ℹ️ Akun sudah divalidasi sebelumnya', 'nim' => $account['nim']]);
     }
 
