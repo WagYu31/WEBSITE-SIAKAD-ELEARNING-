@@ -4875,35 +4875,30 @@ async function handleMgmtAction(action, data) {
             alert('❌ Gagal konfirmasi pembayaran');
           }
         } else {
-          // Online — Midtrans Snap in modal iframe
+          // Online — Open Midtrans in new tab
           const snapToken = payData.snap_token;
           const snapUrl = payData.snap_url || `https://app.sandbox.midtrans.com/snap/v4/redirection/${snapToken}`;
           if (!snapToken) {
             alert('⚠️ Snap token gagal dibuat.\n\nDetail: ' + (payData.error_detail || payData.error || 'Unknown'));
             break;
           }
-          // Create modal overlay with iframe
-          const overlay = document.createElement('div');
-          overlay.id = 'midtrans-modal';
-          overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-          overlay.innerHTML = `
-            <div style="background:white;border-radius:16px;width:min(480px,95vw);height:min(680px,90vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:hsl(215 25% 15%);color:white;border-radius:16px 16px 0 0;">
-                <span style="font-weight:600;font-size:0.9rem;">💳 Pembayaran Online — Midtrans</span>
-                <button id="close-midtrans-modal" style="background:hsl(0 70% 55%);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;font-size:0.8rem;">✕ Tutup</button>
-              </div>
-              <iframe src="${snapUrl}" style="flex:1;border:none;width:100%;"></iframe>
-            </div>
+          // Open in new tab
+          const payWin = window.open(snapUrl, '_blank');
+          if (!payWin) {
+            // Popup blocked — show link
+            alert('⚠️ Popup diblokir browser.\n\nSilakan klik link berikut:\n' + snapUrl);
+          }
+          // Show info notification (non-blocking)
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(215 25% 15%);color:white;padding:16px 24px;border-radius:12px;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-width:380px;font-size:0.85rem;line-height:1.5;';
+          notif.innerHTML = `
+            💳 <strong>Pembayaran Midtrans dibuka di tab baru</strong><br>
+            <span style="color:hsl(210 50% 70%);">Setelah mahasiswa selesai bayar, kembali ke halaman ini dan klik ① Bayar lagi untuk cek status.</span><br>
+            <button onclick="this.parentElement.remove();loadRegistrationList();" style="margin-top:8px;background:hsl(145 60% 45%);color:white;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.8rem;">✅ Sudah Bayar — Refresh</button>
+            <button onclick="this.parentElement.remove();" style="margin-top:8px;margin-left:4px;background:hsl(0 0% 40%);color:white;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.8rem;">✕</button>
           `;
-          document.body.appendChild(overlay);
-          // Close handlers
-          document.getElementById('close-midtrans-modal').onclick = () => {
-            overlay.remove();
-            loadRegistrationList();
-          };
-          overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) { overlay.remove(); loadRegistrationList(); }
-          });
+          document.body.appendChild(notif);
+          setTimeout(() => { if (notif.parentElement) notif.remove(); }, 60000);
         }
         break;
       }
