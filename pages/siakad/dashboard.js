@@ -4315,13 +4315,11 @@ function bapPMBContent() {
       </div>
     </div>
     <!-- Detail Modal -->
-    <div class="modal-overlay" id="pmbDetailModal">
-      <div class="modal" style="max-width:580px;">
+    <div id="pmbDetailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:white;border-radius:16px;width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);margin:auto;padding:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-          <h3 style="font-family:var(--font-heading);font-size:1.1rem;">Detail Pendaftar</h3>
-          <button class="btn btn-ghost btn-icon" id="closeDetailModal" style="width:32px;height:32px;padding:0;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          <h3 style="font-family:var(--font-heading);font-size:1.1rem;margin:0;">Detail Pendaftar</h3>
+          <button id="closeDetailModal" style="width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&times;</button>
         </div>
         <div id="pmbDetailContent"></div>
       </div>
@@ -4341,10 +4339,10 @@ async function initPMBManagement() {
 
   // Close detail modal
   document.getElementById('closeDetailModal')?.addEventListener('click', () => {
-    document.getElementById('pmbDetailModal')?.classList.remove('active');
+    document.getElementById('pmbDetailModal').style.display = 'none';
   });
   document.getElementById('pmbDetailModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'pmbDetailModal') e.target.classList.remove('active');
+    if (e.target.id === 'pmbDetailModal') e.target.style.display = 'none';
   });
 
   loadRegistrationList();
@@ -4572,6 +4570,7 @@ function renderPMBTable(registrations) {
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td onclick="event.stopPropagation();">
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;">
+              <button class="mgmt-action-btn" data-action="view" data-id="${r.id}" title="Lihat Kelengkapan Data" style="color:hsl(210 60% 50%);">👁️</button>
               <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Bayar">💰</button>
               <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi">✅</button>
               <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun">🔐</button>
@@ -4775,7 +4774,7 @@ function showRegistrantDetail(reg) {
     });
   });
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 }
 
 
@@ -4798,6 +4797,11 @@ async function handleMgmtAction(action, data) {
   try {
     let res, result;
     switch (action) {
+      case 'view': {
+        const reg = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        if (reg) showRegistrantDetail(reg);
+        return;
+      }
       case 'create-account':
         res = await fetch(`${PMB_API}/account/create`, {
           method: 'POST',
@@ -5286,11 +5290,11 @@ function showEditForm(regId) {
 
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
-        <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').classList.remove('active')">Batal</button>
+        <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
       </div>
     </form>`;
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 
   document.getElementById('editRegForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
