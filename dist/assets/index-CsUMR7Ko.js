@@ -4809,12 +4809,25 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
                 </div>
               </div>
             `}
-          </div>`,a||document.querySelectorAll(`.pmb-pay-option`).forEach(e=>{e.addEventListener(`click`,async()=>{let n=e.dataset.method,i=parseInt(e.dataset.regId);e.disabled=!0,e.querySelector(`.pmb-pay-option-title`).textContent=`Memproses...`;try{let a=await fetch(`${X}/payment`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:i,metode_bayar:n,jumlah:35e4})}),o=await a.json();if(a.ok){n===`online`?r.innerHTML=`
-                      <div class="pmb-pay-done">
-                        <div class="pmb-success-icon">✅</div>
-                        <h3>Pembayaran Online Berhasil!</h3>
-                        <p>Status pendaftaran Anda telah diupdate menjadi <strong>Proses</strong>.</p>
-                      </div>`:r.innerHTML=`
+          </div>`,a||document.querySelectorAll(`.pmb-pay-option`).forEach(e=>{e.addEventListener(`click`,async()=>{let n=e.dataset.method,i=parseInt(e.dataset.regId);e.disabled=!0,e.querySelector(`.pmb-pay-option-title`).textContent=`Memproses...`;try{let a=await fetch(`${X}/payment`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:i,metode_bayar:n,jumlah:35e4})}),o=await a.json();if(a.ok){if(n===`online`){let n=o.snap_token;n&&window.snap&&typeof window.snap.pay==`function`?window.snap.pay(n,{onSuccess:function(e){r.innerHTML=`
+                            <div class="pmb-pay-done">
+                              <div class="pmb-success-icon">✅</div>
+                              <h3>Pembayaran Berhasil!</h3>
+                              <p>Metode: ${e.payment_type||`-`}</p>
+                              <p>Order ID: ${e.order_id||`-`}</p>
+                              <p>Status pendaftaran Anda telah diupdate menjadi <strong>Proses</strong>.</p>
+                            </div>`,fetch(`${X}/stats`).then(e=>e.json()).then(e=>{t=e;let n=document.querySelector(`.pmb-stats`);n&&(n.outerHTML=Nn(t))}).catch(()=>{})},onPending:function(e){r.innerHTML=`
+                            <div class="pmb-pay-done cash">
+                              <div class="pmb-success-icon">⏳</div>
+                              <h3>Pembayaran Pending</h3>
+                              <p>Silakan selesaikan pembayaran. Status akan otomatis terupdate.</p>
+                            </div>`},onError:function(e){r.innerHTML=`<div class="pmb-error">❌ Pembayaran gagal. Silakan coba lagi.</div>`},onClose:function(){e.disabled=!1,e.querySelector(`.pmb-pay-option-title`).textContent=`Bayar Online`}}):r.innerHTML=`
+                        <div class="pmb-pay-done">
+                          <div class="pmb-success-icon">💳</div>
+                          <h3>Lanjutkan Pembayaran</h3>
+                          <p>Klik tombol di bawah untuk membayar:</p>
+                          <a href="${o.snap_url||`https://app.sandbox.midtrans.com/snap/v4/redirection/${n}`}" target="_blank" style="display:inline-block;margin-top:12px;padding:12px 32px;background:hsl(215 70% 50%);color:white;border-radius:10px;text-decoration:none;font-weight:600;">🌐 Bayar Sekarang</a>
+                        </div>`}else r.innerHTML=`
                       <div class="pmb-pay-done cash">
                         <div class="pmb-success-icon">📋</div>
                         <h3>Pembayaran Cash Tercatat</h3>

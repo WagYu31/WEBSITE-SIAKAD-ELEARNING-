@@ -675,12 +675,54 @@ export async function renderPMB(container) {
 
                 if (payRes.ok) {
                   if (method === 'online') {
-                    result.innerHTML = `
-                      <div class="pmb-pay-done">
-                        <div class="pmb-success-icon">✅</div>
-                        <h3>Pembayaran Online Berhasil!</h3>
-                        <p>Status pendaftaran Anda telah diupdate menjadi <strong>Proses</strong>.</p>
-                      </div>`;
+                    const snapToken = payData.snap_token;
+                    if (snapToken && window.snap && typeof window.snap.pay === 'function') {
+                      // Show Midtrans Snap popup on same page
+                      window.snap.pay(snapToken, {
+                        onSuccess: function(snapResult) {
+                          result.innerHTML = `
+                            <div class="pmb-pay-done">
+                              <div class="pmb-success-icon">✅</div>
+                              <h3>Pembayaran Berhasil!</h3>
+                              <p>Metode: ${snapResult.payment_type || '-'}</p>
+                              <p>Order ID: ${snapResult.order_id || '-'}</p>
+                              <p>Status pendaftaran Anda telah diupdate menjadi <strong>Proses</strong>.</p>
+                            </div>`;
+                          // Refresh stats
+                          fetch(`${API}/stats`).then(r => r.json()).then(s => {
+                            stats = s;
+                            const el = document.querySelector('.pmb-stats');
+                            if (el) el.outerHTML = renderStats(stats);
+                          }).catch(() => {});
+                        },
+                        onPending: function(snapResult) {
+                          result.innerHTML = `
+                            <div class="pmb-pay-done cash">
+                              <div class="pmb-success-icon">⏳</div>
+                              <h3>Pembayaran Pending</h3>
+                              <p>Silakan selesaikan pembayaran. Status akan otomatis terupdate.</p>
+                            </div>`;
+                        },
+                        onError: function(snapResult) {
+                          result.innerHTML = `<div class="pmb-error">❌ Pembayaran gagal. Silakan coba lagi.</div>`;
+                        },
+                        onClose: function() {
+                          // User closed without completing
+                          optBtn.disabled = false;
+                          optBtn.querySelector('.pmb-pay-option-title').textContent = 'Bayar Online';
+                        }
+                      });
+                    } else {
+                      // Fallback if Snap.js not loaded
+                      const snapUrl = payData.snap_url || `https://app.sandbox.midtrans.com/snap/v4/redirection/${snapToken}`;
+                      result.innerHTML = `
+                        <div class="pmb-pay-done">
+                          <div class="pmb-success-icon">💳</div>
+                          <h3>Lanjutkan Pembayaran</h3>
+                          <p>Klik tombol di bawah untuk membayar:</p>
+                          <a href="${snapUrl}" target="_blank" style="display:inline-block;margin-top:12px;padding:12px 32px;background:hsl(215 70% 50%);color:white;border-radius:10px;text-decoration:none;font-weight:600;">🌐 Bayar Sekarang</a>
+                        </div>`;
+                    }
                   } else {
                     result.innerHTML = `
                       <div class="pmb-pay-done cash">
