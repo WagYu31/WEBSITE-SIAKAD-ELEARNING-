@@ -154,11 +154,11 @@ export function renderPortal(container) {
       </div>
 
       <nav class="portal-menu" aria-label="Menu portal">
-        <a class="portal-menu-item" href="#">
+        <a class="portal-menu-item" href="#" data-coming-soon="Pengumuman">
           ${I.megaphone} Pengumuman
           <span class="portal-menu-badge" aria-label="17 pengumuman baru">17</span>
         </a>
-        <a class="portal-menu-item" href="#">
+        <a class="portal-menu-item" href="#" data-coming-soon="Panduan">
           ${I.compass} Panduan
         </a>
       </nav>

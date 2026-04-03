@@ -3534,11 +3534,11 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
       </div>
 
       <nav class="portal-menu" aria-label="Menu portal">
-        <a class="portal-menu-item" href="#">
+        <a class="portal-menu-item" href="#" data-coming-soon="Pengumuman">
           ${G.megaphone} Pengumuman
           <span class="portal-menu-badge" aria-label="17 pengumuman baru">17</span>
         </a>
-        <a class="portal-menu-item" href="#">
+        <a class="portal-menu-item" href="#" data-coming-soon="Panduan">
           ${G.compass} Panduan
         </a>
       </nav>
