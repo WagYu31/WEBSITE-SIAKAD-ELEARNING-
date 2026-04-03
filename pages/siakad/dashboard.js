@@ -5440,6 +5440,11 @@ async function loadMahasiswaList() {
         status_mhs: r.status_mhs || 'aktif',
       }));
 
+    // If API returned empty, use local data
+    if (_mahasiswaList.length === 0) {
+      _mahasiswaList = MAHASISWA_DATA.map(m => ({...m}));
+    }
+
     updateMhsStats();
     renderMhsTable(_mahasiswaList);
   } catch (err) {
