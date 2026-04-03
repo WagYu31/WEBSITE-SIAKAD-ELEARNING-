@@ -5515,6 +5515,7 @@ function renderMhsTable(list) {
           <td><span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : m.status_mhs === 'lulus' ? 'blue' : 'danger'}">${m.status_mhs}</span></td>
           <td onclick="event.stopPropagation();">
             <div style="display:flex;gap:4px;">
+              <button class="mgmt-action-btn mhs-view-btn" data-id="${m.id}" title="Lihat Detail" style="color:hsl(210 60% 50%);">👁️</button>
               <button class="mgmt-action-btn mhs-edit-btn" data-id="${m.id}" title="Edit">✏️</button>
               <button class="mgmt-action-btn mhs-del-btn" data-id="${m.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
             </div>
@@ -5528,8 +5529,17 @@ function renderMhsTable(list) {
   // Row click → profile modal
   container.querySelectorAll('.mhs-tr').forEach(row => {
     row.addEventListener('click', () => {
-      const id = parseInt(row.dataset.id);
-      const mhs = _mahasiswaList.find(m => m.id === id);
+      const id = row.dataset.id;
+      const mhs = _mahasiswaList.find(m => m.id == id || m.id === id);
+      if (mhs) showMhsProfile(mhs);
+    });
+  });
+
+  // View buttons (eye icon)
+  container.querySelectorAll('.mhs-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const mhs = _mahasiswaList.find(m => m.id == id || m.id === id);
       if (mhs) showMhsProfile(mhs);
     });
   });
@@ -5537,8 +5547,8 @@ function renderMhsTable(list) {
   // Edit buttons
   container.querySelectorAll('.mhs-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = parseInt(btn.dataset.id);
-      const mhs = _mahasiswaList.find(m => m.id === id);
+      const id = btn.dataset.id;
+      const mhs = _mahasiswaList.find(m => m.id == id || m.id === id);
       if (mhs) showMhsEditModal(mhs);
     });
   });
@@ -5546,8 +5556,8 @@ function renderMhsTable(list) {
   // Delete buttons
   container.querySelectorAll('.mhs-del-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const id = parseInt(btn.dataset.id);
-      const mhs = _mahasiswaList.find(m => m.id === id);
+      const id = btn.dataset.id;
+      const mhs = _mahasiswaList.find(m => m.id == id || m.id === id);
       if (!mhs) return;
       if (!confirm(`⚠️ Hapus data mahasiswa ${mhs.nama}?\n\nAkun dan data terkait akan dihapus.`)) return;
       try {
@@ -5584,33 +5594,43 @@ function showMhsProfile(m) {
       </div>
     </div>
 
+    <!-- Akun Login -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🔐 Akun Login</h4>
+    <div style="background:hsl(215 25% 96%);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+      ${row('Username / NIM', m.nim)}
+      ${row('Email', m.email || '-')}
+      ${row('Password', '<code style="background:hsl(215 20% 90%);padding:2px 8px;border-radius:4px;font-size:0.8rem;">mahasiswa123</code>')}
+      ${row('Role', '<span class="badge-sm blue">Mahasiswa</span>')}
+    </div>
+
     <!-- Akademik -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🎓 Akademik</h4>
     ${row('Program Studi', m.prodi_pilihan)}
     ${row('Angkatan', m.angkatan)}
     ${row('Semester', m.semester)}
+    ${row('IPK', m.ipk ? m.ipk.toFixed(2) : 'Belum ada')}
 
     <!-- Data Pribadi -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👤 Data Pribadi</h4>
     ${row('NIK', m.nik)}
     ${row('Email', m.email)}
-    ${row('Telepon', m.telepon_1)}
+    ${row('Telepon', m.telepon || m.telepon_1 || '-')}
+    ${row('Jenis Kelamin', m.jenis_kelamin === 'L' ? 'Laki-laki' : m.jenis_kelamin === 'P' ? 'Perempuan' : (m.gender || '-'))}
     ${row('Tempat Lahir', m.tempat_lahir)}
     ${row('Tanggal Lahir', m.tanggal_lahir)}
-    ${row('Gender', m.gender)}
     ${row('Agama', m.agama)}
 
     <!-- Alamat -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">📍 Alamat</h4>
     ${row('Alamat', m.alamat)}
-    ${row('Kota', [m.kecamatan, m.kota, m.provinsi].filter(Boolean).join(', '))}
+    ${row('Kota', [m.kecamatan, m.kota, m.provinsi].filter(Boolean).join(', ') || '-')}
 
     <!-- Orang Tua -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👨‍👩‍👧 Orang Tua / Wali</h4>
     ${row('Nama Ayah', m.nama_ayah)}
     ${row('Nama Ibu', m.nama_ibu)}
-    ${row('Pekerjaan Ayah', m.pekerjaan_ayah)}
-    ${row('Asal Sekolah', m.asal_sekolah)}
+    ${row('Pekerjaan Ayah', m.pekerjaan_ayah || '-')}
+    ${row('Asal Sekolah', m.asal_sekolah || '-')}
   `;
 
   modal.classList.add('active');

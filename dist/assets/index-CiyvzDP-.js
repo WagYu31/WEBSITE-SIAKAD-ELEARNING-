@@ -3182,13 +3182,14 @@
           <td><span class="badge-sm ${e.status_mhs===`aktif`?`success`:e.status_mhs===`cuti`?`warning`:e.status_mhs===`lulus`?`blue`:`danger`}">${e.status_mhs}</span></td>
           <td onclick="event.stopPropagation();">
             <div style="display:flex;gap:4px;">
+              <button class="mgmt-action-btn mhs-view-btn" data-id="${e.id}" title="Lihat Detail" style="color:hsl(210 60% 50%);">👁️</button>
               <button class="mgmt-action-btn mhs-edit-btn" data-id="${e.id}" title="Edit">✏️</button>
               <button class="mgmt-action-btn mhs-del-btn" data-id="${e.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
             </div>
           </td>
         </tr>`).join(``)}
       </tbody>
-    </table>`,n&&(n.textContent=`Menampilkan ${e.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=parseInt(e.dataset.id),n=W.find(e=>e.id===t);n&&Kt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=parseInt(e.dataset.id),n=W.find(e=>e.id===t);n&&qt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=parseInt(e.dataset.id),n=W.find(e=>e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Ht();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}}function Kt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Profil Mahasiswa`);let i=(e,t)=>`
+    </table>`,n&&(n.textContent=`Menampilkan ${e.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Kt(n)})}),t.querySelectorAll(`.mhs-view-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Kt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&qt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Ht();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}}function Kt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Profil Mahasiswa`);let i=(e,t)=>`
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-50);">
       <span style="font-size:0.78rem;color:var(--text-muted);">${e}</span>
       <span style="font-size:0.85rem;font-weight:600;text-align:right;">${t||`-`}</span>
@@ -3203,33 +3204,43 @@
       </div>
     </div>
 
+    <!-- Akun Login -->
+    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🔐 Akun Login</h4>
+    <div style="background:hsl(215 25% 96%);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+      ${i(`Username / NIM`,e.nim)}
+      ${i(`Email`,e.email||`-`)}
+      ${i(`Password`,`<code style="background:hsl(215 20% 90%);padding:2px 8px;border-radius:4px;font-size:0.8rem;">mahasiswa123</code>`)}
+      ${i(`Role`,`<span class="badge-sm blue">Mahasiswa</span>`)}
+    </div>
+
     <!-- Akademik -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🎓 Akademik</h4>
     ${i(`Program Studi`,e.prodi_pilihan)}
     ${i(`Angkatan`,e.angkatan)}
     ${i(`Semester`,e.semester)}
+    ${i(`IPK`,e.ipk?e.ipk.toFixed(2):`Belum ada`)}
 
     <!-- Data Pribadi -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👤 Data Pribadi</h4>
     ${i(`NIK`,e.nik)}
     ${i(`Email`,e.email)}
-    ${i(`Telepon`,e.telepon_1)}
+    ${i(`Telepon`,e.telepon||e.telepon_1||`-`)}
+    ${i(`Jenis Kelamin`,e.jenis_kelamin===`L`?`Laki-laki`:e.jenis_kelamin===`P`?`Perempuan`:e.gender||`-`)}
     ${i(`Tempat Lahir`,e.tempat_lahir)}
     ${i(`Tanggal Lahir`,e.tanggal_lahir)}
-    ${i(`Gender`,e.gender)}
     ${i(`Agama`,e.agama)}
 
     <!-- Alamat -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">📍 Alamat</h4>
     ${i(`Alamat`,e.alamat)}
-    ${i(`Kota`,[e.kecamatan,e.kota,e.provinsi].filter(Boolean).join(`, `))}
+    ${i(`Kota`,[e.kecamatan,e.kota,e.provinsi].filter(Boolean).join(`, `)||`-`)}
 
     <!-- Orang Tua -->
     <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👨‍👩‍👧 Orang Tua / Wali</h4>
     ${i(`Nama Ayah`,e.nama_ayah)}
     ${i(`Nama Ibu`,e.nama_ibu)}
-    ${i(`Pekerjaan Ayah`,e.pekerjaan_ayah)}
-    ${i(`Asal Sekolah`,e.asal_sekolah)}
+    ${i(`Pekerjaan Ayah`,e.pekerjaan_ayah||`-`)}
+    ${i(`Asal Sekolah`,e.asal_sekolah||`-`)}
   `,t.classList.add(`active`)}function qt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Edit Data Mahasiswa`);let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;n.innerHTML=`
     <form id="mhsEditForm" style="max-height:55vh;overflow-y:auto;padding-right:6px;">
       <div class="off-section">
