@@ -5018,7 +5018,8 @@ async function handleMgmtAction(action, data) {
           // Confirm cash immediately
           const confirmRes = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
           if (confirmRes.ok) {
-            alert('✅ Pembayaran cash dikonfirmasi!\nRp 350.000');
+            const confirmData = await confirmRes.json();
+            alert('\u2705 Pembayaran cash dikonfirmasi!\nRp ' + Number(confirmData.jumlah || 0).toLocaleString('id-ID'));
             loadRegistrationList();
           } else {
             alert('❌ Gagal konfirmasi pembayaran');

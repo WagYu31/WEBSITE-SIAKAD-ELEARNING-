@@ -187,7 +187,7 @@ function confirmPayment($id) {
     $db->prepare('UPDATE pmb_registrations SET status = ?, updated_at = NOW() WHERE id = ?')
        ->execute(['Proses', $payment['registration_id']]);
 
-    jsonResponse(['message' => '✅ Pembayaran cash dikonfirmasi!']);
+    jsonResponse(['message' => '✅ Pembayaran cash dikonfirmasi!', 'jumlah' => (float)$payment['jumlah']]);
 }
 
 // POST /api/pmb/payment/notification (Midtrans Webhook)

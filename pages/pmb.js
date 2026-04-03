@@ -320,7 +320,7 @@ function renderInfoPage() {
         <div class="pmb-info-card">
           <h3>💰 Biaya Pendaftaran</h3>
           <table class="pmb-info-table">
-            <tr><td>Biaya Formulir</td><td><strong>Rp 350.000</strong></td></tr>
+            <tr><td>Biaya Formulir</td><td><strong>Rp ${biayaPendaftaran.toLocaleString('id-ID')}</strong></td></tr>
             <tr><td>Metode Bayar</td><td>Online (Transfer) / Cash</td></tr>
           </table>
         </div>
