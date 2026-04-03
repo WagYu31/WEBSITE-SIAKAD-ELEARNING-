@@ -225,28 +225,28 @@ export function renderPortal(container) {
       <!-- Additional Services -->
       <h2 class="portal-section-title">Website-website</h2>
       <div class="portal-services-grid" role="list" aria-label="Layanan tambahan">
-        <a class="portal-service-card" href="#" role="listitem">
+        <a class="portal-service-card" href="#" role="listitem" data-coming-soon="Perpustakaan">
           <div class="portal-service-icon">
             <img src="/assets/images/portal-library.png" alt="">
           </div>
           <h4>Perpustakaan</h4>
           <p>Digital Library</p>
         </a>
-        <a class="portal-service-card" href="#" role="listitem">
+        <a class="portal-service-card" href="#" role="listitem" data-coming-soon="Portal Ortu">
           <div class="portal-service-icon" style="background:hsl(215 60% 95%);border-radius:14px;">
             ${I.building}
           </div>
           <h4>Portal Ortu</h4>
           <p>Monitoring Akademik</p>
         </a>
-        <a class="portal-service-card" href="#" role="listitem">
+        <a class="portal-service-card" href="#" role="listitem" data-coming-soon="Konseling">
           <div class="portal-service-icon" style="background:hsl(42 80% 92%);border-radius:14px;">
             ${I.megaphone}
           </div>
           <h4>Konseling</h4>
           <p>Bimbingan Mahasiswa</p>
         </a>
-        <a class="portal-service-card" href="#" role="listitem">
+        <a class="portal-service-card" href="#" role="listitem" data-coming-soon="Tracer Study">
           <div class="portal-service-icon" style="background:hsl(150 50% 92%);border-radius:14px;">
             ${I.graduationCap}
           </div>
@@ -295,4 +295,40 @@ export function renderPortal(container) {
       clockEl.textContent = getTimeString();
     }, 1000);
   }
+
+  // Coming Soon toast for service cards
+  document.querySelectorAll('[data-coming-soon]').forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = card.getAttribute('data-coming-soon');
+      showComingSoonToast(name);
+    });
+  });
+}
+
+function showComingSoonToast(name) {
+  // Remove existing toast
+  document.querySelector('.coming-soon-toast')?.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'coming-soon-toast';
+  toast.innerHTML = `
+    <div class="coming-soon-toast-icon">🚀</div>
+    <div class="coming-soon-toast-text">
+      <strong>${name}</strong>
+      <span>Coming Soon — Fitur ini sedang dalam pengembangan</span>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+
+  // Auto remove after 3s
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
 }
