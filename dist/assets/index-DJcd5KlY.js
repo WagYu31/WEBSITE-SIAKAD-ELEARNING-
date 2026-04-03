@@ -4779,9 +4779,6 @@ Data yang dihapus tidak dapat dikembalikan.`))return;let a=l.findIndex(e=>e.id==
         </div>
       </header>
 
-      <!-- Stats -->
-      ${In(t)}
-
       <!-- Content -->
       <div class="pmb-content">
         <div class="pmb-main" id="pmbMainArea">

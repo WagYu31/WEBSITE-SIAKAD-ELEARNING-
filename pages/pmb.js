@@ -401,9 +401,6 @@ export async function renderPMB(container) {
         </div>
       </header>
 
-      <!-- Stats -->
-      ${renderStats(stats)}
-
       <!-- Content -->
       <div class="pmb-content">
         <div class="pmb-main" id="pmbMainArea">
