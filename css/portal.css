@@ -290,16 +290,12 @@
   height: 180px;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, hsl(215 30% 96%), hsl(200 30% 94%));
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .portal-sso-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 8px;
+  object-fit: cover;
+  object-position: center top;
   transition: transform 0.4s ease;
 }
 .portal-sso-card:hover .portal-sso-thumb img {
