@@ -221,11 +221,12 @@ function uploadPmbFiles($id) {
 function getPmbStats() {
     $db = getDB();
     $total = $db->query("SELECT COUNT(*) FROM pmb_registrations")->fetchColumn();
-    $proses = $db->query("SELECT COUNT(*) FROM pmb_registrations WHERE status IN ('Menunggu','Proses')")->fetchColumn();
+    $menunggu = $db->query("SELECT COUNT(*) FROM pmb_registrations WHERE status = 'Menunggu'")->fetchColumn();
+    $proses = $db->query("SELECT COUNT(*) FROM pmb_registrations WHERE status = 'Proses'")->fetchColumn();
     $diterima = $db->query("SELECT COUNT(*) FROM pmb_registrations WHERE status = 'Diterima'")->fetchColumn();
     $ditolak = $db->query("SELECT COUNT(*) FROM pmb_registrations WHERE status = 'Ditolak'")->fetchColumn();
 
-    jsonResponse(['total_pendaftar' => (int)$total, 'total_proses' => (int)$proses, 'total_diterima' => (int)$diterima, 'total_ditolak' => (int)$ditolak]);
+    jsonResponse(['total_pendaftar' => (int)$total, 'total_proses' => (int)$menunggu + (int)$proses, 'total_diterima' => (int)$diterima, 'total_ditolak' => (int)$ditolak]);
 }
 
 // GET /api/pmb/status/:no_pendaftaran
