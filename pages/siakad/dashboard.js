@@ -5401,13 +5401,13 @@ function bapMahasiswaContent() {
     </div>
 
     <!-- Modal for Mahasiswa Profile/Edit -->
-    <div class="modal-overlay" id="mhsModal">
-      <div class="modal-container" style="max-width:580px;">
-        <div class="modal-header">
-          <h3 class="modal-title" id="mhsModalTitle">Detail</h3>
-          <button class="modal-close" onclick="document.getElementById('mhsModal').classList.remove('active')">&times;</button>
+    <div id="mhsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
+      <div style="background:white;border-radius:16px;width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);margin:auto;">
+        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;">
+          <h3 id="mhsModalTitle" style="margin:0;font-size:1rem;font-weight:700;color:hsl(215 40% 18%);">Detail</h3>
+          <button onclick="document.getElementById('mhsModal').style.display='none'" style="width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&times;</button>
         </div>
-        <div class="modal-body" id="mhsModalBody"></div>
+        <div id="mhsModalBody" style="padding:20px 24px;"></div>
       </div>
     </div>`;
 }
@@ -5633,7 +5633,7 @@ function showMhsProfile(m) {
     ${row('Asal Sekolah', m.asal_sekolah || '-')}
   `;
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 }
 
 function showMhsEditModal(m) {
@@ -5716,11 +5716,11 @@ function showMhsEditModal(m) {
 
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan</button>
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('mhsModal').classList.remove('active')">Batal</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('mhsModal').style.display='none'">Batal</button>
       </div>
     </form>`;
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 
   document.getElementById('mhsEditForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
