@@ -2816,8 +2816,9 @@
   /* Action buttons */
   .mgmt-action-btn, [data-action] { font-size: 0.6rem !important; padding: 2px 5px !important; }
 
-  /* Inputs */
-  .form-input, .form-select { font-size: 0.8rem !important; padding: 8px 12px !important; }
+  /* Inputs - but NOT login icon inputs */
+  .dash-content .form-input, .dash-content .form-select { font-size: 0.8rem !important; padding: 8px 12px !important; }
+  .input-icon-wrapper .form-input { padding-left: 44px !important; }
 
   /* Buttons */
   .btn { font-size: 0.72rem !important; padding: 6px 12px !important; }
