@@ -3,7 +3,7 @@
 // Shared layout with role-specific content
 // ============================================
 
-import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST, KURIKULUM_DATA, KRS_DATA, ABSENSI_DATA, EVALUASI_DATA, JADWAL_UTS_UAS, DOSEN_KELAS_MAHASISWA, DOSEN_BIMBINGAN, KALENDER_AKADEMIK, WISUDA_DATA, SURAT_TEMPLATES, generatePertemuanDates, formatTanggalShort, formatTanggalFull} from '../../js/data.js';
+import { CAMPUS, USERS, JADWAL, MATA_KULIAH, NILAI, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus , DOSEN_LIST, KURIKULUM_DATA, KRS_DATA, ABSENSI_DATA, EVALUASI_DATA, JADWAL_UTS_UAS, DOSEN_KELAS_MAHASISWA, DOSEN_BIMBINGAN, KALENDER_AKADEMIK, WISUDA_DATA, SURAT_TEMPLATES, MAHASISWA_DATA, generatePertemuanDates, formatTanggalShort, formatTanggalFull} from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 import { bulkSaveAbsensi, bulkSaveNilai, fetchAbsensi, fetchKHS } from '../../js/api.js';
 
@@ -5443,10 +5443,10 @@ async function loadMahasiswaList() {
     updateMhsStats();
     renderMhsTable(_mahasiswaList);
   } catch (err) {
-    document.getElementById('mhsTableContainer').innerHTML = `
-      <div style="text-align:center;padding:32px;">
-        <p style="color:var(--text-muted);font-size:var(--text-sm);">⚠️ ${err.message}</p>
-      </div>`;
+    // Fallback to local MAHASISWA_DATA when API is unavailable
+    _mahasiswaList = MAHASISWA_DATA.map(m => ({...m}));
+    updateMhsStats();
+    renderMhsTable(_mahasiswaList);
   }
 }
 
