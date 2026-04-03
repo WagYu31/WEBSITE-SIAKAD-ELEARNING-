@@ -4875,49 +4875,35 @@ async function handleMgmtAction(action, data) {
             alert('❌ Gagal konfirmasi pembayaran');
           }
         } else {
-          // Online — Midtrans Snap embedded popup
+          // Online — Midtrans Snap in modal iframe
           const snapToken = payData.snap_token;
+          const snapUrl = payData.snap_url || `https://app.sandbox.midtrans.com/snap/v4/redirection/${snapToken}`;
           if (!snapToken) {
             alert('⚠️ Snap token gagal dibuat.\n\nDetail: ' + (payData.error_detail || payData.error || 'Unknown'));
             break;
           }
-          try {
-            // Load Midtrans Snap.js if not loaded
-            if (!window.snap) {
-              const clientKey = payData.client_key || 'Mid-client-mGA7v04cXrux3KNF';
-              await new Promise((resolve, reject) => {
-                const s = document.createElement('script');
-                s.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-                s.setAttribute('data-client-key', clientKey);
-                s.onload = () => setTimeout(resolve, 500); // wait for snap to init
-                s.onerror = reject;
-                document.head.appendChild(s);
-              });
-            }
-            if (!window.snap) {
-              alert('⚠️ Snap.js gagal dimuat. Coba refresh halaman.');
-              break;
-            }
-            // Open Snap popup on current page
-            window.snap.pay(snapToken, {
-              onSuccess: function(result) {
-                alert('✅ Pembayaran berhasil!\n\nMetode: ' + (result.payment_type || '-') + '\nOrder ID: ' + (result.order_id || '-'));
-                loadRegistrationList();
-              },
-              onPending: function(result) {
-                alert('⏳ Pembayaran pending.\n\nSilakan selesaikan pembayaran.\nOrder ID: ' + (result.order_id || '-'));
-              },
-              onError: function(result) {
-                alert('❌ Pembayaran gagal.\n\n' + JSON.stringify(result));
-              },
-              onClose: function() {
-                loadRegistrationList();
-              }
-            });
-          } catch(snapErr) {
-            console.error('Snap error:', snapErr);
-            alert('⚠️ Midtrans Snap error: ' + (snapErr.message || snapErr));
-          }
+          // Create modal overlay with iframe
+          const overlay = document.createElement('div');
+          overlay.id = 'midtrans-modal';
+          overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+          overlay.innerHTML = `
+            <div style="background:white;border-radius:16px;width:min(480px,95vw);height:min(680px,90vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:hsl(215 25% 15%);color:white;border-radius:16px 16px 0 0;">
+                <span style="font-weight:600;font-size:0.9rem;">💳 Pembayaran Online — Midtrans</span>
+                <button id="close-midtrans-modal" style="background:hsl(0 70% 55%);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;font-size:0.8rem;">✕ Tutup</button>
+              </div>
+              <iframe src="${snapUrl}" style="flex:1;border:none;width:100%;"></iframe>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+          // Close handlers
+          document.getElementById('close-midtrans-modal').onclick = () => {
+            overlay.remove();
+            loadRegistrationList();
+          };
+          overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) { overlay.remove(); loadRegistrationList(); }
+          });
         }
         break;
       }
