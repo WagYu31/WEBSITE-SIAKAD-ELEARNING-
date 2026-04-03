@@ -287,15 +287,19 @@
   box-shadow: 0 12px 36px hsl(215 40% 10% / 0.1);
 }
 .portal-sso-thumb {
+  height: 180px;
   overflow: hidden;
   position: relative;
-  background: hsl(215 20% 96%);
+  background: linear-gradient(135deg, hsl(215 30% 96%), hsl(200 30% 94%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .portal-sso-thumb img {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 100%;
   object-fit: contain;
+  padding: 8px;
   transition: transform 0.4s ease;
 }
 .portal-sso-card:hover .portal-sso-thumb img {
@@ -391,6 +395,7 @@
 @media (max-width: 900px) {
   .portal-main { padding: 56px 20px 28px; max-width: 100%; }
   .portal-sso-grid { grid-template-columns: 1fr; gap: 14px; }
+  .portal-sso-thumb { height: 160px; }
 
   .portal-welcome {
     flex-direction: column;
@@ -408,6 +413,7 @@
 @media (max-width: 768px) {
   .portal-main { padding: 52px 14px 24px; max-width: 100%; overflow-x: hidden; }
   .portal-sso-grid { grid-template-columns: 1fr; gap: 12px; }
+  .portal-sso-thumb { height: 150px; }
 
   .portal-sso-body h3 { font-size: 0.95rem; }
   .portal-welcome {
@@ -445,6 +451,7 @@
   .portal { overflow-x: hidden; }
   .portal-main { padding: 50px 10px 20px; }
   .portal-sso-grid { gap: 10px; }
+  .portal-sso-thumb { height: 130px; }
 
   .portal-sso-body { padding: 12px 14px; }
   .portal-sso-body h3 { font-size: 0.88rem; }
@@ -474,6 +481,7 @@
   .portal-welcome-img { width: 50px; height: 50px; }
   .portal-welcome-stats { gap: 14px; flex-wrap: wrap; }
   .portal-welcome-stat strong { font-size: 1.1rem; }
+  .portal-sso-thumb { height: 110px; }
 
   .portal-sso-body { padding: 10px 12px; }
   .portal-sso-body h3 { font-size: 0.82rem; }
