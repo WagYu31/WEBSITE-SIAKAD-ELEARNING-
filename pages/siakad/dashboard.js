@@ -3727,13 +3727,6 @@ function transkripContent() {
 }
 
 function validasiKrsContent() {
-  // Check if coming from Bimbingan PA with a selected mahasiswa
-  const sel = window._paSelectedMhs;
-  if (sel) {
-    window._paSelectedMhs = null; // clear after use
-    return _krsDetailContent(sel);
-  }
-
   const krsRequests = [
     { nim: '2024101001', nama: 'Ahmad Rizky Pratama', prodi: 'Adm. Publik', semester: 4, sks: 19, tanggal: '10 Feb 2026', status: 'Divalidasi' },
     { nim: '2024101002', nama: 'Siti Nurhaliza', prodi: 'Adm. Publik', semester: 4, sks: 18, tanggal: '11 Feb 2026', status: 'Divalidasi' },
@@ -3834,7 +3827,7 @@ function _krsDetailContent(mhs) {
       @media(max-width:768px){.krs-profile{flex-direction:column;text-align:center}.krs-profile-meta{justify-content:center}}
     </style>
     <div class="krs-detail">
-      <button class="krs-back" onclick="window.location.hash='#/bimbingan-pa'">← Kembali ke Bimbingan PA</button>
+      <button class="krs-back" onclick="_paBackToBimbingan()">← Kembali ke Bimbingan PA</button>
       <div class="krs-profile">
         <div class="krs-profile-av">${mhsIni}</div>
         <div class="krs-profile-info">
@@ -3880,7 +3873,7 @@ function _krsDetailContent(mhs) {
       </div>
       <div class="krs-actions">
         <button class="krs-btn krs-btn-outline" onclick="window.print()">🖨️ Cetak KRS</button>
-        <button class="krs-btn krs-btn-primary" onclick="alert('KRS berhasil divalidasi!');window.location.hash='#/bimbingan-pa'">✅ Validasi KRS</button>
+        <button class="krs-btn krs-btn-primary" onclick="alert('KRS berhasil divalidasi!');_paBackToBimbingan()">✅ Validasi KRS</button>
       </div>
     </div>`;
 }
@@ -4136,8 +4129,29 @@ function _paToast(msg) {
 }
 
 function _paOpenKrs(nim, nama, sem, ipk, prodi) {
-  window._paSelectedMhs = { nim, nama, sem, ipk, prodi };
-  window.location.hash = '#/validasi-krs';
+  const mhs = { nim, nama, sem, ipk, prodi };
+  const mainContent = document.getElementById('dashMain');
+  if (!mainContent) return;
+  const isoFooter = mainContent.querySelector('.dash-iso-footer')?.outerHTML || '';
+  mainContent.innerHTML = _krsDetailContent(mhs) + isoFooter;
+  mainContent.scrollTop = 0;
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-link').forEach(l => { l.classList.remove('active'); l.removeAttribute('aria-current'); });
+  const krsLink = document.querySelector('.sidebar-link[data-page="validasi-krs"]');
+  if (krsLink) { krsLink.classList.add('active'); krsLink.setAttribute('aria-current', 'page'); }
+}
+
+function _paBackToBimbingan() {
+  const mainContent = document.getElementById('dashMain');
+  if (!mainContent) return;
+  const isoFooter = mainContent.querySelector('.dash-iso-footer')?.outerHTML || '';
+  mainContent.innerHTML = bimbinganPAContent() + isoFooter;
+  initBimbinganPA();
+  mainContent.scrollTop = 0;
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-link').forEach(l => { l.classList.remove('active'); l.removeAttribute('aria-current'); });
+  const paLink = document.querySelector('.sidebar-link[data-page="bimbingan-pa"]');
+  if (paLink) { paLink.classList.add('active'); paLink.setAttribute('aria-current', 'page'); }
 }
 
 function bimbinganPAContent() {
@@ -4204,6 +4218,7 @@ function initBimbinganPA() {
   window._paCloseModal = _paCloseModal;
   window._paSaveMhs = _paSaveMhs;
   window._paOpenKrs = _paOpenKrs;
+  window._paBackToBimbingan = _paBackToBimbingan;
 }
 
 
