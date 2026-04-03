@@ -2602,6 +2602,10 @@ function jadwalManageContent() {
           <option value="">Semua Tipe</option>
           <option>Offline</option><option>Online</option><option>Hybrid</option>
         </select>
+        <select id="jadwalFilterDosen" style="padding:7px 12px;border:1px solid hsl(215 20% 85%);border-radius:8px;font-size:0.78rem;font-weight:600;max-width:220px;">
+          <option value="">Semua Dosen</option>
+          ${[...new Set(JADWAL_DUMMY.map(j => j.dosen).filter(d => d && d !== '-'))].sort().map(d => `<option value="${d}">${d}</option>`).join('')}
+        </select>
 
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -2630,7 +2634,7 @@ function jadwalManageContent() {
               const modes = j.modePertemuan || Array(14).fill('offline');
               const onlineCount = modes.filter(x => x === 'online').length;
               const offlineCount = 14 - onlineCount;
-              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}">
+              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${j.dosen}">
                 <td>${i+1}.</td>
                 <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
                 <td style="text-align:center;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:hsl(215 20% 92%);font-size:0.65rem;font-weight:800;color:hsl(215 30% 45%);">${j.semester}</span></td>
@@ -2872,6 +2876,7 @@ function initJadwalManagePage() {
     const fSmt = document.getElementById('jadwalFilterSmt')?.value || '';
     const fHari = document.getElementById('jadwalFilterHari')?.value || '';
     const fTipe = document.getElementById('jadwalFilterTipe')?.value || '';
+    const fDosen = document.getElementById('jadwalFilterDosen')?.value || '';
 
     let visibleCount = 0;
     // Hide all detail rows when filtering
@@ -2881,6 +2886,7 @@ function initJadwalManagePage() {
         && (!fSmt || row.dataset.smt === fSmt)
         && (!fHari || row.dataset.hari === fHari)
         && (!fTipe || row.dataset.tipe === fTipe)
+        && (!fDosen || (row.dataset.dosen || '').includes(fDosen))
 ;
       row.style.display = show ? '' : 'none';
       if (show) visibleCount++;
@@ -2892,6 +2898,7 @@ function initJadwalManagePage() {
   document.getElementById('jadwalFilterSmt')?.addEventListener('change', applyTableFilters);
   document.getElementById('jadwalFilterHari')?.addEventListener('change', applyTableFilters);
   document.getElementById('jadwalFilterTipe')?.addEventListener('change', applyTableFilters);
+  document.getElementById('jadwalFilterDosen')?.addEventListener('change', applyTableFilters);
 
   applyTableFilters(); // show initial count
 
