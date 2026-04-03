@@ -4979,12 +4979,7 @@ async function handleMgmtAction(action, data) {
           alert('❌ Akun belum dibuat. Buat akun terlebih dahulu.');
           return;
         }
-        const accData = await accRes.json();
-        if (accData.is_validated) {
-          alert('ℹ️ Akun sudah divalidasi sebelumnya.');
-          return;
-        }
-        // Get account ID from DB  
+        // Always call validate endpoint (it also ensures registration status is updated)
         const valRes = await fetch(`${PMB_API}/account/${data.id}/validate`, { method: 'PUT' });
         result = await valRes.json();
         if (valRes.ok) {
