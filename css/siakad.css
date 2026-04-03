@@ -2565,53 +2565,58 @@
   transition: box-shadow .25s;
 }
 .profil-section:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  box-shadow: 0 6px 24px rgba(0,0,0,.08);
+  border-color: hsl(215 40% 88%);
 }
 
 /* Profile Tabs */
 .profil-tabs {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 4px;
-  background: var(--gray-100);
-  border-radius: 14px;
-  margin-bottom: 16px;
+  padding: 5px;
+  background: linear-gradient(135deg, hsl(215 30% 96%), hsl(220 25% 94%));
+  border-radius: 16px;
+  margin-bottom: 20px;
   scrollbar-width: none;
+  border: 1px solid rgba(255,255,255,.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
 }
 .profil-tabs::-webkit-scrollbar { display: none; }
 .profil-tab {
   flex-shrink: 0;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  color: hsl(215 20% 55%);
+  font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all .25s;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
   white-space: nowrap;
 }
 .profil-tab:hover {
-  background: rgba(255,255,255,.6);
-  color: var(--text-primary);
+  background: rgba(255,255,255,.7);
+  color: hsl(215 55% 40%);
+  transform: translateY(-1px);
 }
 .profil-tab.active {
-  background: white;
-  color: var(--primary-600);
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  background: linear-gradient(135deg, hsl(215 60% 50%), hsl(225 65% 55%));
+  color: white;
+  box-shadow: 0 4px 14px hsla(215,60%,45%,.3);
+  transform: translateY(-1px);
 }
 .profil-tab-panel {
   display: none;
-  animation: profilTabIn .3s ease;
+  animation: profilTabIn .35s cubic-bezier(.4,0,.2,1);
 }
 .profil-tab-panel.active {
   display: block;
 }
 @keyframes profilTabIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -2619,60 +2624,61 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-100);
+  padding: 16px 22px;
+  background: linear-gradient(135deg, hsl(215 30% 98%), hsl(220 20% 96%));
+  border-bottom: 1px solid hsl(215 20% 92%);
 }
 .profil-section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.82rem;
+  gap: 12px;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: hsl(215 55% 22%);
   margin: 0;
 }
 .profil-section-title .pst-icon {
-  width: 30px; height: 30px;
-  border-radius: 8px;
+  width: 34px; height: 34px;
+  border-radius: 10px;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.9rem;
+  font-size: 1rem;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 /* Table-row field layout */
 .profil-row {
   display: flex;
-  border-bottom: 1px solid var(--gray-50);
-  transition: background .15s;
+  border-bottom: 1px solid hsl(215 20% 95%);
+  transition: all .2s;
 }
 .profil-row:last-child { border-bottom: none; }
-.profil-row:hover { background: hsl(215 30% 98%); }
+.profil-row:hover { background: linear-gradient(90deg, hsl(215 40% 97%), transparent); }
 .profil-row-label {
   width: 170px;
   flex-shrink: 0;
-  padding: 10px 20px;
+  padding: 12px 22px;
   font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: hsl(215 55% 50%);
   text-transform: uppercase;
-  letter-spacing: .03em;
+  letter-spacing: .04em;
   display: flex;
   align-items: center;
 }
 .profil-row-value {
   flex: 1;
-  padding: 10px 16px;
+  padding: 12px 18px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-primary);
-  border-left: 1px solid var(--gray-50);
+  color: hsl(215 30% 20%);
+  border-left: 1px solid hsl(215 20% 95%);
 }
 .profil-row-value.mono {
   font-family: var(--font-mono);
   letter-spacing: .02em;
 }
 .profil-row-value.muted {
-  color: var(--text-muted);
+  color: hsl(215 15% 65%);
   font-style: italic;
   font-weight: 400;
   font-size: 0.8rem;
