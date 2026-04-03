@@ -56,6 +56,15 @@ function bapCreateAccount() {
         jsonResponse(['error' => 'Pendaftaran tidak ditemukan'], 404);
     }
 
+    // CHECK: Payment must be paid first (ALWAYS check, even for existing accounts)
+    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC LIMIT 1');
+    $stmt->execute([$regId]);
+    $payment = $stmt->fetch();
+
+    if (!$payment || $payment['status'] !== 'paid') {
+        jsonResponse(['error' => '❌ Pembayaran belum lunas!\n\nUrutan yang benar:\n① Bayar dulu\n② Baru buat akun\n③ Kemudian validasi'], 400);
+    }
+
     // Check if account already exists
     $stmt = $db->prepare('SELECT * FROM pmb_accounts WHERE registration_id = ?');
     $stmt->execute([$regId]);
@@ -67,15 +76,6 @@ function bapCreateAccount() {
             'nim' => $existing['nim'],
             'email' => $existing['email'],
         ]);
-    }
-
-    // CHECK: Payment must be paid first
-    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC LIMIT 1');
-    $stmt->execute([$regId]);
-    $payment = $stmt->fetch();
-
-    if (!$payment || $payment['status'] !== 'paid') {
-        jsonResponse(['error' => 'Pembayaran belum lunas. Harap selesaikan pembayaran terlebih dahulu sebelum membuat akun.'], 400);
     }
 
     // Generate NIM and password
@@ -129,13 +129,22 @@ function getAccountByRegistration($regId) {
 function validateAccountByBAP($regId) {
     $db = getDB();
 
-    // Find account by registration_id (the frontend sends registration_id as :id)
+    // CHECK: Payment must be paid first
+    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC LIMIT 1');
+    $stmt->execute([$regId]);
+    $payment = $stmt->fetch();
+
+    if (!$payment || $payment['status'] !== 'paid') {
+        jsonResponse(['error' => '❌ Pembayaran belum lunas!\n\nUrutan: ① Bayar → ② Buat Akun → ③ Validasi'], 400);
+    }
+
+    // Find account by registration_id
     $stmt = $db->prepare('SELECT * FROM pmb_accounts WHERE registration_id = ?');
     $stmt->execute([$regId]);
     $account = $stmt->fetch();
 
     if (!$account) {
-        jsonResponse(['error' => 'Akun belum dibuat. Buat akun terlebih dahulu.'], 404);
+        jsonResponse(['error' => '❌ Akun belum dibuat!\n\nUrutan: ① Bayar → ② Buat Akun → ③ Validasi'], 404);
     }
 
     if ($account['is_validated']) {
