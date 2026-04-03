@@ -234,5 +234,19 @@ if ($path === '/seed/akademik' && ($method === 'POST' || $method === 'GET')) {
     seedAkademik();
 }
 
+// ===================== PMB SETTINGS =====================
+if ($path === '/pmb/settings' && $method === 'GET') {
+    require_once __DIR__ . '/settings.php';
+    getSettings();
+}
+if ($path === '/pmb/settings' && $method === 'PUT') {
+    require_once __DIR__ . '/settings.php';
+    updateSettings();
+}
+if ($path === '/pmb/settings/biaya' && $method === 'GET') {
+    require_once __DIR__ . '/settings.php';
+    getBiaya();
+}
+
 // ===================== 404 =====================
 jsonResponse(['error' => 'Route not found', 'path' => $path, 'method' => $method], 404);

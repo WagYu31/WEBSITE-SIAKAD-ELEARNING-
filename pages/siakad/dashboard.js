@@ -212,6 +212,7 @@ const MENUS = {
       { icon: I.calendar, text: 'Kalender Akademik', id: 'kalender' },
       { icon: I.award, text: 'Wisuda', id: 'wisuda' },
       { icon: I.users, text: 'Bimbingan PA', id: 'bimbingan-pa' },
+      { icon: '⚙️', text: 'Setting PMB', id: 'setting-pmb' },
     ]},
   ],
 };
@@ -4228,6 +4229,154 @@ function _paBackToBimbingan() {
   if (paLink) { paLink.classList.add('active'); paLink.setAttribute('aria-current', 'page'); }
 }
 
+// ============================================
+// SETTING PMB
+// ============================================
+function settingPMBContent() {
+  return `
+    <div class="dash-section" style="animation:fadeUp .4s ease">
+      <h3>⚙️ Setting PMB</h3>
+      <p style="color:var(--text-muted);margin-bottom:20px;">Konfigurasi biaya, jadwal gelombang, dan tahun akademik PMB.</p>
+
+      <div id="settingPMBLoader" style="text-align:center;padding:30px;">${I.loader} Memuat settings...</div>
+      <form id="settingPMBForm" style="display:none;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+
+          <!-- Biaya -->
+          <div class="dash-card" style="padding:20px;">
+            <h4 style="margin-bottom:14px;color:hsl(145 60% 40%);">💰 Biaya Pendaftaran</h4>
+            <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px;">Biaya (Rp)</label>
+            <input type="number" id="set_biaya_pendaftaran" min="0" step="1000"
+              style="width:100%;padding:10px 14px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;font-size:1rem;font-weight:600;">
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">Berlaku untuk semua pembayaran baru.</p>
+          </div>
+
+          <!-- Tahun Akademik -->
+          <div class="dash-card" style="padding:20px;">
+            <h4 style="margin-bottom:14px;color:hsl(215 60% 50%);">🎓 Tahun Akademik</h4>
+            <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px;">Tahun Akademik</label>
+            <input type="text" id="set_tahun_akademik" placeholder="2026/2027"
+              style="width:100%;padding:10px 14px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;font-size:1rem;">
+          </div>
+
+          <!-- Gelombang 1 -->
+          <div class="dash-card" style="padding:20px;">
+            <h4 style="margin-bottom:14px;color:hsl(40 80% 45%);">📅 Gelombang 1</h4>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Mulai</label>
+                <input type="date" id="set_gelombang_1_start" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Selesai</label>
+                <input type="date" id="set_gelombang_1_end" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Gelombang 2 -->
+          <div class="dash-card" style="padding:20px;">
+            <h4 style="margin-bottom:14px;color:hsl(200 70% 45%);">📅 Gelombang 2</h4>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Mulai</label>
+                <input type="date" id="set_gelombang_2_start" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Selesai</label>
+                <input type="date" id="set_gelombang_2_end" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Gelombang 3 -->
+          <div class="dash-card" style="padding:20px;">
+            <h4 style="margin-bottom:14px;color:hsl(280 50% 50%);">📅 Gelombang 3</h4>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Mulai</label>
+                <input type="date" id="set_gelombang_3_start" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:4px;">Selesai</label>
+                <input type="date" id="set_gelombang_3_end" style="width:100%;padding:8px;border:1.5px solid hsl(215 15% 75%);border-radius:8px;">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:24px;display:flex;gap:12px;">
+          <button type="submit" id="settingSaveBtn" style="padding:12px 32px;background:hsl(145 60% 40%);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.9rem;">
+            💾 Simpan Perubahan
+          </button>
+          <span id="settingSaveStatus" style="color:hsl(145 60% 40%);font-weight:600;align-self:center;"></span>
+        </div>
+      </form>
+    </div>`;
+}
+
+async function initSettingPMB() {
+  const loader = document.getElementById('settingPMBLoader');
+  const form = document.getElementById('settingPMBForm');
+  if (!form) return;
+
+  try {
+    const res = await fetch(`${PMB_API}/settings`);
+    const settings = await res.json();
+
+    // Populate fields
+    const keys = ['biaya_pendaftaran','tahun_akademik','gelombang_1_start','gelombang_1_end','gelombang_2_start','gelombang_2_end','gelombang_3_start','gelombang_3_end'];
+    keys.forEach(k => {
+      const el = document.getElementById('set_' + k);
+      if (el && settings[k]) el.value = settings[k].value;
+    });
+
+    loader.style.display = 'none';
+    form.style.display = 'block';
+  } catch (e) {
+    loader.innerHTML = '❌ Gagal memuat settings: ' + e.message;
+  }
+
+  // Save handler
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('settingSaveBtn');
+    const status = document.getElementById('settingSaveStatus');
+    btn.disabled = true;
+    btn.textContent = '⏳ Menyimpan...';
+
+    const data = {};
+    ['biaya_pendaftaran','tahun_akademik','gelombang_1_start','gelombang_1_end','gelombang_2_start','gelombang_2_end','gelombang_3_start','gelombang_3_end'].forEach(k => {
+      const el = document.getElementById('set_' + k);
+      if (el) data[k] = el.value;
+    });
+
+    try {
+      const res = await fetch(`${PMB_API}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        status.textContent = '✅ Tersimpan!';
+        status.style.color = 'hsl(145 60% 40%)';
+      } else {
+        status.textContent = '❌ ' + (result.error || 'Gagal');
+        status.style.color = 'hsl(0 70% 50%)';
+      }
+    } catch (err) {
+      status.textContent = '❌ Gagal: ' + err.message;
+      status.style.color = 'hsl(0 70% 50%)';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Simpan Perubahan';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  });
+}
+
 function bimbinganPAContent() {
   const bimb = _getPaBimbingan();
   const dosenList = DOSEN_LIST.filter(d => d.totalMahasiswaBimbingan > 0);
@@ -4856,7 +5005,7 @@ async function handleMgmtAction(action, data) {
         const payCreateRes = await fetch(`${PMB_API}/payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ registration_id: parseInt(data.id), metode_bayar: metodeBayar, jumlah: 350000 }),
+          body: JSON.stringify({ registration_id: parseInt(data.id), metode_bayar: metodeBayar }),
         });
         const payData = await payCreateRes.json();
 
@@ -6764,6 +6913,9 @@ export function renderDashboard(container) {
       } else if (mainContent && page === 'bimbingan-pa' && user.role === 'bap') {
         mainContent.innerHTML = bimbinganPAContent() + isoFooter;
         initBimbinganPA();
+      } else if (mainContent && page === 'setting-pmb' && user.role === 'bap') {
+        mainContent.innerHTML = settingPMBContent() + isoFooter;
+        initSettingPMB();
       } else if (mainContent && page === 'jadwal-manage' && user.role === 'bap') {
         await loadSavedJadwalPertemuan();
         mainContent.innerHTML = jadwalManageContent() + isoFooter;

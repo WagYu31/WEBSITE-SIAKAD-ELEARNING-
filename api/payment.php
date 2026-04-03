@@ -19,7 +19,11 @@ function createPayment() {
 
     $regId = intval($input['registration_id'] ?? 0);
     $metode = $input['metode_bayar'] ?? 'online';
-    $jumlah = floatval($input['jumlah'] ?? 350000);
+    
+    // Fetch fee from settings
+    $feeRow = $db->query("SELECT setting_value FROM pmb_settings WHERE setting_key = 'biaya_pendaftaran'")->fetch();
+    $defaultFee = $feeRow ? (int)$feeRow['setting_value'] : 350000;
+    $jumlah = floatval($input['jumlah'] ?? $defaultFee);
 
     if ($regId <= 0) {
         jsonResponse(['error' => 'registration_id wajib diisi'], 400);

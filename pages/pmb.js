@@ -7,6 +7,7 @@ import { getUser } from '../js/app.js';
 import { CAMPUS, getInitials } from '../js/data.js';
 
 const API = '/api/pmb';
+let biayaPendaftaran = 350000; // Will be updated from API
 
 // ---- SVG Icons ----
 const I = {
@@ -289,7 +290,7 @@ function renderPaymentPage() {
   return `
     <div class="pmb-form-container">
       <h2>💳 Pembayaran Biaya Pendaftaran</h2>
-      <p class="pmb-form-sub">Biaya pendaftaran: <strong>Rp 350.000</strong></p>
+      <p class="pmb-form-sub">Biaya pendaftaran: <strong>Rp ${biayaPendaftaran.toLocaleString('id-ID')}</strong></p>
 
       <div class="pmb-search-box">
         <input type="text" id="pmbPayInput" placeholder="No. Pendaftaran: PMB-2026-0001" class="pmb-search-input">
@@ -352,11 +353,18 @@ export async function renderPMB(container) {
   let currentPage = 'info';
   let stats = { total_pendaftar: 0, total_proses: 0, total_diterima: 0, total_ditolak: 0 };
 
-  // Fetch stats
+  // Fetch stats & settings
   try {
-    const res = await fetch(`${API}/stats`);
-    if (res.ok) stats = await res.json();
-  } catch (e) { console.warn('Stats fetch failed:', e); }
+    const [statsRes, biayaRes] = await Promise.all([
+      fetch(`${API}/stats`),
+      fetch(`${API}/settings/biaya`),
+    ]);
+    if (statsRes.ok) stats = await statsRes.json();
+    if (biayaRes.ok) {
+      const b = await biayaRes.json();
+      biayaPendaftaran = b.biaya_pendaftaran || 350000;
+    }
+  } catch (e) { console.warn('Init fetch failed:', e); }
 
   function renderPage(page) {
     currentPage = page;
@@ -626,7 +634,7 @@ export async function renderPMB(container) {
 
             <div class="pmb-pay-amount">
               <span>Biaya Pendaftaran</span>
-              <strong>Rp 350.000</strong>
+              <strong>Rp ${biayaPendaftaran.toLocaleString('id-ID')}</strong>
             </div>
 
             ${hasPaid ? `
@@ -669,7 +677,7 @@ export async function renderPMB(container) {
                 const payRes = await fetch(`${API}/payment`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ registration_id: regId, metode_bayar: method, jumlah: 350000 }),
+                  body: JSON.stringify({ registration_id: regId, metode_bayar: method, jumlah: biayaPendaftaran }),
                 });
                 const payData = await payRes.json();
 
