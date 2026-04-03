@@ -2602,7 +2602,7 @@
     <div class="dash-card" style="margin-bottom:20px;">
       <div class="dash-card-head">
         <h3>${F.userPlus} Manajemen PMB</h3>
-        <div style="display:flex;gap:8px;">
+        <div class="pmb-header-btns">
           <button class="pmb-mgmt-btn active" data-tab="list">Daftar Pendaftar</button>
           <button class="pmb-mgmt-btn" data-tab="add">+ Tambah Offline</button>
         </div>
@@ -2630,7 +2630,7 @@
       <button class="btn btn-outline" style="margin-top:12px;" onclick="loadRegistrationList()">Coba Lagi</button>
     </div>`}}}var V=1,Et=20,H={key:`created_at`,dir:`desc`},U=new Set;function Dt(e,t){let n=document.getElementById(`pmbMgmtContent`);if(!n)return;n.innerHTML=`
     <!-- Stat Cards -->
-    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+    <div class="stat-grid pmb-stat-grid" style="margin-bottom:20px;">
       <div class="stat-box">
         <div class="stat-icon blue">${F.users}</div>
         <div class="stat-info"><div class="stat-value">${e.total_pendaftar}</div><div class="stat-label">Total Pendaftar</div></div>
@@ -2650,7 +2650,7 @@
     </div>
 
     <!-- Search & Filter Bar -->
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <div class="pmb-filter-bar">
       <div style="flex:1;min-width:200px;position:relative;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="pmbSearch" class="form-input" placeholder="Cari nama, NIK, atau no. pendaftaran..." style="padding-left:36px;">
@@ -2669,7 +2669,7 @@
     </div>
 
     <!-- Date Filter -->
-    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+    <div class="pmb-date-bar">
       <label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">📅 Periode:</label>
       <input type="date" id="pmbDateFrom" class="form-input" style="width:auto;min-width:140px;font-size:0.78rem;">
       <span style="color:var(--text-muted);font-size:0.8rem;">—</span>
