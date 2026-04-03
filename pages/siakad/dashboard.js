@@ -4881,35 +4881,43 @@ async function handleMgmtAction(action, data) {
             alert('⚠️ Snap token gagal dibuat.\n\nDetail: ' + (payData.error_detail || payData.error || 'Unknown'));
             break;
           }
-          // Load Midtrans Snap.js if not loaded
-          if (!window.snap) {
-            const clientKey = payData.client_key || 'Mid-client-mGA7v04cXrux3KNF';
-            await new Promise((resolve, reject) => {
-              const s = document.createElement('script');
-              s.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-              s.setAttribute('data-client-key', clientKey);
-              s.onload = resolve;
-              s.onerror = reject;
-              document.head.appendChild(s);
-            });
-          }
-          // Open Snap popup on current page
-          window.snap.pay(snapToken, {
-            onSuccess: function(result) {
-              alert('✅ Pembayaran berhasil!\n\nMetode: ' + (result.payment_type || '-') + '\nOrder ID: ' + (result.order_id || '-'));
-              loadRegistrationList();
-            },
-            onPending: function(result) {
-              alert('⏳ Pembayaran pending.\n\nSilakan selesaikan pembayaran.\nOrder ID: ' + (result.order_id || '-'));
-            },
-            onError: function(result) {
-              alert('❌ Pembayaran gagal.\n\n' + JSON.stringify(result));
-            },
-            onClose: function() {
-              // User closed popup without completing
-              loadRegistrationList();
+          try {
+            // Load Midtrans Snap.js if not loaded
+            if (!window.snap) {
+              const clientKey = payData.client_key || 'Mid-client-mGA7v04cXrux3KNF';
+              await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+                s.setAttribute('data-client-key', clientKey);
+                s.onload = () => setTimeout(resolve, 500); // wait for snap to init
+                s.onerror = reject;
+                document.head.appendChild(s);
+              });
             }
-          });
+            if (!window.snap) {
+              alert('⚠️ Snap.js gagal dimuat. Coba refresh halaman.');
+              break;
+            }
+            // Open Snap popup on current page
+            window.snap.pay(snapToken, {
+              onSuccess: function(result) {
+                alert('✅ Pembayaran berhasil!\n\nMetode: ' + (result.payment_type || '-') + '\nOrder ID: ' + (result.order_id || '-'));
+                loadRegistrationList();
+              },
+              onPending: function(result) {
+                alert('⏳ Pembayaran pending.\n\nSilakan selesaikan pembayaran.\nOrder ID: ' + (result.order_id || '-'));
+              },
+              onError: function(result) {
+                alert('❌ Pembayaran gagal.\n\n' + JSON.stringify(result));
+              },
+              onClose: function() {
+                loadRegistrationList();
+              }
+            });
+          } catch(snapErr) {
+            console.error('Snap error:', snapErr);
+            alert('⚠️ Midtrans Snap error: ' + (snapErr.message || snapErr));
+          }
         }
         break;
       }

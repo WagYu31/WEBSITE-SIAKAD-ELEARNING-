@@ -52,6 +52,7 @@ function createPayment() {
                 'snap_token' => $existing['snap_token'],
                 'snap_url' => $existing['snap_url'],
                 'status' => $existing['status'],
+                'client_key' => MIDTRANS_CLIENT_KEY,
             ]);
         }
         // For cash, return existing
