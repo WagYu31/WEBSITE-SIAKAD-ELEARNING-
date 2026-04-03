@@ -2567,6 +2567,54 @@
 .profil-section:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,.06);
 }
+
+/* Profile Tabs */
+.profil-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px;
+  background: var(--gray-100);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  scrollbar-width: none;
+}
+.profil-tabs::-webkit-scrollbar { display: none; }
+.profil-tab {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s;
+  white-space: nowrap;
+}
+.profil-tab:hover {
+  background: rgba(255,255,255,.6);
+  color: var(--text-primary);
+}
+.profil-tab.active {
+  background: white;
+  color: var(--primary-600);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.profil-tab-panel {
+  display: none;
+  animation: profilTabIn .3s ease;
+}
+.profil-tab-panel.active {
+  display: block;
+}
+@keyframes profilTabIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .profil-section-header {
   display: flex;
   align-items: center;

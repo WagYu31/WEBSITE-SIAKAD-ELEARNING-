@@ -6022,7 +6022,19 @@ function profilSayaContent(user) {
     + '<button type="button" class="btn btn-secondary" id="cancelEditProfil" style="border-radius:10px;padding:10px 20px;">Batal</button>'
     + '</div></form></div></div></div>'
 
-    // Data Pribadi Section
+    // Tab Navigation
+    + '<div class="profil-tabs" role="tablist" aria-label="Profil sections">'
+    + '<button class="profil-tab active" data-tab="pribadi" role="tab" aria-selected="true">👤 Pribadi</button>'
+    + '<button class="profil-tab" data-tab="alamat" role="tab">📍 Alamat</button>'
+    + '<button class="profil-tab" data-tab="keluarga" role="tab">👨‍👩‍👧 Keluarga</button>'
+    + '<button class="profil-tab" data-tab="sekolah" role="tab">🏫 Akademik</button>'
+    + '<button class="profil-tab" data-tab="dokumen" role="tab">📂 Dokumen</button>'
+    + '<button class="profil-tab" data-tab="keuangan" role="tab">💰 Keuangan</button>'
+    + '<button class="profil-tab" data-tab="akun" role="tab">⚙️ Akun</button>'
+    + '</div>'
+
+    // Tab: Data Pribadi
+    + '<div class="profil-tab-panel active" data-panel="pribadi" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secPribadi">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secPribadi"><span class="pst-icon" style="background:hsl(215 50% 94%);color:var(--primary-600);">\ud83d\udc64</span> Data Pribadi</h3></div>'
     + '<div class="profil-2col">'
@@ -6038,9 +6050,10 @@ function profilSayaContent(user) {
     + row('Agama', vv(user.agama))
     + row('No. KIP', vv(user.kip))
     + row('No. KKS', vv(user.kks))
-    + '</div></div>'
+    + '</div></div></div>'
 
-    // Alamat Section
+    // Tab: Alamat
+    + '<div class="profil-tab-panel" data-panel="alamat" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secAlamat">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secAlamat"><span class="pst-icon" style="background:hsl(145 40% 93%);color:hsl(145 55% 35%);">\ud83d\udccd</span> Alamat</h3></div>'
     + '<div>'
@@ -6052,9 +6065,10 @@ function profilSayaContent(user) {
     + row('Kelurahan', vv(user.kelurahan))
     + '</div>'
     + row('Kode Pos', vm(user.kode_pos))
-    + '</div></div>'
+    + '</div></div></div>'
 
-    // Data Orang Tua Section
+    // Tab: Keluarga
+    + '<div class="profil-tab-panel" data-panel="keluarga" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secKeluarga">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secKeluarga"><span class="pst-icon" style="background:hsl(38 50% 93%);color:hsl(38 70% 40%);">\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67</span> Data Orang Tua / Wali</h3></div>'
     + '<div class="profil-2col">'
@@ -6066,9 +6080,10 @@ function profilSayaContent(user) {
     + row('Nama Ibu', vv(user.nama_ibu))
     + row('Pekerjaan Ibu', vv(user.pekerjaan_ibu))
     + row('NIK Ibu', vm(user.nik_ibu))
-    + '</div></div>'
+    + '</div></div></div>'
 
-    // Asal Sekolah & Akademik Section
+    // Tab: Sekolah
+    + '<div class="profil-tab-panel" data-panel="sekolah" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secSekolah">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secSekolah"><span class="pst-icon" style="background:hsl(280 40% 93%);color:hsl(280 55% 45%);">\ud83c\udfeb</span> Asal Sekolah & Akademik</h3></div>'
     + '<div class="profil-2col">'
@@ -6076,9 +6091,10 @@ function profilSayaContent(user) {
     + row('Program Studi', vv(user.prodi))
     + row('Jenjang', '<span class="profil-row-value">Strata 1 (S1)</span>')
     + row('Status', '<span class="profil-row-value"><span style="background:hsl(145 55% 45%);color:white;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">\u2713 Aktif</span></span>')
-    + '</div></div>'
+    + '</div></div></div>'
 
-    // Dokumen Persyaratan Section
+    // Tab: Dokumen
+    + '<div class="profil-tab-panel" data-panel="dokumen" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secDokumen">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secDokumen"><span class="pst-icon" style="background:hsl(35 80% 93%);color:hsl(35 70% 42%);">\ud83d\udcc2</span> Dokumen Persyaratan</h3></div>'
     + '<div class="profil-2col">'
@@ -6087,17 +6103,19 @@ function profilSayaContent(user) {
     + dokRow('Pas Foto 3×4', user.file_pasfoto)
     + dokRow('Transkip Nilai Rapor', user.file_rapor)
     + dokRow('Surat Keterangan Sehat', user.file_surat_sehat)
-    + '</div></div>'
+    + '</div></div></div>'
 
-    // Riwayat Keuangan Section
+    // Tab: Keuangan
+    + '<div class="profil-tab-panel" data-panel="keuangan" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secKeuangan">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secKeuangan"><span class="pst-icon" style="background:hsl(145 90% 92%);color:hsl(145 60% 35%);">💰</span> Riwayat Keuangan</h3></div>'
     + '<div style="padding:20px;" id="riwayatKeuanganArea">'
     + '<div style="text-align:center;padding:20px;color:var(--text-muted);">' + I.loader + ' Memuat riwayat keuangan...</div>'
     + '</div>'
-    + '</div>'
+    + '</div></div>'
 
-    // Pengaturan Akun Section
+    // Tab: Akun
+    + '<div class="profil-tab-panel" data-panel="akun" role="tabpanel">'
     + '<div class="profil-section" role="region" aria-labelledby="secAkun">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secAkun"><span class="pst-icon" style="background:hsl(0 0% 94%);color:var(--text-muted);">\u2699\ufe0f</span> Pengaturan Akun</h3></div>'
     + '<div style="padding:20px;">'
@@ -6106,7 +6124,7 @@ function profilSayaContent(user) {
     + '<div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="profNewPw">Password Baru</label><input type="password" id="profNewPw" class="form-input" placeholder="Minimal 8 karakter" autocomplete="new-password" minlength="8"></div>'
     + '<div class="form-group" style="margin-bottom:16px;"><label class="form-label" for="profConfPw">Konfirmasi Password Baru</label><input type="password" id="profConfPw" class="form-input" placeholder="Ulangi password baru" autocomplete="new-password"></div>'
     + '<button type="button" class="btn btn-primary btn-sm" style="border-radius:8px;" >\ud83d\udd10 Ubah Password</button>'
-    + '</form></div></div>';
+    + '</form></div></div></div>';
 }
 
 
@@ -6994,6 +7012,19 @@ export function renderDashboard(container) {
             area.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Tidak dapat memuat riwayat keuangan.</div>';
           }
         })();
+
+        // --- Init Profil Tab Switching ---
+        document.querySelectorAll('.profil-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            const target = tab.dataset.tab;
+            document.querySelectorAll('.profil-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+            document.querySelectorAll('.profil-tab-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            const panel = document.querySelector(`.profil-tab-panel[data-panel="${target}"]`);
+            if (panel) panel.classList.add('active');
+          });
+        });
 
         // --- Init Edit Profil Toggle ---
         const editToggle = document.getElementById('editProfilToggle');
