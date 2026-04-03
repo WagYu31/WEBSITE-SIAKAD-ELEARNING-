@@ -63,6 +63,28 @@ function createPayment() {
                 'status' => $existing['status'],
             ]);
         }
+        // Online payment exists but no snap_token — retry Midtrans
+        if ($metode === 'online' && !$existing['snap_token']) {
+            $snapData = midtransCreateSnap($existing['order_id'], $jumlah, $reg);
+            if ($snapData && !empty($snapData['token'])) {
+                $db->prepare('UPDATE pmb_payments SET snap_token=?, snap_url=?, updated_at=NOW() WHERE id=?')
+                   ->execute([$snapData['token'], $snapData['redirect_url'] ?? '', $existing['id']]);
+                jsonResponse([
+                    'message' => 'Snap token berhasil dibuat',
+                    'id' => (int)$existing['id'],
+                    'order_id' => $existing['order_id'],
+                    'snap_token' => $snapData['token'],
+                    'snap_url' => $snapData['redirect_url'] ?? '',
+                    'client_key' => MIDTRANS_CLIENT_KEY,
+                ]);
+            } else {
+                jsonResponse([
+                    'error' => 'Midtrans Snap gagal. Detail: ' . json_encode($snapData),
+                    'id' => (int)$existing['id'],
+                    'server_key_set' => !empty(MIDTRANS_SERVER_KEY),
+                ], 500);
+            }
+        }
     }
 
     // Generate order ID
@@ -266,4 +288,28 @@ function midtransCreateSnap($orderId, $amount, $customer) {
     }
 
     return json_decode($response, true);
+}
+
+// GET /api/pmb/payment/test — Debug Midtrans connection
+function midtransTest() {
+    $serverKey = MIDTRANS_SERVER_KEY;
+    $clientKey = MIDTRANS_CLIENT_KEY;
+
+    // Test with a dummy transaction
+    $orderId = 'TEST-' . time();
+    $snapData = midtransCreateSnap($orderId, 10000, [
+        'nama' => 'Test User',
+        'email' => 'test@test.com',
+    ]);
+
+    jsonResponse([
+        'server_key_set' => !empty($serverKey),
+        'server_key_prefix' => substr($serverKey, 0, 15) . '...',
+        'client_key' => $clientKey,
+        'env_file_exists' => file_exists(__DIR__ . '/env.php'),
+        'snap_url' => MIDTRANS_SNAP_URL,
+        'test_order_id' => $orderId,
+        'snap_response' => $snapData,
+        'curl_available' => function_exists('curl_init'),
+    ]);
 }

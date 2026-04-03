@@ -167,6 +167,10 @@ if ($path === '/pmb/migrate' && $method === 'GET') {
 }
 
 // ===================== PMB PAYMENT (Midtrans) =====================
+if ($path === '/pmb/payment/test' && $method === 'GET') {
+    require_once __DIR__ . '/payment.php';
+    midtransTest();
+}
 if ($path === '/pmb/payment' && $method === 'POST') {
     require_once __DIR__ . '/payment.php';
     createPayment();

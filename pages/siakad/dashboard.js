@@ -4861,14 +4861,7 @@ async function handleMgmtAction(action, data) {
         const payData = await payCreateRes.json();
 
         if (!payCreateRes.ok) {
-          if (payData.error && payData.error.includes('sudah lunas')) {
-            alert('ℹ️ Pembayaran sudah lunas.');
-          } else if (payData.snap_token) {
-            // Existing pending online payment — open Snap
-            window.open(payData.snap_url || `https://app.sandbox.midtrans.com/snap/v2/vtweb/${payData.snap_token}`, '_blank');
-          } else {
-            alert('❌ ' + (payData.error || 'Gagal'));
-          }
+          alert('❌ ' + (payData.error || 'Gagal membuat pembayaran'));
           return;
         }
 
@@ -4889,7 +4882,7 @@ async function handleMgmtAction(action, data) {
           } else if (payData.snap_token) {
             window.open(`https://app.sandbox.midtrans.com/snap/v2/vtweb/${payData.snap_token}`, '_blank');
           } else {
-            alert('⚠️ Snap token gagal dibuat. Cek konfigurasi Midtrans.');
+            alert('⚠️ Snap token gagal dibuat.\n\nDetail: ' + (payData.error_detail || payData.error || 'Unknown error') + '\n\nCoba buka: /api/pmb/payment/test untuk debug.');
           }
         }
         break;
