@@ -4875,30 +4875,37 @@ async function handleMgmtAction(action, data) {
             alert('❌ Gagal konfirmasi pembayaran');
           }
         } else {
-          // Online — Open Midtrans in new tab
+          // Online — Midtrans Snap popup on same page
           const snapToken = payData.snap_token;
-          const snapUrl = payData.snap_url || `https://app.sandbox.midtrans.com/snap/v4/redirection/${snapToken}`;
           if (!snapToken) {
             alert('⚠️ Snap token gagal dibuat.\n\nDetail: ' + (payData.error_detail || payData.error || 'Unknown'));
             break;
           }
-          // Open in new tab
-          const payWin = window.open(snapUrl, '_blank');
-          if (!payWin) {
-            // Popup blocked — show link
-            alert('⚠️ Popup diblokir browser.\n\nSilakan klik link berikut:\n' + snapUrl);
+          if (window.snap && typeof window.snap.pay === 'function') {
+            // Use Snap.js popup (embedded on same page)
+            window.snap.pay(snapToken, {
+              onSuccess: function(result) {
+                alert('✅ Pembayaran berhasil!\n\nMetode: ' + (result.payment_type || '-') + '\nOrder ID: ' + (result.order_id || '-'));
+                loadRegistrationList();
+              },
+              onPending: function(result) {
+                alert('⏳ Pembayaran pending.\nSilakan selesaikan pembayaran.');
+                loadRegistrationList();
+              },
+              onError: function(result) {
+                alert('❌ Pembayaran gagal.');
+                loadRegistrationList();
+              },
+              onClose: function() {
+                loadRegistrationList();
+              }
+            });
+          } else {
+            // Fallback: open in new tab if Snap.js failed to load
+            const snapUrl = payData.snap_url || `https://app.sandbox.midtrans.com/snap/v4/redirection/${snapToken}`;
+            window.open(snapUrl, '_blank');
+            alert('💳 Halaman pembayaran dibuka di tab baru.\nSetelah selesai bayar, refresh halaman ini.');
           }
-          // Show info notification (non-blocking)
-          const notif = document.createElement('div');
-          notif.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(215 25% 15%);color:white;padding:16px 24px;border-radius:12px;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-width:380px;font-size:0.85rem;line-height:1.5;';
-          notif.innerHTML = `
-            💳 <strong>Pembayaran Midtrans dibuka di tab baru</strong><br>
-            <span style="color:hsl(210 50% 70%);">Setelah mahasiswa selesai bayar, kembali ke halaman ini dan klik ① Bayar lagi untuk cek status.</span><br>
-            <button onclick="this.parentElement.remove();loadRegistrationList();" style="margin-top:8px;background:hsl(145 60% 45%);color:white;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.8rem;">✅ Sudah Bayar — Refresh</button>
-            <button onclick="this.parentElement.remove();" style="margin-top:8px;margin-left:4px;background:hsl(0 0% 40%);color:white;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:0.8rem;">✕</button>
-          `;
-          document.body.appendChild(notif);
-          setTimeout(() => { if (notif.parentElement) notif.remove(); }, 60000);
         }
         break;
       }
@@ -6648,6 +6655,14 @@ export function renderDashboard(container) {
     </main>
   </div>`;
 
+  // ---- Preload Midtrans Snap.js for BAP payment ----
+  if (user.role === 'bap' && !window.snap && !document.getElementById('midtrans-snap-script')) {
+    const snapScript = document.createElement('script');
+    snapScript.id = 'midtrans-snap-script';
+    snapScript.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+    snapScript.setAttribute('data-client-key', 'Mid-client-mGA7v04cXrux3KNF');
+    document.head.appendChild(snapScript);
+  }
   // ---- Event Handlers ----
   // Hamburger
   const hamburger = document.getElementById('dashHamburger');
