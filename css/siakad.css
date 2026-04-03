@@ -2688,3 +2688,223 @@
   .profil-row-value { font-size: 0.8rem; }
 }
 
+/* ============================================================
+   COMPREHENSIVE RESPONSIVE OVERRIDES
+   – SIAKAD Dashboard (Mahasiswa, Dosen, BAP)
+   ============================================================ */
+
+/* ---- GENERIC TABLE RESPONSIVE ---- */
+.dash-card table,
+.dash-card-body table,
+[id*="Area"] table,
+[id*="Content"] table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* ---- ≤ 1280px: Sidebar collapses ---- */
+@media (max-width: 1280px) {
+  /* Management action buttons wrap */
+  .mgmt-action-btn { font-size: 0.65rem !important; padding: 3px 8px !important; }
+}
+
+/* ---- ≤ 1024px: Tablet ---- */
+@media (max-width: 1024px) {
+  /* Tables: horizontal scroll wrapper */
+  .dash-card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  
+  /* Management PMB table */
+  table[style*="border-collapse"] th,
+  table[style*="border-collapse"] td { font-size: 0.78rem !important; padding: 8px 10px !important; }
+  
+  /* Action button groups */
+  .mgmt-action-btn { font-size: 0.62rem !important; padding: 2px 6px !important; margin: 1px !important; }
+  
+  /* Profil banner */
+  .profil-banner { padding: 20px !important; }
+  .profil-banner h2 { font-size: 1.3rem !important; }
+  
+  /* Welcome banner */
+  .el-welcome-banner { padding: 24px 20px; flex-direction: column; text-align: center; gap: 16px; }
+  .el-welcome-text h2 { font-size: 1.2rem; }
+}
+
+/* ---- ≤ 768px: Mobile landscape / small tablet ---- */
+@media (max-width: 768px) {
+  /* ALL tables: smaller text, tighter padding */
+  table th { font-size: 0.7rem !important; padding: 6px 8px !important; white-space: nowrap; }
+  table td { font-size: 0.75rem !important; padding: 6px 8px !important; }
+  
+  /* Table overflow */
+  .dash-card-body,
+  [style*="overflow-x"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Stat grid: 2 columns */
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .stat-box { padding: 14px !important; }
+  .stat-value { font-size: 1.15rem !important; }
+  .stat-icon { width: 36px !important; height: 36px !important; }
+  .stat-icon svg { width: 18px !important; height: 18px !important; }
+  
+  /* Dashboard card */
+  .dash-card { border-radius: 12px; margin-bottom: 14px; }
+  .dash-card-head { padding: 12px 14px; }
+  .dash-card-head h3 { font-size: 0.85rem; }
+  .dash-card-body { padding: 10px 12px; }
+  
+  /* Profile sections */
+  .profil-section { margin-bottom: 14px !important; }
+  .profil-section-header { padding: 14px 16px !important; }
+  .profil-section-title { font-size: 0.9rem !important; }
+  .profil-row { padding: 8px 16px !important; }
+  .profil-row-label { font-size: 0.68rem !important; min-width: 100px !important; width: auto !important; }
+  .profil-row-value { font-size: 0.78rem !important; }
+  .profil-banner { padding: 16px !important; border-radius: 14px !important; }
+  .profil-banner h2 { font-size: 1.15rem !important; }
+  
+  /* Action buttons in PMB management */
+  [data-action] { font-size: 0.6rem !important; padding: 2px 5px !important; }
+  
+  /* Search/filter bars */
+  input[type="search"],
+  input[type="text"],
+  select {
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
+  }
+  
+  /* Management top bar buttons */
+  .btn { font-size: 0.72rem !important; padding: 6px 12px !important; }
+  
+  /* Welcome banner */
+  .el-welcome-banner { padding: 20px 16px; border-radius: 14px; }
+  .el-welcome-text h2 { font-size: 1.15rem; }
+  .el-welcome-text p { font-size: 0.78rem; }
+  .el-welcome-stats { padding: 10px 14px; }
+  .el-mini-ring { width: 60px; height: 60px; }
+  
+  /* Header/topbar */
+  .dash-topbar { padding: 0 12px !important; }
+  .dash-topbar-left h1 { font-size: 0.95rem !important; }
+  .dash-topbar-left p { font-size: 0.7rem !important; }
+  
+  /* ISO footer */
+  .dash-iso-footer { gap: 6px; }
+  .dash-iso-badge { font-size: 0.6rem; padding: 3px 8px; }
+}
+
+/* ---- ≤ 640px: Small mobile ---- */
+@media (max-width: 640px) {
+  /* Tables: even smaller */
+  table th { font-size: 0.65rem !important; padding: 5px 6px !important; }
+  table td { font-size: 0.7rem !important; padding: 5px 6px !important; }
+  
+  /* Force table min-width for scrolling */
+  .dash-card-body table,
+  [id*="Area"] table {
+    min-width: 600px;
+  }
+  
+  /* Stat box */
+  .stat-grid { grid-template-columns: 1fr 1fr !important; }
+  .stat-box { padding: 10px !important; gap: 8px !important; }
+  .stat-value { font-size: 1rem !important; }
+  .stat-label { font-size: 0.65rem !important; }
+  .stat-icon { width: 32px !important; height: 32px !important; }
+  
+  /* Profile 2col → 1col */
+  .profil-2col { grid-template-columns: 1fr !important; }
+  .profil-row { flex-direction: column !important; gap: 2px !important; padding: 6px 14px !important; }
+  .profil-row-label { min-width: unset !important; width: 100% !important; }
+  
+  /* Header welcome */
+  .el-welcome-banner { padding: 16px 14px; border-radius: 12px; }
+  .el-welcome-text h2 { font-size: 1.05rem; }
+  .el-welcome-stats { display: none; }
+  
+  /* Modal/Overlay forms */
+  .modal, [style*="position: fixed"] { padding: 10px !important; }
+  
+  /* Cards layout */
+  .dash-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  
+  /* Management header actions */
+  [style*="display:flex"][style*="gap"] {
+    flex-wrap: wrap !important;
+  }
+  
+  /* Page title */
+  .page-title { font-size: 1rem; gap: 8px; }
+  .page-title svg { width: 18px; height: 18px; }
+}
+
+/* ---- ≤ 480px: Extra small ---- */
+@media (max-width: 480px) {
+  /* Content padding */
+  .dash-content { padding: 8px 8px 16px !important; }
+  
+  /* Stat: single column */
+  .stat-grid { grid-template-columns: 1fr !important; }
+  .stat-box { flex-direction: row !important; padding: 12px !important; }
+  
+  /* Tables use even smaller min-width */
+  .dash-card-body table,
+  [id*="Area"] table {
+    min-width: 500px;
+  }
+  
+  /* Profile banner stack */
+  .profil-banner { text-align: center !important; }
+  .profil-banner > div { flex-direction: column !important; gap: 10px !important; align-items: center !important; text-align: center !important; }
+  .profil-banner h2 { font-size: 1.05rem !important; }
+  .profil-banner .profil-badges { justify-content: center !important; flex-wrap: wrap !important; }
+  
+  /* Action buttons stack */
+  [data-action] { display: block !important; width: 100% !important; text-align: center !important; margin: 2px 0 !important; }
+  
+  /* Welcome banner minimal */
+  .el-welcome-banner { padding: 14px 12px; }
+  .el-welcome-text h2 { font-size: 0.95rem; }
+  .el-welcome-text p { font-size: 0.72rem; }
+  .el-welcome-date { font-size: 0.65rem; padding: 3px 10px; }
+  
+  /* Card heads */
+  .dash-card-head h3 { font-size: 0.8rem; }
+  
+  /* Sidebar when open */
+  .dash-sidebar.open { width: 240px; }
+}
+
+/* ---- ≤ 375px: Tiny mobile ---- */
+@media (max-width: 375px) {
+  .dash-content { padding: 6px 6px 12px !important; }
+  .dash-topbar { height: 48px !important; }
+  .dash-topbar-left h1 { font-size: 0.82rem !important; }
+  
+  .stat-box { padding: 10px !important; }
+  .stat-value { font-size: 0.95rem !important; }
+  
+  .profil-section-title { font-size: 0.82rem !important; }
+  .profil-row-label { font-size: 0.62rem !important; }
+  .profil-row-value { font-size: 0.72rem !important; }
+  
+  .el-welcome-banner { padding: 12px 10px; }
+  .el-welcome-text h2 { font-size: 0.88rem; }
+  
+  .dash-card { border-radius: 8px; }
+  .dash-card-head { padding: 8px 10px; }
+  .dash-card-body { padding: 8px 10px; }
+  
+  /* Buttons */
+  .btn { font-size: 0.65rem !important; padding: 4px 8px !important; }
+  .btn-sm { font-size: 0.62rem !important; padding: 3px 8px !important; }
+  
+  /* Sidebar */
+  .dash-sidebar.open { width: 220px; }
+  .sidebar-link { font-size: 0.78rem; padding: 8px 10px; }
+  .sidebar-label { font-size: 0.58rem; }
+}
+
