@@ -6093,6 +6093,14 @@ function profilSayaContent(user) {
     + dokRow('Surat Keterangan Sehat', user.file_surat_sehat)
     + '</div></div>'
 
+    // Riwayat Keuangan Section
+    + '<div class="profil-section" role="region" aria-labelledby="secKeuangan">'
+    + '<div class="profil-section-header"><h3 class="profil-section-title" id="secKeuangan"><span class="pst-icon" style="background:hsl(145 90% 92%);color:hsl(145 60% 35%);">💰</span> Riwayat Keuangan</h3></div>'
+    + '<div style="padding:20px;" id="riwayatKeuanganArea">'
+    + '<div style="text-align:center;padding:20px;color:var(--text-muted);">' + I.loader + ' Memuat riwayat keuangan...</div>'
+    + '</div>'
+    + '</div>'
+
     // Pengaturan Akun Section
     + '<div class="profil-section" role="region" aria-labelledby="secAkun">'
     + '<div class="profil-section-header"><h3 class="profil-section-title" id="secAkun"><span class="pst-icon" style="background:hsl(0 0% 94%);color:var(--text-muted);">\u2699\ufe0f</span> Pengaturan Akun</h3></div>'
@@ -6933,6 +6941,56 @@ export function renderDashboard(container) {
         } catch (e) { console.log('Profile API offline, using local data'); }
 
         mainContent.innerHTML = profilSayaContent(profileUser) + isoFooter;
+
+        // --- Load Riwayat Keuangan ---
+        (async () => {
+          const area = document.getElementById('riwayatKeuanganArea');
+          if (!area) return;
+          try {
+            const res = await fetch(`/api/pmb/payments/${encodeURIComponent(user.nim)}`);
+            if (!res.ok) throw new Error('API error');
+            const payments = await res.json();
+            if (!payments || payments.length === 0) {
+              area.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada riwayat pembayaran.</div>';
+              return;
+            }
+            const statusBadge = (s) => {
+              const colors = { paid: 'hsl(145 60% 40%)', pending: 'hsl(40 80% 45%)', expired: 'hsl(0 70% 50%)' };
+              const labels = { paid: '✅ Lunas', pending: '⏳ Pending', expired: '❌ Expired' };
+              return `<span style="background:${colors[s] || '#888'};color:white;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">${labels[s] || s}</span>`;
+            };
+            const formatRp = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+            const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '-';
+
+            area.innerHTML = `
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                  <thead>
+                    <tr style="background:hsl(215 20% 96%);text-align:left;">
+                      <th style="padding:10px 14px;font-weight:600;">No. Order</th>
+                      <th style="padding:10px 14px;font-weight:600;">Jumlah</th>
+                      <th style="padding:10px 14px;font-weight:600;">Metode</th>
+                      <th style="padding:10px 14px;font-weight:600;">Status</th>
+                      <th style="padding:10px 14px;font-weight:600;">Tanggal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${payments.map(p => `
+                      <tr style="border-bottom:1px solid hsl(215 15% 90%);">
+                        <td style="padding:10px 14px;font-family:monospace;font-size:0.78rem;">${p.order_id}</td>
+                        <td style="padding:10px 14px;font-weight:600;">${formatRp(p.jumlah)}</td>
+                        <td style="padding:10px 14px;">${p.metode_bayar === 'online' ? '🌐 Online' : '💵 Cash'}</td>
+                        <td style="padding:10px 14px;">${statusBadge(p.status)}</td>
+                        <td style="padding:10px 14px;">${formatDate(p.paid_at || p.created_at)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>`;
+          } catch (e) {
+            area.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Tidak dapat memuat riwayat keuangan.</div>';
+          }
+        })();
 
         // --- Init Edit Profil Toggle ---
         const editToggle = document.getElementById('editProfilToggle');

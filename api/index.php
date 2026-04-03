@@ -183,6 +183,10 @@ if (preg_match('#^/pmb/payment/(\d+)/confirm$#', $path, $m) && $method === 'PUT'
     require_once __DIR__ . '/payment.php';
     confirmPayment((int)$m[1]);
 }
+if (preg_match('#^/pmb/payments/(.+)$#', $path, $m) && $method === 'GET') {
+    require_once __DIR__ . '/payment.php';
+    getPaymentsByNim(urldecode($m[1]));
+}
 if (preg_match('#^/pmb/payment/(\d+)$#', $path, $m) && $method === 'GET') {
     require_once __DIR__ . '/payment.php';
     getPaymentStatus((int)$m[1]);

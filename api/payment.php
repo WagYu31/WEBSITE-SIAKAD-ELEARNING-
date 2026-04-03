@@ -327,3 +327,34 @@ function midtransTest() {
         'curl_available' => function_exists('curl_init'),
     ]);
 }
+
+// GET /api/pmb/payments/{nim} — Get payment history by student NIM
+function getPaymentsByNim($nim) {
+    $db = getDB();
+    
+    // Find registration by NIM (via pmb_accounts)
+    $stmt = $db->prepare('SELECT registration_id FROM pmb_accounts WHERE nim = ?');
+    $stmt->execute([$nim]);
+    $account = $stmt->fetch();
+    
+    if (!$account) {
+        // Try finding by no_pendaftaran pattern
+        $stmt = $db->prepare('SELECT id FROM pmb_registrations WHERE no_pendaftaran = ? OR nik = ?');
+        $stmt->execute([$nim, $nim]);
+        $reg = $stmt->fetch();
+        $regId = $reg ? $reg['id'] : 0;
+    } else {
+        $regId = $account['registration_id'];
+    }
+    
+    if ($regId <= 0) {
+        jsonResponse([]);
+        return;
+    }
+    
+    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC');
+    $stmt->execute([$regId]);
+    $payments = $stmt->fetchAll();
+    
+    jsonResponse($payments);
+}
