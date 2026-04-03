@@ -252,5 +252,23 @@ if ($path === '/pmb/settings/biaya' && $method === 'GET') {
     getBiaya();
 }
 
+// ===================== SEMESTER PAYMENTS =====================
+if ($path === '/semester-payments' && $method === 'GET') {
+    require_once __DIR__ . '/semester-payments.php';
+    getAllSemesterPayments();
+}
+if ($path === '/semester-payments' && $method === 'POST') {
+    require_once __DIR__ . '/semester-payments.php';
+    createSemesterPayment();
+}
+if (preg_match('#^/semester-payments/(\d+)$#', $path, $m) && $method === 'PUT') {
+    require_once __DIR__ . '/semester-payments.php';
+    updateSemesterPayment((int)$m[1]);
+}
+if (preg_match('#^/semester-payments/(\d+)$#', $path, $m) && $method === 'DELETE') {
+    require_once __DIR__ . '/semester-payments.php';
+    deleteSemesterPayment((int)$m[1]);
+}
+
 // ===================== 404 =====================
 jsonResponse(['error' => 'Route not found', 'path' => $path, 'method' => $method], 404);

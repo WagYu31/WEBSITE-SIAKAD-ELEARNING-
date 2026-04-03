@@ -132,6 +132,29 @@ try {
     $accountTableCreated = $e->getMessage();
 }
 
+// ---- Create semester_payments table ----
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS semester_payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nim VARCHAR(20) NOT NULL,
+        semester INT NOT NULL,
+        tahun_akademik VARCHAR(15) NOT NULL DEFAULT '2026/2027',
+        jenis VARCHAR(50) NOT NULL DEFAULT 'SPP',
+        jumlah DOUBLE NOT NULL DEFAULT 0,
+        status VARCHAR(15) NOT NULL DEFAULT 'pending',
+        metode_bayar VARCHAR(20) DEFAULT NULL,
+        keterangan TEXT DEFAULT NULL,
+        paid_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_nim (nim),
+        INDEX idx_semester (semester)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $semesterPaymentsCreated = true;
+} catch (Exception $e) {
+    $semesterPaymentsCreated = $e->getMessage();
+}
+
 echo json_encode([
     'message' => 'Migration complete',
     'pmb_added' => $added,
@@ -140,4 +163,5 @@ echo json_encode([
     'profiles_total_existing' => count($existingProfile),
     'pmb_payments_table' => $paymentTableCreated,
     'pmb_accounts_table' => $accountTableCreated,
+    'semester_payments_table' => $semesterPaymentsCreated ?? false,
 ]);

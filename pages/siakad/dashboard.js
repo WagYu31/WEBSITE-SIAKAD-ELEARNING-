@@ -6967,7 +6967,7 @@ export function renderDashboard(container) {
                 <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
                   <thead>
                     <tr style="background:hsl(215 20% 96%);text-align:left;">
-                      <th style="padding:10px 14px;font-weight:600;">No. Order</th>
+                      <th style="padding:10px 14px;font-weight:600;">Jenis</th>
                       <th style="padding:10px 14px;font-weight:600;">Jumlah</th>
                       <th style="padding:10px 14px;font-weight:600;">Metode</th>
                       <th style="padding:10px 14px;font-weight:600;">Status</th>
@@ -6977,9 +6977,16 @@ export function renderDashboard(container) {
                   <tbody>
                     ${payments.map(p => `
                       <tr style="border-bottom:1px solid hsl(215 15% 90%);">
-                        <td style="padding:10px 14px;font-family:monospace;font-size:0.78rem;">${p.order_id}</td>
+                        <td style="padding:10px 14px;">
+                          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.72rem;font-weight:600;margin-bottom:2px;
+                            background:${p.type === 'pmb' ? 'hsl(215 80% 92%)' : 'hsl(145 60% 92%)'};
+                            color:${p.type === 'pmb' ? 'hsl(215 70% 40%)' : 'hsl(145 60% 30%)'};">
+                            ${p.type === 'pmb' ? '📝 PMB' : '📚 Semester'}
+                          </span><br>
+                          <span style="font-size:0.78rem;color:var(--text-muted);">${p.jenis || p.order_id}</span>
+                        </td>
                         <td style="padding:10px 14px;font-weight:600;">${formatRp(p.jumlah)}</td>
-                        <td style="padding:10px 14px;">${p.metode_bayar === 'online' ? '🌐 Online' : '💵 Cash'}</td>
+                        <td style="padding:10px 14px;">${p.metode_bayar === 'online' ? '🌐 Online' : p.metode_bayar === 'cash' ? '💵 Cash' : p.metode_bayar || '-'}</td>
                         <td style="padding:10px 14px;">${statusBadge(p.status)}</td>
                         <td style="padding:10px 14px;">${formatDate(p.paid_at || p.created_at)}</td>
                       </tr>

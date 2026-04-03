@@ -328,33 +328,74 @@ function midtransTest() {
     ]);
 }
 
-// GET /api/pmb/payments/{nim} — Get payment history by student NIM
+// GET /api/pmb/payments/{nim} — Get all payment history by student NIM
 function getPaymentsByNim($nim) {
     $db = getDB();
+    $allPayments = [];
     
-    // Find registration by NIM (via pmb_accounts)
+    // 1. Find PMB registration payments via pmb_accounts
     $stmt = $db->prepare('SELECT registration_id FROM pmb_accounts WHERE nim = ?');
     $stmt->execute([$nim]);
     $account = $stmt->fetch();
     
-    if (!$account) {
-        // Try finding by no_pendaftaran pattern
+    $regId = 0;
+    if ($account) {
+        $regId = $account['registration_id'];
+    } else {
+        // Try finding by no_pendaftaran or nik
         $stmt = $db->prepare('SELECT id FROM pmb_registrations WHERE no_pendaftaran = ? OR nik = ?');
         $stmt->execute([$nim, $nim]);
         $reg = $stmt->fetch();
         $regId = $reg ? $reg['id'] : 0;
-    } else {
-        $regId = $account['registration_id'];
     }
     
-    if ($regId <= 0) {
-        jsonResponse([]);
-        return;
+    // PMB payments
+    if ($regId > 0) {
+        $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC');
+        $stmt->execute([$regId]);
+        $pmbPayments = $stmt->fetchAll();
+        foreach ($pmbPayments as $p) {
+            $allPayments[] = [
+                'id' => (int)$p['id'],
+                'type' => 'pmb',
+                'jenis' => 'Biaya Pendaftaran PMB',
+                'order_id' => $p['order_id'],
+                'jumlah' => (float)$p['jumlah'],
+                'metode_bayar' => $p['metode_bayar'],
+                'status' => $p['status'],
+                'paid_at' => $p['paid_at'],
+                'created_at' => $p['created_at'],
+            ];
+        }
     }
     
-    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC');
-    $stmt->execute([$regId]);
-    $payments = $stmt->fetchAll();
+    // 2. Semester payments
+    try {
+        $stmt = $db->prepare('SELECT * FROM semester_payments WHERE nim = ? ORDER BY created_at DESC');
+        $stmt->execute([$nim]);
+        $semPayments = $stmt->fetchAll();
+        foreach ($semPayments as $p) {
+            $allPayments[] = [
+                'id' => (int)$p['id'],
+                'type' => 'semester',
+                'jenis' => $p['jenis'] . ' Semester ' . $p['semester'] . ' (' . $p['tahun_akademik'] . ')',
+                'order_id' => 'SEM-' . $p['nim'] . '-' . $p['semester'],
+                'jumlah' => (float)$p['jumlah'],
+                'metode_bayar' => $p['metode_bayar'],
+                'status' => $p['status'],
+                'keterangan' => $p['keterangan'],
+                'paid_at' => $p['paid_at'],
+                'created_at' => $p['created_at'],
+            ];
+        }
+    } catch (Exception $e) {
+        // Table might not exist yet
+    }
     
-    jsonResponse($payments);
+    // Sort by created_at DESC
+    usort($allPayments, function($a, $b) {
+        return strtotime($b['created_at']) - strtotime($a['created_at']);
+    });
+    
+    jsonResponse($allPayments);
 }
