@@ -3,9 +3,12 @@
 // PMB Payment API — Midtrans Sandbox Integration
 // ============================================
 
-// Midtrans Sandbox Keys
-define('MIDTRANS_SERVER_KEY', 'SB-Mid-server-YOUR_KEY_HERE'); // Ganti dengan server key sandbox
-define('MIDTRANS_CLIENT_KEY', 'SB-Mid-client-YOUR_KEY_HERE'); // Ganti dengan client key sandbox
+// Midtrans Sandbox Keys — loaded from env.php (not in git)
+if (file_exists(__DIR__ . '/env.php')) {
+    require_once __DIR__ . '/env.php';
+}
+if (!defined('MIDTRANS_SERVER_KEY')) define('MIDTRANS_SERVER_KEY', '');
+if (!defined('MIDTRANS_CLIENT_KEY')) define('MIDTRANS_CLIENT_KEY', '');
 define('MIDTRANS_IS_PRODUCTION', false);
 define('MIDTRANS_SNAP_URL', 'https://app.sandbox.midtrans.com/snap/v1/transactions');
 

@@ -3,3 +3,4 @@ node_modules/
 *.log
 backend/server
 backend/pmb.db
+api/env.php
