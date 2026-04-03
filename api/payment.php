@@ -47,6 +47,15 @@ function createPayment() {
         if ($existing['status'] === 'paid') {
             jsonResponse(['error' => 'Pembayaran sudah lunas', 'payment' => $existing], 409);
         }
+        
+        // If fee changed, delete old pending payment and recreate
+        if ($existing['status'] === 'pending' && abs($existing['jumlah'] - $jumlah) > 0.01) {
+            $db->prepare('DELETE FROM pmb_payments WHERE id = ?')->execute([$existing['id']]);
+            $existing = null; // Force create new payment below
+        }
+    }
+
+    if ($existing) {
         // Return existing pending payment (reuse snap token)
         if ($metode === 'online' && $existing['snap_token']) {
             jsonResponse([
