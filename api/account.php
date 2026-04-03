@@ -62,12 +62,20 @@ function bapCreateAccount() {
     $existing = $stmt->fetch();
 
     if ($existing) {
-        // Return existing without password (security)
         jsonResponse([
             'message' => 'Akun sudah dibuat sebelumnya',
             'nim' => $existing['nim'],
             'email' => $existing['email'],
         ]);
+    }
+
+    // CHECK: Payment must be paid first
+    $stmt = $db->prepare('SELECT * FROM pmb_payments WHERE registration_id = ? ORDER BY created_at DESC LIMIT 1');
+    $stmt->execute([$regId]);
+    $payment = $stmt->fetch();
+
+    if (!$payment || $payment['status'] !== 'paid') {
+        jsonResponse(['error' => 'Pembayaran belum lunas. Harap selesaikan pembayaran terlebih dahulu sebelum membuat akun.'], 400);
     }
 
     // Generate NIM and password

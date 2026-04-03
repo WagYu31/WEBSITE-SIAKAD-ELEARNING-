@@ -4569,11 +4569,13 @@ function renderPMBTable(registrations) {
           <td><span class="badge-sm ${r.status==='diterima'?'success':r.status==='ditolak'?'danger':r.status==='proses'?'blue':'warning'}">${r.status}</span></td>
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td onclick="event.stopPropagation();">
-            <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;">
+            <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;align-items:center;">
               <button class="mgmt-action-btn" data-action="view" data-id="${r.id}" title="Lihat Kelengkapan Data" style="color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
-              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Pembayaran" style="font-size:0.68rem;">💰 Bayar</button>
-              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Validasi Akun" style="font-size:0.68rem;">✅ Validasi</button>
-              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Buat Akun Mahasiswa" style="font-size:0.68rem;">🔐 Akun</button>
+              <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
+              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Step 1: Pembayaran" style="font-size:0.68rem;">① 💰 Bayar</button>
+              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Step 2: Buat Akun (harus bayar dulu)" style="font-size:0.68rem;">② 🔐 Akun</button>
+              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Step 3: Validasi (harus buat akun dulu)" style="font-size:0.68rem;">③ ✅ Validasi</button>
+              <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
               <button class="mgmt-action-btn" data-action="edit" data-id="${r.id}" title="Edit Data" style="color:hsl(215 70% 50%);font-size:0.68rem;">✏️ Edit</button>
               <button class="mgmt-action-btn" data-action="delete" data-id="${r.id}" title="Hapus Data" style="color:hsl(0 65% 50%);font-size:0.68rem;">🗑️ Hapus</button>
             </div>
