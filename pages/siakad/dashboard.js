@@ -50,7 +50,7 @@ function initJadwalDummy() {
         if (isOnline) ruang = '\u2014';
         else if (isLab) ruang = labRooms[roomIdx % labRooms.length];
         else ruang = rooms[roomIdx % rooms.length];
-        const dosenName = mk.dosen === '-' ? '-' : mk.dosen.split('/')[0].trim();
+        const dosenName = mk.dosen === '-' ? '-' : mk.dosen;
         JADWAL_DUMMY.push({
           id: idCounter++,
           prodi,
@@ -1273,16 +1273,80 @@ function perkembanganContent(user) {
     </div>`;
 }
 
+// ---- Helper: build DOSEN_KELAS_MAHASISWA-compatible data from JADWAL_DUMMY ----
+// This ensures dosen jadwal matches exactly what BAP sees in Manajemen Jadwal
+function getDosenJadwal(user) {
+  initJadwalDummy();
+  const nama = user.nama || '';
+  // Filter JADWAL_DUMMY by dosen name — supports slash-separated multi-dosen format
+  const filtered = JADWAL_DUMMY.filter(j => {
+    if (!j.dosen || j.dosen === '-') return false;
+    // Split slash-separated dosen names and check each
+    const dosenNames = j.dosen.split('/').map(n => n.trim());
+    return dosenNames.some(dn => dn === nama);
+  });
+  // Convert to DOSEN_KELAS_MAHASISWA-compatible format
+  return filtered.map(j => {
+    // Generate consistent mahasiswa list per course (seeded by kodeMK for reproducibility)
+    const seed = j.kodeMK.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+    const allNames = [
+      'Ahmad Rizky Pratama','Siti Nurhaliza','Budi Santoso','Dewi Lestari','Eko Prasetyo',
+      'Fitri Handayani','Gani Setiawan','Hana Permata','Irfan Hakim','Julia Putri',
+      'Kurniawan','Lina Marlina','Muhammad Faisal','Nadia Rahmawati','Rudi Hermawan',
+      'Yeni Fitriani','Farhan Maulana','Rizki Amelia','Dian Puspita','Bayu Nugroho',
+      'Sari Wulandari','Andi Firmansyah','Mega Safitri','Dimas Nugroho','Putri Ayu'
+    ];
+    const count = 5 + (seed % 8); // 5-12 students per class
+    const mahasiswa = [];
+    for (let i = 0; i < count; i++) {
+      const ni = (seed + i * 7) % allNames.length;
+      const nimBase = 2024101000 + ((seed + i * 13) % 100);
+      mahasiswa.push({
+        nim: String(nimBase + i),
+        nama: allNames[ni],
+        angkatan: 2022 + (i % 3),
+        nilaiUTS: 60 + ((seed + i * 3) % 35),
+        nilaiUAS: 60 + ((seed + i * 5) % 35),
+        nilaiTugas: 65 + ((seed + i * 7) % 30),
+        nilaiQuiz: 60 + ((seed + i * 11) % 35),
+        kehadiran: 10 + ((seed + i * 2) % 5)
+      });
+    }
+    return {
+      kode: j.kodeMK,
+      nama: j.namaMK,
+      sks: j.sks,
+      kelas: j.kelas,
+      semester: `Genap ${new Date().getFullYear()}`,
+      hari: j.hari,
+      jam: `${j.jamMulai}-${j.jamSelesai}`,
+      ruang: j.ruang,
+      tipeKelas: j.tipeKelas || 'Offline',
+      prodi: j.prodi,
+      semesterNo: j.semester,
+      bobot: { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 },
+      mahasiswa
+    };
+  });
+}
+
 function dosenContent(user) {
+  const dj = getDosenJadwal(user);
+  window._dosenJadwalCache = dj; // cache for sub-pages
+  const totalMhs = dj.reduce((s,k) => s + k.mahasiswa.length, 0);
+  // Jadwal hari ini
+  const hariArr = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const hariIni = hariArr[new Date().getDay()];
+  const jadwalHariIni = dj.filter(k => k.hari === hariIni);
   return `
     <div class="stat-grid">
       <div class="stat-box">
         <div class="stat-icon blue">${I.monitor}</div>
-        <div class="stat-info"><div class="stat-label">Mata Kuliah</div><div class="stat-value">${user.totalMK}</div><div class="stat-sub">semester ini</div></div>
+        <div class="stat-info"><div class="stat-label">Mata Kuliah</div><div class="stat-value">${dj.length}</div><div class="stat-sub">semester ini</div></div>
       </div>
       <div class="stat-box">
         <div class="stat-icon gold">${I.users}</div>
-        <div class="stat-info"><div class="stat-label">Total Mahasiswa</div><div class="stat-value">${user.totalMahasiswa}</div><div class="stat-sub">semua kelas</div></div>
+        <div class="stat-info"><div class="stat-label">Total Mahasiswa</div><div class="stat-value">${totalMhs}</div><div class="stat-sub">semua kelas</div></div>
       </div>
       <div class="stat-box">
         <div class="stat-icon green">${I.checkCircle}</div>
@@ -1302,12 +1366,12 @@ function dosenContent(user) {
             <table class="sch-table">
               <thead><tr><th>Jam</th><th>Mata Kuliah</th><th>Kelas</th><th>Ruang</th></tr></thead>
               <tbody>
-                ${JADWAL.filter(j => j.dosen.includes('Bambang')).map(j => `<tr>
+                ${jadwalHariIni.length ? jadwalHariIni.map(j => `<tr>
                   <td class="sch-time">${j.jam}</td>
-                  <td><strong>${j.mk}</strong></td>
+                  <td><strong>${j.nama}</strong></td>
                   <td>${j.kelas}</td>
                   <td>${j.ruang}</td>
-                </tr>`).join('')}
+                </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;padding:20px;color:hsl(215 15% 60%);font-size:0.85rem;">Tidak ada jadwal hari ini (${hariIni})</td></tr>`}
               </tbody>
             </table>
           </div>
@@ -1316,14 +1380,14 @@ function dosenContent(user) {
           <div class="dash-card-head"><h3>Kelas yang Diampu</h3></div>
           <div class="dash-card-body">
             <div class="course-grid">
-              ${KELAS_LIST.slice(0, 4).map(k => `
+              ${dj.slice(0, 4).map(k => `
                 <div class="course-card">
                   <div class="course-card-code">${k.kode}</div>
                   <h4>${k.nama}</h4>
-                  <p>${k.mahasiswa} Mahasiswa</p>
+                  <p>${k.mahasiswa.length} Mahasiswa</p>
                   <div class="course-card-foot">
-                    <span>${k.materiSelesai}/${k.totalMateri} Materi</span>
-                    <span class="badge-sm blue">${k.progress}%</span>
+                    <span>${k.sks} SKS · ${k.kelas}</span>
+                    <span class="badge-sm blue">${k.hari}</span>
                   </div>
                 </div>
               `).join('')}
@@ -1362,6 +1426,7 @@ function dosenContent(user) {
 // ---- DOSEN SUB-PAGES ----
 
 function dosenInfoHeader(user) {
+  const dj = window._dosenJadwalCache || getDosenJadwal(user);
   return `<div class="dash-card" style="margin-bottom:20px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,hsl(200 55% 28%),hsl(170 45% 38%));padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
       <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,hsl(200 40% 55%),hsl(180 40% 65%));border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -1374,7 +1439,7 @@ function dosenInfoHeader(user) {
       <div style="display:flex;gap:12px;">
         <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
           <div style="font-size:0.6rem;opacity:0.7;">Mata Kuliah</div>
-          <div style="font-size:1rem;font-weight:800;">${DOSEN_KELAS_MAHASISWA.length}</div>
+          <div style="font-size:1rem;font-weight:800;">${dj.length}</div>
         </div>
         <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;color:white;text-align:center;backdrop-filter:blur(4px);">
           <div style="font-size:0.6rem;opacity:0.7;">Mahasiswa PA</div>
@@ -1387,7 +1452,9 @@ function dosenInfoHeader(user) {
 
 function jadwalDosenContent(user) {
   const days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-  const allJadwal = DOSEN_KELAS_MAHASISWA.map((k,idx) => ({
+  const dj = window._dosenJadwalCache || getDosenJadwal(user);
+  window._dosenJadwalCache = dj;
+  const allJadwal = dj.map((k,idx) => ({
     hari: k.hari, jam: k.jam, kode: k.kode, nama: k.nama, kelas: k.kelas, ruang: k.ruang,
     jmlMhs: k.mahasiswa.length, idx
   }));
@@ -1449,7 +1516,7 @@ function renderInputNilaiDetail(kelasIdx) {
     if (v >= 70) return 'B'; if (v >= 65) return 'B-'; if (v >= 60) return 'C+';
     if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
   }
-  const kelas = DOSEN_KELAS_MAHASISWA[kelasIdx];
+  const kelas = (window._dosenJadwalCache || [])[kelasIdx];
   const b = kelas.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
   const totalPertemuan = 14;
   const rumusStr = `UTS×${b.uts}% + UAS×${b.uas}% + Tugas×${b.tugas}% + Quiz×${b.quiz}% + Absensi×${b.absensi}%`;
@@ -1594,7 +1661,7 @@ function initJadwalDosenPage() {
           if (warning) warning.style.display = 'none';
           
           // Save bobot to data
-          const kls2 = DOSEN_KELAS_MAHASISWA[idx];
+          const kls2 = (window._dosenJadwalCache || [])[idx];
           kls2.bobot = { uts: bUts, uas: bUas, tugas: bTugas, quiz: bQuiz, absensi: bAbsensi };
           
           // Update header labels
@@ -1638,7 +1705,7 @@ function initJadwalDosenPage() {
         // ── Simpan Nilai → POST to backend ──
         document.getElementById('btnSimpanNilaiInline')?.addEventListener('click', async () => {
           const kelasIdx2 = parseInt(document.getElementById('btnSimpanNilaiInline').dataset.kelasIdx);
-          const kls = DOSEN_KELAS_MAHASISWA[kelasIdx2];
+          const kls = (window._dosenJadwalCache || [])[kelasIdx2];
           const rows = nilaiDiv.querySelectorAll('#nilaiTable tbody tr');
           const items = [];
           rows.forEach((row, ri) => {
@@ -1685,7 +1752,7 @@ function mhsDosenContent(user) {
     <div class="dash-card" style="margin-bottom:16px;">
       <div class="dash-card-head"><h3>👥 Data Mahasiswa per Kelas</h3></div>
     </div>
-    ${DOSEN_KELAS_MAHASISWA.map(kelas => `
+    ${(window._dosenJadwalCache || []).map(kelas => `
     <div class="dash-card" style="margin-bottom:16px;">
       <div class="dash-card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
         <h3 style="margin:0;font-size:0.88rem;">${kelas.kode} — ${kelas.nama} (${kelas.kelas})</h3>
@@ -1725,7 +1792,7 @@ function inputNilaiContent(user) {
       <strong style="font-size:0.85rem;">📝 Petunjuk:</strong>
       <span style="font-size:0.82rem;color:hsl(215 15% 40%);"> Pilih kelas, edit nilai pada tabel, lalu klik Simpan Nilai. Bobot bisa dikonfigurasi per kelas via ⚙️ Atur Bobot di Jadwal Mengajar.</span>
     </div>
-    ${DOSEN_KELAS_MAHASISWA.map((kelas, ki) => {
+    ${(window._dosenJadwalCache || []).map((kelas, ki) => {
       const b = kelas.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
       return `
     <div class="dash-card" style="margin-bottom:20px;">
@@ -1770,7 +1837,7 @@ function initInputNilaiPage() {
   document.querySelectorAll('.btn-simpan-nilai').forEach(btn => {
     btn.addEventListener('click', async () => {
       const kelasIdx = parseInt(btn.dataset.kelasIdx);
-      const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+      const kls = (window._dosenJadwalCache || [])[kelasIdx];
       const card = btn.closest('.dash-card');
       const rows = card.querySelectorAll('tbody tr');
       const items = [];
@@ -1817,7 +1884,7 @@ function rekapNilaiContent(user) {
     if (v >= 55) return 'C'; if (v >= 45) return 'D'; return 'E';
   }
   const totalPertemuan = 14;
-  const stats = DOSEN_KELAS_MAHASISWA.map(k => {
+  const stats = (window._dosenJadwalCache || []).map(k => {
     const b = k.bobot || { uts: 20, uas: 30, tugas: 20, quiz: 15, absensi: 15 };
     const scores = k.mahasiswa.map(m => {
       const nilaiAbsensi = Math.round(m.kehadiran / totalPertemuan * 100);
@@ -1879,7 +1946,7 @@ function absensiDosenContent(user) {
       </div>
     </div>
     <div id="absensiClassGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
-      ${DOSEN_KELAS_MAHASISWA.map((kelas,idx) => {
+      ${(window._dosenJadwalCache || []).map((kelas,idx) => {
         const totalMhs = kelas.mahasiswa.length;
         const avgHadir = Math.round(kelas.mahasiswa.reduce((a,m) => a + m.kehadiran,0) / totalMhs);
         const avgPct = Math.round(avgHadir / totalPertemuan * 100);
@@ -1926,7 +1993,7 @@ function absensiDosenContent(user) {
 
 function renderAbsensiDetail(kelasIdx) {
   const totalPertemuan = 14;
-  const kelas = DOSEN_KELAS_MAHASISWA[kelasIdx];
+  const kelas = (window._dosenJadwalCache || [])[kelasIdx];
   const totalMhs = kelas.mahasiswa.length;
   const avgHadir = Math.round(kelas.mahasiswa.reduce((a,m) => a + m.kehadiran,0) / totalMhs);
   const avgPct = Math.round(avgHadir / totalPertemuan * 100);
@@ -2074,7 +2141,7 @@ function attachAbsensiCellHandlers(container) {
 function attachAbsensiSaveHandlers(container, kelasIdx) {
   // ── Simpan Absensi (window-level for inline onclick) ──
   window.__simpanAbsensi = async function() {
-    const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+    const kls = (window._dosenJadwalCache || [])[kelasIdx];
     const items = [];
     container.querySelectorAll('.absensi-cell').forEach(cell => {
       items.push({
@@ -2126,7 +2193,7 @@ function attachAbsensiSaveHandlers(container, kelasIdx) {
 
   // ── Cetak Rekap (window-level for inline onclick) ──
   window.__cetakRekap = function() {
-    const kls = DOSEN_KELAS_MAHASISWA[kelasIdx];
+    const kls = (window._dosenJadwalCache || [])[kelasIdx];
     const totalPertemuan = 14;
     // Collect current cell data
     const rowsData = [];
