@@ -2751,6 +2751,95 @@
   .profil-row-value { font-size: 0.8rem; }
 }
 
+/* ====== PMB GLOW CARDS ====== */
+.pmb-glow-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  color: white;
+  overflow: hidden;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.pmb-glow-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+.pmb-gc-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.pmb-gc-icon svg { stroke: white; }
+.pmb-gc-info { flex: 1; min-width: 0; }
+.pmb-gc-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-family: var(--font-heading);
+  text-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.pmb-gc-label {
+  font-size: 0.72rem;
+  opacity: .85;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.pmb-gc-ring {
+  position: absolute;
+  right: -16px;
+  top: -16px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 6px solid rgba(255,255,255,.1);
+  pointer-events: none;
+}
+
+/* ====== PMB TABLE ENHANCEMENTS ====== */
+.pmb-tr {
+  transition: all .2s;
+}
+.pmb-tr:hover {
+  background: linear-gradient(90deg, hsl(215 50% 97%), hsl(215 30% 99%)) !important;
+}
+.badge-sm {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: .02em;
+}
+.badge-sm.blue { background: hsl(215 65% 92%); color: hsl(215 65% 42%); }
+.badge-sm.warning { background: hsl(38 70% 92%); color: hsl(38 65% 38%); }
+.badge-sm.success { background: hsl(150 50% 90%); color: hsl(150 60% 30%); }
+.badge-sm.danger { background: hsl(0 60% 92%); color: hsl(0 60% 42%); }
+
+.mgmt-action-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all .2s;
+}
+.mgmt-action-btn:hover {
+  background: hsl(215 30% 96%);
+  border-color: hsl(215 30% 90%);
+  transform: translateY(-1px);
+}
+
 /* ============================================================
    COMPREHENSIVE RESPONSIVE OVERRIDES
    – SIAKAD Dashboard (Mahasiswa, Dosen, BAP)

@@ -2631,21 +2631,25 @@
     </div>`}}}var V=1,Et=20,H={key:`created_at`,dir:`desc`},U=new Set;function Dt(e,t){let n=document.getElementById(`pmbMgmtContent`);if(!n)return;n.innerHTML=`
     <!-- Stat Cards -->
     <div class="stat-grid pmb-stat-grid" style="margin-bottom:20px;">
-      <div class="stat-box">
-        <div class="stat-icon blue">${F.users}</div>
-        <div class="stat-info"><div class="stat-value">${e.total_pendaftar}</div><div class="stat-label">Total Pendaftar</div></div>
+      <div class="pmb-glow-card" style="background:linear-gradient(135deg,hsl(215 65% 50%),hsl(230 70% 58%));">
+        <div class="pmb-gc-icon">${F.users}</div>
+        <div class="pmb-gc-info"><div class="pmb-gc-value">${e.total_pendaftar}</div><div class="pmb-gc-label">Total Pendaftar</div></div>
+        <div class="pmb-gc-ring"></div>
       </div>
-      <div class="stat-box">
-        <div class="stat-icon gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="stat-info"><div class="stat-value">${e.total_proses}</div><div class="stat-label">Proses</div></div>
+      <div class="pmb-glow-card" style="background:linear-gradient(135deg,hsl(38 75% 52%),hsl(28 80% 48%));">
+        <div class="pmb-gc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="pmb-gc-info"><div class="pmb-gc-value">${e.total_proses}</div><div class="pmb-gc-label">Proses</div></div>
+        <div class="pmb-gc-ring"></div>
       </div>
-      <div class="stat-box">
-        <div class="stat-icon green">${F.checkCircle}</div>
-        <div class="stat-info"><div class="stat-value">${e.total_diterima}</div><div class="stat-label">Diterima</div></div>
+      <div class="pmb-glow-card" style="background:linear-gradient(135deg,hsl(150 55% 42%),hsl(160 60% 38%));">
+        <div class="pmb-gc-icon">${F.checkCircle}</div>
+        <div class="pmb-gc-info"><div class="pmb-gc-value">${e.total_diterima}</div><div class="pmb-gc-label">Diterima</div></div>
+        <div class="pmb-gc-ring"></div>
       </div>
-      <div class="stat-box">
-        <div class="stat-icon rose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
-        <div class="stat-info"><div class="stat-value">${e.total_ditolak}</div><div class="stat-label">Ditolak</div></div>
+      <div class="pmb-glow-card" style="background:linear-gradient(135deg,hsl(0 60% 55%),hsl(350 65% 48%));">
+        <div class="pmb-gc-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <div class="pmb-gc-info"><div class="pmb-gc-value">${e.total_ditolak}</div><div class="pmb-gc-label">Ditolak</div></div>
+        <div class="pmb-gc-ring"></div>
       </div>
     </div>
 
