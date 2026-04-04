@@ -4714,14 +4714,14 @@ function renderPMBTable(registrations) {
       </tr></thead>
       <tbody>
         ${registrations.map(r => `<tr class="pmb-tr" data-id="${r.id}" style="cursor:pointer;${_pmbSelected.has(r.id)?'background:hsl(215 80% 97%);':''}">
-          <td onclick="event.stopPropagation();" style="text-align:center;"><input type="checkbox" class="pmb-chk" data-id="${r.id}" ${_pmbSelected.has(r.id)?'checked':''}></td>
+          <td style="text-align:center;"><input type="checkbox" class="pmb-chk" data-id="${r.id}" ${_pmbSelected.has(r.id)?'checked':''}></td>
           <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${r.no_pendaftaran}</td>
           <td><strong>${r.nama}</strong><br><span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span></td>
           <td style="font-size:0.8rem;">${r.prodi_pilihan || '-'}</td>
           <td><span class="badge-sm ${r.metode==='online'?'blue':'warning'}">${r.metode==='online'?'Online':'Offline'}</span></td>
           <td><span class="badge-sm ${r.status==='diterima'?'success':r.status==='ditolak'?'danger':r.status==='proses'?'blue':'warning'}">${r.status}</span></td>
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
-          <td onclick="event.stopPropagation();">
+          <td>
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;align-items:center;">
               <button class="mgmt-action-btn" data-action="view" data-id="${r.id}" title="Lihat Kelengkapan Data" style="color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
               <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
