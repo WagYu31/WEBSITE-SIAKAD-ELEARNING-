@@ -4669,6 +4669,28 @@ function applyPMBFilters() {
   const pageData = filtered.slice(start, start + PMB_PER_PAGE);
 
   document.getElementById('pmbTableWrapper').innerHTML = renderPMBTable(pageData);
+  
+  // DIRECT addEventListener on each button - most reliable approach
+  document.querySelectorAll('.pmb-act').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      var act = btn.getAttribute('data-act');
+      var rid = btn.getAttribute('data-rid');
+      var email = btn.getAttribute('data-email') || '';
+      var prodi = btn.getAttribute('data-prodi') || '';
+      handleMgmtAction(act, { id: rid, email: email, prodi: prodi });
+    });
+  });
+  // Direct row click
+  document.querySelectorAll('.pmb-tr').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+      if (e.target.closest('.pmb-act') || e.target.closest('input')) return;
+      var id = parseInt(row.getAttribute('data-id'));
+      var reg = _pmbRegistrations.find(function(r){ return r.id === id; });
+      if (reg) showRegistrantDetail(reg);
+    });
+  });
   document.getElementById('pmbResultCount').textContent = total > 0
     ? `Menampilkan ${start + 1}–${Math.min(start + PMB_PER_PAGE, total)} dari ${total} pendaftar`
     : 'Tidak ada data';
