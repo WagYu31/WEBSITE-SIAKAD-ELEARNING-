@@ -4723,14 +4723,14 @@ function renderPMBTable(registrations) {
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td>
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;align-items:center;">
-              <button class="mgmt-action-btn" data-action="view" data-id="${r.id}" title="Lihat Kelengkapan Data" style="color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('view',{id:'${r.id}'})" title="Lihat" style="color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
               <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
-              <button class="mgmt-action-btn" data-action="confirm-pay" data-id="${r.id}" title="Step 1: Pembayaran" style="font-size:0.68rem;">① 💰 Bayar</button>
-              <button class="mgmt-action-btn" data-action="create-account" data-id="${r.id}" data-email="${r.email}" data-prodi="${r.prodi_pilihan}" title="Step 2: Buat Akun (harus bayar dulu)" style="font-size:0.68rem;">② 🔐 Akun</button>
-              <button class="mgmt-action-btn" data-action="validate" data-id="${r.id}" title="Step 3: Validasi (harus buat akun dulu)" style="font-size:0.68rem;">③ ✅ Validasi</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('confirm-pay',{id:'${r.id}'})" title="Bayar" style="font-size:0.68rem;">① 💰 Bayar</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('create-account',{id:'${r.id}',email:'${r.email||''}',prodi:'${r.prodi_pilihan||''}'})" title="Buat Akun" style="font-size:0.68rem;">② 🔐 Akun</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('validate',{id:'${r.id}'})" title="Validasi" style="font-size:0.68rem;">③ ✅ Validasi</button>
               <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
-              <button class="mgmt-action-btn" data-action="edit" data-id="${r.id}" title="Edit Data" style="color:hsl(215 70% 50%);font-size:0.68rem;">✏️ Edit</button>
-              <button class="mgmt-action-btn" data-action="delete" data-id="${r.id}" title="Hapus Data" style="color:hsl(0 65% 50%);font-size:0.68rem;">🗑️ Hapus</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('edit',{id:'${r.id}'})" title="Edit" style="color:hsl(215 70% 50%);font-size:0.68rem;">✏️ Edit</button>
+              <button class="mgmt-action-btn" onclick="window._pmbAction('delete',{id:'${r.id}'})" title="Hapus" style="color:hsl(0 65% 50%);font-size:0.68rem;">🗑️ Hapus</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -4771,26 +4771,12 @@ async function bulkDelete() {
 }
 
 function bindPMBActions() {
-  // Use event delegation on table wrapper for reliability
-  const wrapper = document.getElementById('pmbTableWrapper');
-  if (wrapper) {
-    wrapper.onclick = function(e) {
-      // Handle action buttons
-      const btn = e.target.closest('.mgmt-action-btn');
-      if (btn) {
-        e.stopPropagation();
-        handleMgmtAction(btn.dataset.action, btn.dataset);
-        return;
-      }
-      // Handle row clicks (for detail view)
-      const row = e.target.closest('.pmb-tr');
-      if (row && !e.target.closest('input[type="checkbox"]')) {
-        const id = parseInt(row.dataset.id);
-        const reg = _pmbRegistrations.find(r => r.id === id);
-        if (reg) showRegistrantDetail(reg);
-      }
-    };
-  }
+  // Expose handler to window so inline onclick can call it from module scope
+  window._pmbAction = function(action, data) { handleMgmtAction(action, data); };
+  window._pmbRowClick = function(id) {
+    const reg = _pmbRegistrations.find(r => r.id === parseInt(id));
+    if (reg) showRegistrantDetail(reg);
+  };
   // Sort headers
   document.querySelectorAll('.sortable-th').forEach(th => {
     th.addEventListener('click', () => {
