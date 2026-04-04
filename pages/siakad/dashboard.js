@@ -4771,12 +4771,26 @@ async function bulkDelete() {
 }
 
 function bindPMBActions() {
-  document.querySelectorAll('.mgmt-action-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.stopPropagation(); handleMgmtAction(btn.dataset.action, btn.dataset); });
-  });
-  document.querySelectorAll('.pmb-tr').forEach(row => {
-    row.addEventListener('click', () => { const id = parseInt(row.dataset.id); const reg = _pmbRegistrations.find(r => r.id === id); if (reg) showRegistrantDetail(reg); });
-  });
+  // Use event delegation on table wrapper for reliability
+  const wrapper = document.getElementById('pmbTableWrapper');
+  if (wrapper) {
+    wrapper.onclick = function(e) {
+      // Handle action buttons
+      const btn = e.target.closest('.mgmt-action-btn');
+      if (btn) {
+        e.stopPropagation();
+        handleMgmtAction(btn.dataset.action, btn.dataset);
+        return;
+      }
+      // Handle row clicks (for detail view)
+      const row = e.target.closest('.pmb-tr');
+      if (row && !e.target.closest('input[type="checkbox"]')) {
+        const id = parseInt(row.dataset.id);
+        const reg = _pmbRegistrations.find(r => r.id === id);
+        if (reg) showRegistrantDetail(reg);
+      }
+    };
+  }
   // Sort headers
   document.querySelectorAll('.sortable-th').forEach(th => {
     th.addEventListener('click', () => {
