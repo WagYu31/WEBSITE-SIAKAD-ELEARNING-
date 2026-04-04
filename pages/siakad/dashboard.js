@@ -4723,14 +4723,14 @@ function renderPMBTable(registrations) {
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td>
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;align-items:center;">
-              <button class="mgmt-action-btn" onclick="window._pmbAction('view',{id:'${r.id}'})" title="Lihat" style="color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
+              <button class="pmb-act" data-act="view" data-rid="${r.id}" title="Lihat" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;color:hsl(210 60% 50%);font-size:0.68rem;">👁️ Lihat</button>
               <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
-              <button class="mgmt-action-btn" onclick="window._pmbAction('confirm-pay',{id:'${r.id}'})" title="Bayar" style="font-size:0.68rem;">① 💰 Bayar</button>
-              <button class="mgmt-action-btn" onclick="window._pmbAction('create-account',{id:'${r.id}',email:'${r.email||''}',prodi:'${r.prodi_pilihan||''}'})" title="Buat Akun" style="font-size:0.68rem;">② 🔐 Akun</button>
-              <button class="mgmt-action-btn" onclick="window._pmbAction('validate',{id:'${r.id}'})" title="Validasi" style="font-size:0.68rem;">③ ✅ Validasi</button>
+              <button class="pmb-act" data-act="confirm-pay" data-rid="${r.id}" title="Bayar" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.68rem;">① 💰 Bayar</button>
+              <button class="pmb-act" data-act="create-account" data-rid="${r.id}" data-email="${r.email||''}" data-prodi="${r.prodi_pilihan||''}" title="Buat Akun" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.68rem;">② 🔐 Akun</button>
+              <button class="pmb-act" data-act="validate" data-rid="${r.id}" title="Validasi" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.68rem;">③ ✅ Validasi</button>
               <span style="color:var(--gray-300);font-size:0.65rem;">│</span>
-              <button class="mgmt-action-btn" onclick="window._pmbAction('edit',{id:'${r.id}'})" title="Edit" style="color:hsl(215 70% 50%);font-size:0.68rem;">✏️ Edit</button>
-              <button class="mgmt-action-btn" onclick="window._pmbAction('delete',{id:'${r.id}'})" title="Hapus" style="color:hsl(0 65% 50%);font-size:0.68rem;">🗑️ Hapus</button>
+              <button class="pmb-act" data-act="edit" data-rid="${r.id}" title="Edit" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;color:hsl(215 70% 50%);font-size:0.68rem;">✏️ Edit</button>
+              <button class="pmb-act" data-act="delete" data-rid="${r.id}" title="Hapus" style="background:none;border:1px solid transparent;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600;color:hsl(0 65% 50%);font-size:0.68rem;">🗑️ Hapus</button>
             </div>
           </td>
         </tr>`).join('')}
@@ -4771,12 +4771,29 @@ async function bulkDelete() {
 }
 
 function bindPMBActions() {
-  // Expose handler to window so inline onclick can call it from module scope
-  window._pmbAction = function(action, data) { handleMgmtAction(action, data); };
-  window._pmbRowClick = function(id) {
-    const reg = _pmbRegistrations.find(r => r.id === parseInt(id));
-    if (reg) showRegistrantDetail(reg);
+  // GLOBAL document-level click delegation — most reliable approach
+  // Remove old listener to avoid duplicates
+  if (window.__pmbClickHandler) {
+    document.removeEventListener('click', window.__pmbClickHandler, true);
+  }
+  window.__pmbClickHandler = function(e) {
+    // Action buttons (pmb-act class)
+    const btn = e.target.closest('.pmb-act');
+    if (btn && btn.dataset.act && btn.dataset.rid) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleMgmtAction(btn.dataset.act, { id: btn.dataset.rid, email: btn.dataset.email || '', prodi: btn.dataset.prodi || '' });
+      return;
+    }
+    // Row click → detail view
+    const row = e.target.closest('.pmb-tr');
+    if (row && !e.target.closest('.pmb-act') && !e.target.closest('input[type="checkbox"]')) {
+      const id = parseInt(row.dataset.id);
+      const reg = _pmbRegistrations.find(r => r.id === id);
+      if (reg) showRegistrantDetail(reg);
+    }
   };
+  document.addEventListener('click', window.__pmbClickHandler, true); // useCapture=true for highest priority
   // Sort headers
   document.querySelectorAll('.sortable-th').forEach(th => {
     th.addEventListener('click', () => {
