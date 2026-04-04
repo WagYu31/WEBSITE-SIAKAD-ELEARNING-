@@ -4686,8 +4686,9 @@ function applyPMBFilters() {
   document.querySelectorAll('.pmb-tr').forEach(function(row) {
     row.addEventListener('click', function(e) {
       if (e.target.closest('.pmb-act') || e.target.closest('input')) return;
-      var id = parseInt(row.getAttribute('data-id'));
-      var reg = _pmbRegistrations.find(function(r){ return r.id === id; });
+      var rid = row.getAttribute('data-id');
+      // Use String comparison since API returns string IDs
+      var reg = _pmbRegistrations.find(function(r){ return String(r.id) === String(rid); });
       if (reg) showRegistrantDetail(reg);
     });
   });
@@ -4992,8 +4993,10 @@ async function handleMgmtAction(action, data) {
     let res, result;
     switch (action) {
       case 'view': {
-        const reg = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        // Use String comparison - API may return string IDs
+        const reg = _pmbRegistrations.find(r => String(r.id) === String(data.id));
         if (reg) showRegistrantDetail(reg);
+        else { console.error('PMB reg not found, id:', data.id, 'available:', _pmbRegistrations.map(r=>r.id)); alert('Data tidak ditemukan. Coba refresh halaman.'); }
         return;
       }
       case 'create-account':
@@ -5034,7 +5037,7 @@ async function handleMgmtAction(action, data) {
         break;
 
       case 'confirm-pay': {
-        const reg = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        const reg = _pmbRegistrations.find(r => String(r.id) === String(data.id));
         const nama = reg ? reg.nama : 'Pendaftar';
         const metode = prompt(`💰 Pembayaran untuk: ${nama}\n\nPilih metode:\n1 = Cash (langsung konfirmasi)\n2 = Online (Midtrans)\n\nKetik 1 atau 2:`);
         if (!metode || !['1','2'].includes(metode.trim())) { alert('Dibatalkan'); return; }
@@ -5103,7 +5106,7 @@ async function handleMgmtAction(action, data) {
         return; // don't reload list
 
       case 'delete':
-        const regToDelete = _pmbRegistrations.find(r => r.id === parseInt(data.id));
+        const regToDelete = _pmbRegistrations.find(r => String(r.id) === String(data.id));
         if (!regToDelete) return;
         if (!confirm(`⚠️ Hapus data pendaftaran?\n\n${regToDelete.nama} (${regToDelete.no_pendaftaran})\n\nSemua data terkait (akun, pembayaran) juga akan dihapus.`)) return;
         res = await fetch(`${PMB_API}/registration/${data.id}`, { method: 'DELETE' });
