@@ -4714,7 +4714,7 @@ function renderPMBTable(registrations) {
           <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${r.no_pendaftaran}</td>
           <td><strong>${r.nama}</strong><br><span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span></td>
           <td style="font-size:0.8rem;">${r.prodi_pilihan || '-'}</td>
-          <td><span class="badge-sm ${(r.metode_bayar||r.metode)==='online'?'blue':(r.metode_bayar||r.metode)==='cash'?'warning':''}">${(r.metode_bayar||r.metode)==='online'?'Online':(r.metode_bayar||r.metode)==='cash'?'Cash':'Belum Bayar'}</span></td>
+          <td><span class="badge-sm ${r.metode==='online'?'blue':'warning'}">${r.metode==='online'?'Online':'Offline'}</span></td>
           <td><span class="badge-sm ${r.status==='diterima'?'success':r.status==='ditolak'?'danger':r.status==='proses'?'blue':'warning'}">${r.status}</span></td>
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td onclick="event.stopPropagation();">
@@ -4886,7 +4886,7 @@ function showRegistrantDetail(reg) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div><p class="dl">Program Studi</p><p class="dv">${v(reg.prodi_pilihan)}</p></div>
           <div><p class="dl">Asal Sekolah</p><p class="dv">${v(reg.asal_sekolah)}</p></div>
-          <div><p class="dl">Metode</p><span class="badge ${(reg.metode_bayar||reg.metode) === 'online' ? 'badge-primary' : (reg.metode_bayar||reg.metode) === 'cash' ? 'badge-warning' : ''}" style="font-size:0.72rem;">${(reg.metode_bayar||reg.metode)==='online'?'Online':(reg.metode_bayar||reg.metode)==='cash'?'Cash':'Belum Bayar'}</span></div>
+          <div><p class="dl">Metode</p><span class="badge ${reg.metode === 'online' ? 'badge-primary' : 'badge-warning'}" style="font-size:0.72rem;">${reg.metode==='online'?'Online':'Offline'}</span></div>
           <div><p class="dl">Tanggal Daftar</p><p class="dv">${formatDate(reg.created_at)}</p></div>
         </div>
       </div>
@@ -4934,7 +4934,7 @@ function exportPMBCSV(registrations) {
   const headers = ['No Pendaftaran','Nama','NIK','Email','Prodi','Metode','Status','Asal Sekolah','Telepon'];
   const rows = registrations.map(r => [
     r.no_pendaftaran, r.nama, r.nik, r.email || '', r.prodi_pilihan || '',
-    r.metode_bayar||r.metode||'', r.status, r.asal_sekolah || '', r.telepon_1 || ''
+    r.metode||'', r.status, r.asal_sekolah || '', r.telepon_1 || ''
   ]);
   const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
