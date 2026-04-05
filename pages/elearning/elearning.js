@@ -311,13 +311,18 @@ function mahasiswaElearning(user) {
     </div>`;
 }
 
+// Global container for dosen kelas fetched from API
+let DOSEN_KELAS_LIST = [];
+
 // ---- E-Learning Content (Dosen) ----
 function dosenElearning(user) {
+  const kelasList = DOSEN_KELAS_LIST.length > 0 ? DOSEN_KELAS_LIST : KELAS_LIST;
+  const displayKelas = kelasList.slice(0, 4);
   return `
     <div class="stat-grid">
       <div class="stat-box">
         <div class="stat-icon blue">${I.monitor}</div>
-        <div class="stat-info"><div class="stat-label">Kelas Ajar</div><div class="stat-value">${user.totalMK}</div><div class="stat-sub">semester ini</div></div>
+        <div class="stat-info"><div class="stat-label">Kelas Ajar</div><div class="stat-value">${kelasList.length}</div><div class="stat-sub">semester ini</div></div>
       </div>
       <div class="stat-box">
         <div class="stat-icon gold">${I.upload}</div>
@@ -339,14 +344,14 @@ function dosenElearning(user) {
           <div class="dash-card-head"><h3>Kelas yang Diampu</h3></div>
           <div class="dash-card-body">
             <div class="course-grid">
-              ${KELAS_LIST.slice(0, 4).map(k => `
+              ${displayKelas.map(k => `
                 <div class="course-card">
-                  <div class="course-card-code">${k.kode}</div>
-                  <h4>${k.nama}</h4>
-                  <p>${k.mahasiswa} Mahasiswa</p>
+                  <div class="course-card-code">${k.kode || k.kode_mk || '-'}</div>
+                  <h4>${k.nama || k.mata_kuliah || '-'}</h4>
+                  <p>${k.kelas ? 'Kelas ' + k.kelas : (k.mahasiswa ? k.mahasiswa + ' Mahasiswa' : '-')}</p>
                   <div class="course-card-foot">
-                    <span>${k.materiSelesai}/${k.totalMateri} Materi</span>
-                    <span class="badge-sm blue">${k.progress}%</span>
+                    <span>${k.sks || '-'} SKS</span>
+                    <span class="badge-sm blue">${k.hari || '-'}</span>
                   </div>
                 </div>
               `).join('')}
@@ -1645,9 +1650,12 @@ function renderCourseDetail(kelas, activeTab, userRole, userNim) {
 // SUB-PAGE: Kelas Saya (vertical banner cards)
 // ============================================
 function pageKelas(user) {
-  const avgProgress = Math.round(KELAS_LIST.reduce((a,k) => a + k.progress, 0) / KELAS_LIST.length);
-  const totalMateri = KELAS_LIST.reduce((a,k) => a + k.totalMateri, 0);
-  const totalSKS = KELAS_LIST.reduce((a,k) => a + k.sks, 0);
+  // For dosen: use dynamic list fetched from API; for mahasiswa: use static KELAS_LIST
+  const isMhsView = !user || user.role === 'mahasiswa';
+  const displayList = (!isMhsView && DOSEN_KELAS_LIST.length > 0) ? DOSEN_KELAS_LIST : KELAS_LIST;
+  const avgProgress = displayList.some(k => k.progress) ? Math.round(displayList.reduce((a,k) => a + (k.progress || 0), 0) / displayList.length) : 0;
+  const totalMateri = displayList.reduce((a,k) => a + (k.totalMateri || 0), 0);
+  const totalSKS = displayList.reduce((a,k) => a + (k.sks || 0), 0);
   const bannerColors = [
     'linear-gradient(135deg, #2563eb, #3b82f6, #60a5fa)',
     'linear-gradient(135deg, #e67e22, #f39c12, #f9bf3b)',
@@ -1661,7 +1669,7 @@ function pageKelas(user) {
   // Compute grade per class for inline display
   const myNim = (user && user.nim) || '2024001';
   const kelasGrades = {};
-  KELAS_LIST.forEach(kelas => {
+  displayList.forEach(kelas => {
     const data = CLASS_CONTENT[kelas.id] || { tugas:[], uts:[], uas:[], quiz:[] };
     let grades = [];
     (data.quiz||[]).forEach(q => { if (q.status==='Selesai' && q.nilai!==null) grades.push(q.nilai); });
@@ -1689,7 +1697,7 @@ function pageKelas(user) {
     <!-- Summary Bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:0.82rem;font-weight:700;color:hsl(215 40% 20%);">📚 ${KELAS_LIST.length} Kelas Aktif</span>
+        <span style="font-size:0.82rem;font-weight:700;color:hsl(215 40% 20%);">📚 ${displayList.length} Kelas Aktif</span>
         <span style="font-size:0.68rem;color:hsl(215 15% 55%);">•</span>
         <span style="font-size:0.72rem;color:hsl(215 15% 50%);">${totalSKS} SKS</span>
       </div>
@@ -1700,7 +1708,7 @@ function pageKelas(user) {
 
     <!-- Course List -->
     <div class="el-kelas-list" aria-label="Daftar kelas">
-      ${KELAS_LIST.map((k, i) => {
+      ${displayList.map((k, i) => {
         const bg = bannerColors[i % bannerColors.length];
         const progressColor = k.progress > 70 ? '#10b981' : k.progress > 50 ? '#3b82f6' : '#f59e0b';
         const grade = kelasGrades[k.id];
@@ -1922,9 +1930,45 @@ function renderPageContent(pageId, user, courseState) {
 // ============================================
 // MAIN RENDER
 // ============================================
-export function renderElearning(container) {
+export async function renderElearning(container) {
   const user = getUser();
   if (!user) { window.location.hash = '#/login'; return; }
+
+  // If dosen, fetch their jadwal mengajar from API and build dynamic kelas list
+  if (user.role === 'dosen' && user.nip) {
+    try {
+      const res = await fetch(`/api/dosen/jadwal-mengajar/${encodeURIComponent(user.nip)}`);
+      if (res.ok) {
+        const json = await res.json();
+        const jadwalArr = json.data || json.jadwal || json || [];
+        // Deduplicate by kode_mk — each unique MK = 1 kelas
+        const seen = new Set();
+        DOSEN_KELAS_LIST = jadwalArr.reduce((acc, j) => {
+          const key = j.kode_mk || j.mata_kuliah_id || j.mata_kuliah;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            acc.push({
+              id: j.mata_kuliah_id || j.id || acc.length + 100,
+              kode: j.kode_mk || '-',
+              nama: j.mata_kuliah || j.nama_mk || '-',
+              dosen: user.nama,
+              sks: j.sks || 3,
+              semester: j.tahun_ajaran || 'Genap 2025/2026',
+              kelas: j.kelas || 'A',
+              hari: j.hari || '-',
+              jadwal: (j.hari || '-') + ', ' + (j.jam || '-'),
+              ruang: j.ruang || '-',
+              mahasiswa: j.jumlah_mahasiswa || 30,
+              progress: 50,
+              totalMateri: 14,
+              materiSelesai: 7,
+            });
+          }
+          return acc;
+        }, []);
+      }
+    } catch(e) { console.warn('Gagal fetch jadwal dosen:', e); }
+  }
 
   let currentPage = 'home';
   let courseState = null; // { kelas, tab, activeQuiz, quizResult, quizIntro, activeForum }
