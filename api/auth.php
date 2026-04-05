@@ -81,8 +81,9 @@ function loginMahasiswa($db, $nim, $password) {
 
 // ============ DOSEN ============
 function loginDosenByNIP($db, $nip, $password) {
-    $stmt = $db->prepare('SELECT * FROM dosen WHERE nip = ? LIMIT 1');
-    $stmt->execute([$nip]);
+    // Try NIP first, then username as fallback
+    $stmt = $db->prepare('SELECT * FROM dosen WHERE nip = ? OR username = ? LIMIT 1');
+    $stmt->execute([$nip, $nip]);
     $dosen = $stmt->fetch();
 
     if (!$dosen) {
@@ -90,12 +91,23 @@ function loginDosenByNIP($db, $nip, $password) {
         return;
     }
 
-    // Check password (support plain or hashed)
+    // Check password — support bcrypt, sha256 (seed.php), and plain text
     $valid = false;
-    if (isset($dosen['password_hash']) && $dosen['password_hash']) {
-        $valid = password_verify($password, $dosen['password_hash']);
-    } elseif (isset($dosen['password'])) {
-        $valid = ($password === $dosen['password']);
+    $storedPwd = $dosen['password_hash'] ?? $dosen['password'] ?? '';
+
+    if ($storedPwd) {
+        // 1. bcrypt (password_hash)
+        if (password_verify($password, $storedPwd)) {
+            $valid = true;
+        }
+        // 2. sha256 (used by seed.php: hash('sha256', $password))
+        elseif (hash('sha256', $password) === $storedPwd) {
+            $valid = true;
+        }
+        // 3. plain text fallback
+        elseif ($password === $storedPwd) {
+            $valid = true;
+        }
     }
 
     if (!$valid) {
