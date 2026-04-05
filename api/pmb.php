@@ -232,10 +232,30 @@ function getPmbStats() {
 // GET /api/pmb/status/:no_pendaftaran
 function checkPmbStatus($noPendaftaran) {
     $db = getDB();
-    $stmt = $db->prepare('SELECT * FROM pmb_registrations WHERE no_pendaftaran = ?');
+    $stmt = $db->prepare('SELECT r.*, p.status as payment_status, p.metode_bayar, p.jumlah, p.paid_at, p.payment_type
+        FROM pmb_registrations r
+        LEFT JOIN pmb_payments p ON p.registration_id = r.id AND p.status = \'paid\'
+        WHERE r.no_pendaftaran = ?');
     $stmt->execute([$noPendaftaran]);
     $reg = $stmt->fetch();
     if (!$reg) jsonResponse(['error' => 'No. pendaftaran tidak ditemukan'], 404);
+
+    // Normalize status to lowercase for frontend mapping
+    $reg['status'] = strtolower($reg['status'] ?? '');
+
+    // Build payment object if paid
+    $hasPaid = !empty($reg['payment_status']) && $reg['payment_status'] === 'paid';
+    $reg['payment'] = $hasPaid ? [
+        'status'      => 'paid',
+        'metode_bayar'=> $reg['metode_bayar'],
+        'jumlah'      => $reg['jumlah'],
+        'paid_at'     => $reg['paid_at'],
+        'payment_type'=> $reg['payment_type'],
+    ] : null;
+
+    // Remove duplicated payment columns from root
+    unset($reg['payment_status'], $reg['metode_bayar'], $reg['jumlah'], $reg['paid_at'], $reg['payment_type']);
+
     jsonResponse($reg);
 }
 
