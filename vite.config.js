@@ -8,12 +8,14 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
+        target: 'https://stiabayuanggajobs.online',
+        changeOrigin: true,
+        secure: true,
       },
       '/uploads': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
+        target: 'https://stiabayuanggajobs.online',
+        changeOrigin: true,
+        secure: true,
       }
     }
   },
