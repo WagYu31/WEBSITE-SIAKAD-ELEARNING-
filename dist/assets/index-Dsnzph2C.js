@@ -3261,52 +3261,61 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;
         <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
       </div>
     </form>`,n.style.display=`flex`,document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`editSaveBtn`);n.disabled=!0,n.textContent=`Menyimpan...`;let r=new FormData(t.target),i={},a=t.target.querySelectorAll(`input[type="file"]`),o=new Set([...a].map(e=>e.name));r.forEach((e,t)=>{e&&!o.has(t)&&(i[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(i)}),r=await t.json();if(t.ok){let t=new FormData,n=!1;if(a.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),n=!0)}),n)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+r.message),document.getElementById(`pmbDetailModal`).style.display=`none`,B()}else alert(`❌ `+(r.error||`Gagal menyimpan`)),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}})}var Vt=`/api/pmb`,W=[];function Ht(){return`
-    <div class="dash-card" style="overflow:visible;">
-      <div class="dash-card-header" style="border-bottom:none;padding-bottom:0;">
+    <div class="dash-card">
+      <div class="dash-card-header">
         <h2 class="dash-card-title">${F.graduationCap} Data Mahasiswa</h2>
       </div>
-      <div class="dash-card-body" style="padding-top:16px;">
+      <div class="dash-card-body">
 
-        <!-- Premium Stat Cards -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-          <div style="background:linear-gradient(135deg,hsl(215 70% 52%),hsl(240 65% 58%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(215,70%,52%,.35);position:relative;overflow:hidden;">
-            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
-            <div style="font-size:1.6rem;margin-bottom:4px;">${F.users}</div>
-            <div id="mhsTotal" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
-            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Total Mahasiswa</div>
+        <!-- Stat Cards — ISO 9241: compact, consistent size, WCAG AA contrast -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid hsl(215 20% 91%);border-left:4px solid hsl(215 65% 50%);border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="width:36px;height:36px;border-radius:8px;background:hsl(215 65% 95%);display:flex;align-items:center;justify-content:center;color:hsl(215 65% 45%);flex-shrink:0;">${F.users}</div>
+            <div>
+              <div id="mhsTotal" style="font-size:1.25rem;font-weight:700;color:hsl(215 35% 18%);line-height:1.1;">-</div>
+              <div style="font-size:0.72rem;color:hsl(215 15% 52%);margin-top:2px;font-weight:500;">Total</div>
+            </div>
           </div>
-          <div style="background:linear-gradient(135deg,hsl(145 60% 42%),hsl(165 55% 38%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(145,60%,42%,.35);position:relative;overflow:hidden;">
-            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
-            <div style="font-size:1.6rem;margin-bottom:4px;">${F.checkCircle}</div>
-            <div id="mhsAktif" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
-            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Aktif</div>
+
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid hsl(215 20% 91%);border-left:4px solid hsl(142 55% 42%);border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="width:36px;height:36px;border-radius:8px;background:hsl(142 55% 94%);display:flex;align-items:center;justify-content:center;color:hsl(142 55% 32%);flex-shrink:0;">${F.checkCircle}</div>
+            <div>
+              <div id="mhsAktif" style="font-size:1.25rem;font-weight:700;color:hsl(215 35% 18%);line-height:1.1;">-</div>
+              <div style="font-size:0.72rem;color:hsl(215 15% 52%);margin-top:2px;font-weight:500;">Aktif</div>
+            </div>
           </div>
-          <div style="background:linear-gradient(135deg,hsl(38 85% 52%),hsl(28 80% 48%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(38,85%,52%,.35);position:relative;overflow:hidden;">
-            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
-            <div style="font-size:1.6rem;margin-bottom:4px;">${F.clock}</div>
-            <div id="mhsCuti" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
-            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Cuti</div>
+
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid hsl(215 20% 91%);border-left:4px solid hsl(38 80% 48%);border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="width:36px;height:36px;border-radius:8px;background:hsl(38 80% 94%);display:flex;align-items:center;justify-content:center;color:hsl(38 70% 34%);flex-shrink:0;">${F.clock}</div>
+            <div>
+              <div id="mhsCuti" style="font-size:1.25rem;font-weight:700;color:hsl(215 35% 18%);line-height:1.1;">-</div>
+              <div style="font-size:0.72rem;color:hsl(215 15% 52%);margin-top:2px;font-weight:500;">Cuti</div>
+            </div>
           </div>
-          <div style="background:linear-gradient(135deg,hsl(270 60% 55%),hsl(290 55% 50%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(270,60%,55%,.35);position:relative;overflow:hidden;">
-            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
-            <div style="font-size:1.6rem;margin-bottom:4px;">${F.award}</div>
-            <div id="mhsLulus" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
-            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Lulus</div>
+
+          <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid hsl(215 20% 91%);border-left:4px solid hsl(270 55% 52%);border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="width:36px;height:36px;border-radius:8px;background:hsl(270 55% 94%);display:flex;align-items:center;justify-content:center;color:hsl(270 55% 40%);flex-shrink:0;">${F.award}</div>
+            <div>
+              <div id="mhsLulus" style="font-size:1.25rem;font-weight:700;color:hsl(215 35% 18%);line-height:1.1;">-</div>
+              <div style="font-size:0.72rem;color:hsl(215 15% 52%);margin-top:2px;font-weight:500;">Lulus</div>
+            </div>
           </div>
+
         </div>
 
-        <!-- Search & Filters Row -->
-        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:hsl(215 30% 97%);padding:12px 14px;border-radius:12px;border:1px solid hsl(215 20% 92%);">
+        <!-- Search & Filters — ISO 9241: controls grouped, consistent height 36px -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
           <div style="flex:1;min-width:200px;position:relative;">
-            <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(215 20% 55%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:34px;background:white;border-radius:8px;height:36px;font-size:0.82rem;">
+            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:hsl(215 15% 55%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:32px;height:36px;font-size:0.82rem;border-color:hsl(215 20% 88%);">
           </div>
-          <select id="mhsFilterProdi" class="form-select" style="min-width:150px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
+          <select id="mhsFilterProdi" class="form-select" style="height:36px;font-size:0.82rem;min-width:140px;border-color:hsl(215 20% 88%);">
             <option value="">Semua Prodi</option>
             <option value="Administrasi Negara">Adm. Negara</option>
             <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
-          <select id="mhsFilterStatus" class="form-select" style="min-width:120px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
+          <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;min-width:120px;border-color:hsl(215 20% 88%);">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="cuti">Cuti</option>
@@ -3316,17 +3325,17 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;
         </div>
 
         <!-- Student Table -->
-        <div id="mhsTableContainer" style="margin-top:4px;"></div>
-        <div id="mhsCount" style="margin-top:10px;font-size:0.75rem;color:var(--text-muted);padding-left:2px;"></div>
+        <div id="mhsTableContainer"></div>
+        <div id="mhsCount" style="margin-top:8px;font-size:0.75rem;color:hsl(215 15% 52%);"></div>
       </div>
     </div>
 
     <!-- Modal for Mahasiswa Profile/Edit -->
-    <div id="mhsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
-      <div style="background:white;border-radius:16px;width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);margin:auto;">
-        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;border-radius:16px 16px 0 0;">
-          <h3 id="mhsModalTitle" style="margin:0;font-size:1rem;font-weight:700;color:hsl(215 40% 18%);">Detail</h3>
-          <button onclick="document.getElementById('mhsModal').style.display='none'" style="width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&times;</button>
+    <div id="mhsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
+      <div style="background:white;border-radius:12px;width:580px;max-width:92vw;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);margin:auto;">
+        <div style="padding:16px 24px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;border-radius:12px 12px 0 0;">
+          <h3 id="mhsModalTitle" style="margin:0;font-size:0.95rem;font-weight:700;color:hsl(215 35% 18%);">Detail</h3>
+          <button onclick="document.getElementById('mhsModal').style.display='none'" style="width:30px;height:30px;border:none;border-radius:6px;background:hsl(215 15% 95%);color:hsl(215 15% 45%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">&times;</button>
         </div>
         <div id="mhsModalBody" style="padding:20px 24px;"></div>
       </div>
