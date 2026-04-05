@@ -6259,74 +6259,180 @@ function showMhsEditModal(m) {
   const v = (val) => val || '';
 
   modalBody.innerHTML = `
-    <form id="mhsEditForm" style="max-height:55vh;overflow-y:auto;padding-right:6px;">
-      <div class="off-section">
+    <form id="mhsEditForm" style="max-height:60vh;overflow-y:auto;padding-right:4px;">
+
+      <!-- ===== AKADEMIK ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
         <h5 class="off-section-title">🎓 Akademik</h5>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Program Studi</label>
+          <div class="form-group">
+            <label class="form-label">Program Studi</label>
             <select name="prodi_pilihan" class="form-select">
               ${prodiOptions.map(p => `<option value="${p}" ${m.prodi_pilihan === p ? 'selected' : ''}>${p}</option>`).join('')}
             </select>
           </div>
-          <div class="form-group"><label class="form-label">Status Mahasiswa</label>
-            <select name="status_mhs" class="form-select">
-              ${['aktif','cuti','lulus','do'].map(s => `<option value="${s}" ${m.status_mhs === s ? 'selected' : ''}>${s}</option>`).join('')}
+          <div class="form-group">
+            <label class="form-label">Status PMB</label>
+            <select name="status" class="form-select">
+              ${['menunggu','proses','diterima','ditolak'].map(s => `<option value="${s}" ${(m.status||'').toLowerCase() === s ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
             </select>
           </div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Semester</label><input type="number" name="semester" value="${m.semester || 1}" min="1" max="14" class="form-input"></div>
-          <div class="form-group"><label class="form-label">NIM</label><input type="text" name="nim" value="${v(m.nim)}" class="form-input" readonly style="opacity:.6;"></div>
+          <div class="form-group">
+            <label class="form-label">Jalur Masuk</label>
+            <select name="jalur" class="form-select">
+              ${['Reguler','Beasiswa','Transfer','Kemitraan'].map(j => `<option value="${j}" ${m.jalur === j ? 'selected' : ''}>${j}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asal Sekolah</label>
+            <input type="text" name="asal_sekolah" value="${v(m.asal_sekolah)}" class="form-input" placeholder="SMAN / SMK / MA ...">
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">NISN</label>
+            <input type="text" name="nisn" value="${v(m.nisn)}" class="form-input" maxlength="10" placeholder="10 digit">
+          </div>
+          <div class="form-group">
+            <label class="form-label">KIP / KKS</label>
+            <input type="text" name="kip" value="${v(m.kip)}" class="form-input" placeholder="No. KIP jika ada">
+          </div>
         </div>
       </div>
 
-      <div class="off-section">
+      <!-- ===== DATA PRIBADI ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
         <h5 class="off-section-title">👤 Data Pribadi</h5>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Nama *</label><input type="text" name="nama" value="${v(m.nama)}" required class="form-input"></div>
-          <div class="form-group"><label class="form-label">NIK</label><input type="text" name="nik" value="${v(m.nik)}" class="form-input" maxlength="16"></div>
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap *</label>
+            <input type="text" name="nama" value="${v(m.nama)}" required class="form-input" placeholder="Nama sesuai KTP">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NIK</label>
+            <input type="text" name="nik" value="${v(m.nik)}" class="form-input" maxlength="16" placeholder="16 digit NIK">
+          </div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" value="${v(m.email)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Telepon</label><input type="tel" name="telepon_1" value="${v(m.telepon_1)}" class="form-input" maxlength="12"></div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" value="${v(m.email)}" class="form-input" placeholder="email@domain.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telepon</label>
+            <input type="tel" name="telepon_1" value="${v(m.telepon_1 || m.telepon)}" class="form-input" maxlength="15" placeholder="08xx">
+          </div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${v(m.tempat_lahir)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${v(m.tanggal_lahir)}" class="form-input"></div>
+          <div class="form-group">
+            <label class="form-label">Tempat Lahir</label>
+            <input type="text" name="tempat_lahir" value="${v(m.tempat_lahir)}" class="form-input" placeholder="Kota lahir">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal Lahir</label>
+            <input type="date" name="tanggal_lahir" value="${v(m.tanggal_lahir ? m.tanggal_lahir.substring(0,10) : '')}" class="form-input">
+          </div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Gender</label>
+          <div class="form-group">
+            <label class="form-label">Jenis Kelamin</label>
             <select name="gender" class="form-select">
-              <option value="">-</option>
+              <option value="">— Pilih —</option>
               <option value="Laki-laki" ${m.gender === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
               <option value="Perempuan" ${m.gender === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label">Agama</label>
+          <div class="form-group">
+            <label class="form-label">Agama</label>
             <select name="agama" class="form-select">
-              <option value="">-</option>
+              <option value="">— Pilih —</option>
               ${['Islam','Kristen','Katolik','Hindu','Budha','Konghucu'].map(a => `<option value="${a}" ${m.agama === a ? 'selected' : ''}>${a}</option>`).join('')}
             </select>
           </div>
         </div>
       </div>
 
-      <div class="off-section">
+      <!-- ===== ALAMAT ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
         <h5 class="off-section-title">📍 Alamat</h5>
-        <div class="form-group" style="margin-bottom:12px;"><label class="form-label">Alamat</label><textarea name="alamat" class="form-input" rows="2">${v(m.alamat)}</textarea></div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">Alamat Lengkap</label>
+          <textarea name="alamat" class="form-input" rows="2" placeholder="Jl. ... No. ... RT/RW ...">${v(m.alamat)}</textarea>
+        </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Kota</label><input type="text" name="kota" value="${v(m.kota)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${v(m.provinsi)}" class="form-input"></div>
+          <div class="form-group">
+            <label class="form-label">Kota / Kabupaten</label>
+            <input type="text" name="kota" value="${v(m.kota)}" class="form-input" placeholder="Kota">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Provinsi</label>
+            <input type="text" name="provinsi" value="${v(m.provinsi)}" class="form-input" placeholder="Provinsi">
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Kecamatan</label>
+            <input type="text" name="kecamatan" value="${v(m.kecamatan)}" class="form-input" placeholder="Kecamatan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kode Pos</label>
+            <input type="text" name="kode_pos" value="${v(m.kode_pos)}" class="form-input" maxlength="5" placeholder="67xxx">
+          </div>
         </div>
       </div>
 
-      <div class="off-section">
-        <h5 class="off-section-title">🏫 Pendidikan</h5>
-        <div class="form-group"><label class="form-label">Asal Sekolah</label><input type="text" name="asal_sekolah" value="${v(m.asal_sekolah)}" class="form-input"></div>
+      <!-- ===== DATA KELUARGA ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
+        <h5 class="off-section-title">👨‍👩‍👧 Data Keluarga</h5>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Nama Ayah</label>
+            <input type="text" name="nama_ayah" value="${v(m.nama_ayah)}" class="form-input" placeholder="Nama Ayah">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pekerjaan Ayah</label>
+            <input type="text" name="pekerjaan_ayah" value="${v(m.pekerjaan_ayah)}" class="form-input" placeholder="Pekerjaan">
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">Nama Ibu</label>
+            <input type="text" name="nama_ibu" value="${v(m.nama_ibu)}" class="form-input" placeholder="Nama Ibu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pekerjaan Ibu</label>
+            <input type="text" name="pekerjaan_ibu" value="${v(m.pekerjaan_ibu)}" class="form-input" placeholder="Pekerjaan">
+          </div>
+        </div>
+        <div class="off-row">
+          <div class="form-group">
+            <label class="form-label">No. Kartu Keluarga</label>
+            <input type="text" name="no_kk" value="${v(m.no_kk)}" class="form-input" maxlength="16" placeholder="16 digit No. KK">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Anak Ke / Dari</label>
+            <div style="display:flex;gap:6px;">
+              <input type="number" name="anak_ke" value="${m.anak_ke || ''}" class="form-input" min="1" max="20" placeholder="ke-" style="flex:1;">
+              <span style="line-height:36px;color:#666;font-size:0.8rem;">dari</span>
+              <input type="number" name="dari_jumlah" value="${m.dari_jumlah || ''}" class="form-input" min="1" max="20" placeholder="jml" style="flex:1;">
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:16px;">
-        <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan</button>
+      <!-- ===== CATATAN ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
+        <h5 class="off-section-title">📝 Catatan</h5>
+        <div class="form-group">
+          <label class="form-label">Catatan BAP</label>
+          <textarea name="catatan" class="form-input" rows="2" placeholder="Catatan internal BAP...">${v(m.catatan)}</textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid hsl(215 15% 92%);">
+        <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan Perubahan</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('mhsModal').style.display='none'">Batal</button>
       </div>
     </form>`;
