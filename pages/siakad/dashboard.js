@@ -4837,7 +4837,7 @@ function bindPMBActions() {
 }
 
 
-function showRegistrantDetail(reg) {
+async function showRegistrantDetail(reg) {
   const modal = document.getElementById('pmbDetailModal');
   const content = document.getElementById('pmbDetailContent');
   if (!modal || !content) return;
@@ -4846,6 +4846,7 @@ function showRegistrantDetail(reg) {
   const v = (val) => val || '<span style="color:var(--danger-400);font-style:italic;">— kosong</span>';
   const check = (val) => val ? '✅' : '❌';
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+  const formatDateTime = (d) => d ? new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
   // Count completeness
   const requiredFields = ['nik','nama','email','telepon_1','prodi_pilihan','asal_sekolah','alamat','tempat_lahir','tanggal_lahir','gender'];
@@ -4875,6 +4876,17 @@ function showRegistrantDetail(reg) {
         </div>
         <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
           <div style="width:${pct}%;height:100%;background:${pctColor};border-radius:8px;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Info Akun Mahasiswa (loaded async) -->
+      <div id="pmbAccSection" style="margin-bottom:16px;">
+        <div style="background:hsl(215 30% 96%);border-radius:12px;padding:14px 16px;border:1px dashed hsl(215 40% 85%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(215 60% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.75rem;font-weight:700;color:hsl(215 60% 40%);text-transform:uppercase;letter-spacing:.05em;">Info Akun Mahasiswa</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">⏳ Memuat info akun...</p>
         </div>
       </div>
 
@@ -4970,6 +4982,74 @@ function showRegistrantDetail(reg) {
   });
 
   modal.style.display = 'flex';
+
+  // ---- Async fetch account info ----
+  const accSection = content.querySelector('#pmbAccSection');
+  try {
+    const accRes = await fetch(`${PMB_API}/account/${reg.id}`);
+    if (accRes.ok) {
+      const acc = await accRes.json();
+      const pwd = acc.plain_password;
+      const pwdId = 'pmbPwdToggle_' + reg.id;
+      const validatedText = acc.is_validated
+        ? `<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${acc.validated_by || 'BAP'} · ${formatDateTime(acc.validated_at)}</span>`
+        : `<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`;
+      const createdText = formatDateTime(acc.created_at);
+
+      accSection.innerHTML = `
+        <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,hsl(215 65% 50%),hsl(250 65% 58%));border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;color:hsl(215 60% 35%);text-transform:uppercase;letter-spacing:.06em;">Info Akun Mahasiswa</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">NIM</p>
+              <p style="font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:hsl(215 65% 40%);letter-spacing:.03em;">${acc.nim}</p>
+            </div>
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Email Login</p>
+              <p style="font-size:0.8rem;color:hsl(215 50% 40%);">${acc.email || '-'}</p>
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Password Terakhir</p>
+              ${pwd ? `
+              <div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid hsl(215 40% 88%);border-radius:8px;padding:8px 12px;">
+                <span id="${pwdId}" style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:hsl(215 65% 40%);letter-spacing:.08em;flex:1;">••••••••</span>
+                <button onclick="var el=document.getElementById('${pwdId}');var eyeBtn=this;if(el.textContent==='••••••••'){el.textContent='${pwd}';eyeBtn.title='Sembunyikan';}else{el.textContent='••••••••';eyeBtn.title='Tampilkan';}"
+                  title="Tampilkan" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button onclick="navigator.clipboard.writeText('${pwd}').then(()=>{this.title='Tersalin!';setTimeout(()=>this.title='Salin',2000);});"
+                  title="Salin" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">🕒 Dibuat: ${createdText}</p>` : `
+              <p style="font-size:0.78rem;color:hsl(38 65% 45%);font-style:italic;">⚠️ Password tidak tersedia (mungkin dibuat manual)</p>`}
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Status Validasi</p>
+              <p style="font-size:0.8rem;">${validatedText}</p>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      // No account yet
+      accSection.innerHTML = `
+        <div style="background:hsl(38 60% 96%);border-radius:12px;padding:12px 16px;border:1px dashed hsl(38 50% 80%);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="hsl(38 65% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.78rem;font-weight:600;color:hsl(38 60% 40%);">Info Akun Mahasiswa</span>
+          </div>
+          <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:6px 0 0;">⚠️ Akun belum dibuat — klik <strong>🔐 Buat Akun</strong> untuk membuatkan akun login.</p>
+        </div>`;
+    }
+  } catch(err) {
+    accSection.innerHTML = `<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`;
+  }
 }
 
 

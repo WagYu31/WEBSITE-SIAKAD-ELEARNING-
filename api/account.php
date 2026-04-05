@@ -111,7 +111,7 @@ function bapCreateAccount() {
 // GET /api/pmb/account/:registration_id
 function getAccountByRegistration($regId) {
     $db = getDB();
-    $stmt = $db->prepare('SELECT id, registration_id, nim, email, is_validated, validated_by, validated_at, created_at FROM pmb_accounts WHERE registration_id = ?');
+    $stmt = $db->prepare('SELECT id, registration_id, nim, email, plain_password, is_validated, validated_by, validated_at, created_at, updated_at FROM pmb_accounts WHERE registration_id = ?');
     $stmt->execute([$regId]);
     $account = $stmt->fetch();
 

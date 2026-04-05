@@ -2736,7 +2736,7 @@
           </td>
         </tr>`).join(``)}
       </tbody>
-    </table>`}function jt(){let e=document.getElementById(`pmbBulkBar`),t=document.getElementById(`pmbBulkCount`);e&&(U.size>0?(e.style.display=`flex`,t&&(t.textContent=`${U.size} pendaftar dipilih`)):e.style.display=`none`)}async function Mt(){if(!confirm(`Validasi ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/${n}/validate`,{method:`PUT`})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Nt(){if(!confirm(`Buat akun untuk ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:n})})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Pt(){if(!confirm(`⚠️ HAPUS ${U.size} pendaftar?\n\nAksi ini tidak bisa dibatalkan!`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/registration/${n}`,{method:`DELETE`})).ok?e++:t++}catch{t++}alert(`✅ Terhapus: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}function Ft(){window.__pmbClickHandler&&document.removeEventListener(`click`,window.__pmbClickHandler,!0),window.__pmbClickHandler=function(e){let t=e.target.closest(`.pmb-act`);if(t&&t.dataset.act&&t.dataset.rid){e.preventDefault(),e.stopPropagation(),Rt(t.dataset.act,{id:t.dataset.rid,email:t.dataset.email||``,prodi:t.dataset.prodi||``});return}let n=e.target.closest(`.pmb-tr`);if(n&&!e.target.closest(`.pmb-act`)&&!e.target.closest(`input[type="checkbox"]`)){let e=parseInt(n.dataset.id),t=z.find(t=>t.id===e);t&&It(t)}},document.addEventListener(`click`,window.__pmbClickHandler,!0),document.querySelectorAll(`.sortable-th`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.sort;H.key===t?H.dir=H.dir===`asc`?`desc`:`asc`:H={key:t,dir:`asc`},Ot()})}),document.getElementById(`pmbSelectAll`)?.addEventListener(`change`,e=>{document.querySelectorAll(`.pmb-chk`).forEach(t=>{let n=parseInt(t.dataset.id);e.target.checked?U.add(n):U.delete(n),t.checked=e.target.checked}),jt()}),document.querySelectorAll(`.pmb-chk`).forEach(e=>{e.addEventListener(`change`,()=>{let t=parseInt(e.dataset.id);e.checked?U.add(t):U.delete(t),jt()})})}function It(e){let t=document.getElementById(`pmbDetailModal`),n=document.getElementById(`pmbDetailContent`);if(!t||!n)return;let r={diterima:`badge-success`,ditolak:`badge-danger`,proses:`badge-primary`,menunggu:`badge-warning`},i=e=>e||`<span style="color:var(--danger-400);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],c=s.filter(t=>e[t]&&String(e[t]).trim()).length,l=Math.round(c/s.length*100),u=l===100?`hsl(145 60% 45%)`:l>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`;n.innerHTML=`
+    </table>`}function jt(){let e=document.getElementById(`pmbBulkBar`),t=document.getElementById(`pmbBulkCount`);e&&(U.size>0?(e.style.display=`flex`,t&&(t.textContent=`${U.size} pendaftar dipilih`)):e.style.display=`none`)}async function Mt(){if(!confirm(`Validasi ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/${n}/validate`,{method:`PUT`})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Nt(){if(!confirm(`Buat akun untuk ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:n})})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Pt(){if(!confirm(`⚠️ HAPUS ${U.size} pendaftar?\n\nAksi ini tidak bisa dibatalkan!`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/registration/${n}`,{method:`DELETE`})).ok?e++:t++}catch{t++}alert(`✅ Terhapus: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}function Ft(){window.__pmbClickHandler&&document.removeEventListener(`click`,window.__pmbClickHandler,!0),window.__pmbClickHandler=function(e){let t=e.target.closest(`.pmb-act`);if(t&&t.dataset.act&&t.dataset.rid){e.preventDefault(),e.stopPropagation(),Rt(t.dataset.act,{id:t.dataset.rid,email:t.dataset.email||``,prodi:t.dataset.prodi||``});return}let n=e.target.closest(`.pmb-tr`);if(n&&!e.target.closest(`.pmb-act`)&&!e.target.closest(`input[type="checkbox"]`)){let e=parseInt(n.dataset.id),t=z.find(t=>t.id===e);t&&It(t)}},document.addEventListener(`click`,window.__pmbClickHandler,!0),document.querySelectorAll(`.sortable-th`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.sort;H.key===t?H.dir=H.dir===`asc`?`desc`:`asc`:H={key:t,dir:`asc`},Ot()})}),document.getElementById(`pmbSelectAll`)?.addEventListener(`change`,e=>{document.querySelectorAll(`.pmb-chk`).forEach(t=>{let n=parseInt(t.dataset.id);e.target.checked?U.add(n):U.delete(n),t.checked=e.target.checked}),jt()}),document.querySelectorAll(`.pmb-chk`).forEach(e=>{e.addEventListener(`change`,()=>{let t=parseInt(e.dataset.id);e.checked?U.add(t):U.delete(t),jt()})})}async function It(e){let t=document.getElementById(`pmbDetailModal`),n=document.getElementById(`pmbDetailContent`);if(!t||!n)return;let r={diterima:`badge-success`,ditolak:`badge-danger`,proses:`badge-primary`,menunggu:`badge-warning`},i=e=>e||`<span style="color:var(--danger-400);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,c=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],l=c.filter(t=>e[t]&&String(e[t]).trim()).length,u=Math.round(l/c.length*100),d=u===100?`hsl(145 60% 45%)`:u>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`;n.innerHTML=`
     <div style="max-height:65vh;overflow-y:auto;padding-right:6px;">
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);">
@@ -2754,10 +2754,21 @@
       <div style="background:hsl(215 40% 97%);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-size:0.78rem;font-weight:600;">📋 Kelengkapan Data</span>
-          <span style="font-size:0.82rem;font-weight:700;color:${u};">${l}%</span>
+          <span style="font-size:0.82rem;font-weight:700;color:${d};">${u}%</span>
         </div>
         <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
-          <div style="width:${l}%;height:100%;background:${u};border-radius:8px;transition:width .3s;"></div>
+          <div style="width:${u}%;height:100%;background:${d};border-radius:8px;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Info Akun Mahasiswa (loaded async) -->
+      <div id="pmbAccSection" style="margin-bottom:16px;">
+        <div style="background:hsl(215 30% 96%);border-radius:12px;padding:14px 16px;border:1px dashed hsl(215 40% 85%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(215 60% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.75rem;font-weight:700;color:hsl(215 60% 40%);text-transform:uppercase;letter-spacing:.05em;">Info Akun Mahasiswa</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">⏳ Memuat info akun...</p>
         </div>
       </div>
 
@@ -2842,7 +2853,53 @@
       <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${e.id}" data-email="${e.email}" data-prodi="${e.prodi_pilihan}">🔐 Buat Akun</button>
       <button class="btn btn-secondary btn-sm mgmt-action-btn" data-action="edit" data-id="${e.id}">✏️ Edit</button>
       <button class="btn btn-danger btn-sm mgmt-action-btn" data-action="delete" data-id="${e.id}" style="margin-left:auto;">🗑️ Hapus</button>
-    </div>`,n.querySelectorAll(`.mgmt-action-btn`).forEach(e=>{e.addEventListener(`click`,t=>{t.stopPropagation(),Rt(e.dataset.action,e.dataset)})}),t.style.display=`flex`}function Lt(e){if(!e.length){alert(`Tidak ada data untuk diexport.`);return}let t=[[`No Pendaftaran`,`Nama`,`NIK`,`Email`,`Prodi`,`Metode`,`Status`,`Asal Sekolah`,`Telepon`],...e.map(e=>[e.no_pendaftaran,e.nama,e.nik,e.email||``,e.prodi_pilihan||``,e.metode||``,e.status,e.asal_sekolah||``,e.telepon_1||``])].map(e=>e.map(e=>`"${e}"`).join(`,`)).join(`
+    </div>`,n.querySelectorAll(`.mgmt-action-btn`).forEach(e=>{e.addEventListener(`click`,t=>{t.stopPropagation(),Rt(e.dataset.action,e.dataset)})}),t.style.display=`flex`;let f=n.querySelector(`#pmbAccSection`);try{let t=await fetch(`${R}/account/${e.id}`);if(t.ok){let n=await t.json(),r=n.plain_password,i=`pmbPwdToggle_`+e.id,a=n.is_validated?`<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${n.validated_by||`BAP`} · ${s(n.validated_at)}</span>`:`<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`,o=s(n.created_at);f.innerHTML=`
+        <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,hsl(215 65% 50%),hsl(250 65% 58%));border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;color:hsl(215 60% 35%);text-transform:uppercase;letter-spacing:.06em;">Info Akun Mahasiswa</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">NIM</p>
+              <p style="font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:hsl(215 65% 40%);letter-spacing:.03em;">${n.nim}</p>
+            </div>
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Email Login</p>
+              <p style="font-size:0.8rem;color:hsl(215 50% 40%);">${n.email||`-`}</p>
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Password Terakhir</p>
+              ${r?`
+              <div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid hsl(215 40% 88%);border-radius:8px;padding:8px 12px;">
+                <span id="${i}" style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:hsl(215 65% 40%);letter-spacing:.08em;flex:1;">••••••••</span>
+                <button onclick="var el=document.getElementById('${i}');var eyeBtn=this;if(el.textContent==='••••••••'){el.textContent='${r}';eyeBtn.title='Sembunyikan';}else{el.textContent='••••••••';eyeBtn.title='Tampilkan';}"
+                  title="Tampilkan" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button onclick="navigator.clipboard.writeText('${r}').then(()=>{this.title='Tersalin!';setTimeout(()=>this.title='Salin',2000);});"
+                  title="Salin" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">🕒 Dibuat: ${o}</p>`:`
+              <p style="font-size:0.78rem;color:hsl(38 65% 45%);font-style:italic;">⚠️ Password tidak tersedia (mungkin dibuat manual)</p>`}
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Status Validasi</p>
+              <p style="font-size:0.8rem;">${a}</p>
+            </div>
+          </div>
+        </div>`}else f.innerHTML=`
+        <div style="background:hsl(38 60% 96%);border-radius:12px;padding:12px 16px;border:1px dashed hsl(38 50% 80%);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="hsl(38 65% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.78rem;font-weight:600;color:hsl(38 60% 40%);">Info Akun Mahasiswa</span>
+          </div>
+          <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:6px 0 0;">⚠️ Akun belum dibuat — klik <strong>🔐 Buat Akun</strong> untuk membuatkan akun login.</p>
+        </div>`}catch{f.innerHTML=`<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`}}function Lt(e){if(!e.length){alert(`Tidak ada data untuk diexport.`);return}let t=[[`No Pendaftaran`,`Nama`,`NIK`,`Email`,`Prodi`,`Metode`,`Status`,`Asal Sekolah`,`Telepon`],...e.map(e=>[e.no_pendaftaran,e.nama,e.nik,e.email||``,e.prodi_pilihan||``,e.metode||``,e.status,e.asal_sekolah||``,e.telepon_1||``])].map(e=>e.map(e=>`"${e}"`).join(`,`)).join(`
 `),n=new Blob([t],{type:`text/csv`}),r=URL.createObjectURL(n),i=document.createElement(`a`);i.href=r,i.download=`PMB_Data_${new Date().toISOString().slice(0,10)}.csv`,i.click(),URL.revokeObjectURL(r)}async function Rt(e,t){try{let n,r;switch(e){case`view`:{let e=z.find(e=>String(e.id)===String(t.id));e?It(e):(console.error(`PMB reg not found, id:`,t.id,`available:`,z.map(e=>e.id)),alert(`Data tidak ditemukan. Coba refresh halaman.`));return}case`create-account`:if(n=await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:parseInt(t.id)})}),r=await n.json(),n.ok){let e=r.password;alert(e?`✅ Akun dibuat!\n\nNIM: ${r.nim}\nPassword: ${e}\nEmail: ${r.email}`:`ℹ️ Akun sudah dibuat sebelumnya.\n\nNIM: ${r.nim}\nEmail: ${r.email}\n\nPassword hanya ditampilkan saat pertama kali dibuat.`)}else alert(`❌ `+(r.error||`Gagal membuat akun`));break;case`validate`:if(!(await fetch(`${R}/account/${t.id}`)).ok){alert(`❌ Akun belum dibuat. Buat akun terlebih dahulu.`);return}let e=await fetch(`${R}/account/${t.id}/validate`,{method:`PUT`});r=await e.json(),e.ok?(alert(`✅ `+r.message),B()):alert(`❌ `+(r.error||`Gagal validasi`));break;case`confirm-pay`:{let e=z.find(e=>String(e.id)===String(t.id)),n=e?e.nama:`Pendaftar`,r=prompt(`💰 Pembayaran untuk: ${n}\n\nPilih metode:\n1 = Cash (langsung konfirmasi)\n2 = Online (Midtrans)\n\nKetik 1 atau 2:`);if(!r||![`1`,`2`].includes(r.trim())){alert(`Dibatalkan`);return}let i=r.trim()===`1`?`cash`:`online`,a=await fetch(`${R}/payment`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:parseInt(t.id),metode_bayar:i})}),o=await a.json();if(!a.ok){alert(`❌ `+(o.error||`Gagal membuat pembayaran`));return}if(i===`cash`){let e=await fetch(`${R}/payment/${o.id}/confirm`,{method:`PUT`});if(e.ok){let t=await e.json();alert(`✅ Pembayaran cash dikonfirmasi!
 Rp `+Number(t.jumlah||0).toLocaleString(`id-ID`)),B()}else alert(`❌ Gagal konfirmasi pembayaran`)}else{let e=o.snap_token;if(!e){alert(`⚠️ Snap token gagal dibuat.
 
