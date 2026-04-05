@@ -4641,7 +4641,7 @@ function applyPMBFilters() {
 
   let filtered = _pmbRegistrations.filter(r => {
     const matchQ = !q || (r.nama||'').toLowerCase().includes(q) || (r.nik||'').includes(q) || (r.no_pendaftaran||'').toLowerCase().includes(q);
-    const matchS = !status || r.status === status;
+    const matchS = !status || (r.status || '').toLowerCase() === status.toLowerCase();
     const matchP = !prodi || r.prodi_pilihan === prodi;
     let matchD = true;
     if (dateFrom || dateTo) {
