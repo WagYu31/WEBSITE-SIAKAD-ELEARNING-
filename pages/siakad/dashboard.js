@@ -6565,6 +6565,48 @@ async function showMhsEditModal(m) {
         </div>
       </div>
 
+      <!-- ===== BERKAS PERSYARATAN ===== -->
+      <div class="off-section" style="margin-bottom:16px;">
+        <h5 class="off-section-title">📎 Berkas Persyaratan</h5>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">File sudah terupload ditampilkan di bawah. Klik <strong>Ganti</strong> untuk upload ulang.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          ${(()=>{
+            const BASE = 'https://stiabayuanggajobs.online/api/';
+            const berkas = [
+              { key:'file_ijazah',      name:'file_ijazah',   label:'Ijazah SMA/SMK/MA', icon:'📜', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_ktp',         name:'file_ktp',      label:'KTP / KK',           icon:'🪪', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_pasfoto',     name:'file_pasfoto',  label:'Pas Foto 3×4',       icon:'📷', accept:'.jpg,.jpeg,.png' },
+            ];
+            return berkas.map(b => {
+              const path = m[b.key];
+              const isImg = path && /\.(jpg|jpeg|png|webp)$/i.test(path);
+              const isPdf = path && /\.pdf$/i.test(path);
+              const previewHtml = path
+                ? (isImg
+                    ? `<a href="${BASE+path}" target="_blank"><img src="${BASE+path}" alt="${b.label}" style="width:100%;max-height:70px;object-fit:cover;border-radius:6px;cursor:pointer;margin-bottom:4px;"></a>`
+                    : isPdf
+                    ? `<a href="${BASE+path}" target="_blank" style="display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:600;color:hsl(215 60% 45%);text-decoration:none;margin-bottom:4px;">📋 Buka PDF</a>`
+                    : `<span style="font-size:0.72rem;color:hsl(215 55% 48%);">📎 Lihat Berkas</span>`)
+                : `<span style="font-size:0.72rem;color:hsl(38 65% 50%);font-style:italic;">⚠️ Belum diupload</span>`;
+              const statusBadge = path
+                ? `<span style="background:hsl(145 55% 90%);color:hsl(145 50% 30%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">✅ Ada</span>`
+                : `<span style="background:hsl(38 90% 90%);color:hsl(38 60% 35%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">⚠️ Kosong</span>`;
+              return `<div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 90%);border-radius:10px;padding:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">${b.icon} ${b.label}</span>
+                  ${statusBadge}
+                </div>
+                ${previewHtml}
+                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;color:hsl(215 60% 45%);cursor:pointer;margin-top:4px;font-weight:600;">
+                  🔄 Ganti
+                  <input type="file" name="${b.name}" accept="${b.accept}" style="display:none;" onchange="this.insertAdjacentHTML('afterend','<span style=\\'font-size:0.65rem;color:hsl(145 55% 38%);display:block;margin-top:2px;\\'>'+(this.files[0]?.name||'')+'</span>')">
+                </label>
+              </div>`;
+            }).join('');
+          })()}
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid hsl(215 15% 92%);">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="mhsEditSaveBtn">💾 Simpan Perubahan</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('mhsModal').style.display='none'">Batal</button>
