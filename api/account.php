@@ -215,11 +215,16 @@ function updateAccount($regId) {
     // Updatable fields: nim, email, is_validated
     if (isset($input['nim']) && $input['nim'] !== '') {
         $sets[] = 'nim = ?'; $vals[] = $input['nim'];
-        // Also update profiles table
+        // Sync to profiles table
         $db->prepare('UPDATE profiles SET nim = ? WHERE nim = ?')->execute([$input['nim'], $account['nim']]);
     }
     if (isset($input['email']) && $input['email'] !== '') {
         $sets[] = 'email = ?'; $vals[] = $input['email'];
+        // ✅ Sync email to pmb_registrations (data pribadi) and profiles
+        $db->prepare('UPDATE pmb_registrations SET email = ?, updated_at = NOW() WHERE id = ?')
+           ->execute([$input['email'], $account['registration_id']]);
+        $nim = $input['nim'] ?? $account['nim'];
+        $db->prepare('UPDATE profiles SET email = ? WHERE nim = ?')->execute([$input['email'], $nim]);
     }
     if (isset($input['is_validated'])) {
         $sets[] = 'is_validated = ?';
@@ -247,7 +252,7 @@ function updateAccount($regId) {
     $vals[] = $account['id'];
     try {
         $db->prepare('UPDATE pmb_accounts SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($vals);
-        $resp = ['message' => '✅ Info akun berhasil diperbarui'];
+        $resp = ['message' => '✅ Info akun berhasil diperbarui (email tersinkronisasi ke data pribadi)'];
         if ($newPwd) $resp['new_password'] = $newPwd;
         jsonResponse($resp);
     } catch (Exception $e) {
