@@ -3343,59 +3343,157 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;
           </td>
         </tr>`).join(``)}
       </tbody>
-    </table>`,n&&(n.textContent=`Menampilkan ${e.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-view-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Yt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Wt();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}}function Jt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Profil Mahasiswa`);let i=(e,t)=>`
-    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-50);">
-      <span style="font-size:0.78rem;color:var(--text-muted);">${e}</span>
-      <span style="font-size:0.85rem;font-weight:600;text-align:right;">${t||`-`}</span>
-    </div>`;n.innerHTML=`
-    <!-- Header -->
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.2rem;">${(e.nama||`?`)[0]}</div>
-      <div>
-        <h3 style="margin:0;font-size:1.1rem;">${e.nama}</h3>
-        <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);">NIM: ${e.nim}</div>
-        <span class="badge-sm ${e.status_mhs===`aktif`?`success`:e.status_mhs===`cuti`?`warning`:`blue`}" style="margin-top:4px;">${e.status_mhs}</span>
+    </table>`,n&&(n.textContent=`Menampilkan ${e.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-view-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Yt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Wt();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}}async function Jt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Detail Mahasiswa`);let i=e=>e||`<span style="color:hsl(0 60% 55%);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,c=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],l=c.filter(t=>e[t]&&String(e[t]).trim()).length,u=Math.round(l/c.length*100),d=u===100?`hsl(145 60% 45%)`:u>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`,f={aktif:`background:hsl(142 60% 90%);color:hsl(142 60% 28%);border:1px solid hsl(142 50% 78%);`,cuti:`background:hsl(38 75% 91%);color:hsl(38 65% 36%);border:1px solid hsl(38 55% 78%);`,lulus:`background:hsl(215 70% 92%);color:hsl(215 65% 38%);border:1px solid hsl(215 55% 80%);`,do:`background:hsl(0 65% 92%);color:hsl(0 60% 40%);border:1px solid hsl(0 50% 80%);`},p=f[e.status_mhs]||f.aktif;n.innerHTML=`
+    <div style="max-height:60vh;overflow-y:auto;padding-right:6px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid hsl(215 15% 93%);">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.2rem;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+          ${(e.nama||`?`)[0].toUpperCase()}
+        </div>
+        <div style="flex:1;">
+          <h4 style="font-family:var(--font-heading);font-size:1rem;margin-bottom:2px;">${e.nama}</h4>
+          <code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);background:hsl(215 20% 96%);padding:2px 8px;border-radius:6px;">${e.nim}</code>
+        </div>
+        <span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;${p}">${e.status_mhs||`Aktif`}</span>
+      </div>
+
+      <!-- Kelengkapan Data -->
+      <div style="background:hsl(215 40% 97%);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:0.78rem;font-weight:600;">📋 Kelengkapan Data</span>
+          <span style="font-size:0.82rem;font-weight:700;color:${d};">${u}%</span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
+          <div style="width:${u}%;height:100%;background:${d};border-radius:8px;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Info Akun (async loaded) -->
+      <div id="mhsAccSection" style="margin-bottom:16px;">
+        <div style="background:hsl(215 30% 96%);border-radius:12px;padding:14px 16px;border:1px dashed hsl(215 40% 85%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(215 60% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.75rem;font-weight:700;color:hsl(215 60% 40%);text-transform:uppercase;letter-spacing:.05em;">Info Akun</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">⏳ Memuat info akun...</p>
+        </div>
+      </div>
+
+      <!-- Akademik -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">🎓 Akademik</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Program Studi</p><p class="dv">${i(e.prodi_pilihan)}</p></div>
+          <div><p class="dl">Angkatan</p><p class="dv">${e.angkatan||`-`}</p></div>
+          <div><p class="dl">Semester</p><p class="dv">${e.semester||1}</p></div>
+          <div><p class="dl">IPK</p><p class="dv">${e.ipk?Number(e.ipk).toFixed(2):`—`}</p></div>
+          <div><p class="dl">Asal Sekolah</p><p class="dv">${i(e.asal_sekolah)}</p></div>
+          <div><p class="dl">Tanggal Daftar</p><p class="dv">${o(e.created_at)}</p></div>
+        </div>
+      </div>
+
+      <!-- Data Pribadi -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👤 Data Pribadi</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">NIK</p><p class="dv" style="font-family:var(--font-mono);">${i(e.nik)}</p></div>
+          <div><p class="dl">NISN</p><p class="dv">${i(e.nisn)}</p></div>
+          <div><p class="dl">Tempat Lahir</p><p class="dv">${i(e.tempat_lahir)}</p></div>
+          <div><p class="dl">Tanggal Lahir</p><p class="dv">${i(e.tanggal_lahir)}</p></div>
+          <div><p class="dl">Gender</p><p class="dv">${i(e.gender||(e.jenis_kelamin===`L`?`Laki-laki`:e.jenis_kelamin===`P`?`Perempuan`:null))}</p></div>
+          <div><p class="dl">Agama</p><p class="dv">${i(e.agama)}</p></div>
+          <div><p class="dl">Email</p><p class="dv">${i(e.email)}</p></div>
+          <div><p class="dl">Telepon</p><p class="dv">${i(e.telepon_1||e.telepon)}</p></div>
+        </div>
+      </div>
+
+      <!-- Alamat -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📍 Alamat</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="grid-column:span 2;"><p class="dl">Alamat Lengkap</p><p class="dv">${i(e.alamat)}</p></div>
+          <div><p class="dl">Kota</p><p class="dv">${i(e.kota)}</p></div>
+          <div><p class="dl">Provinsi</p><p class="dv">${i(e.provinsi)}</p></div>
+          <div><p class="dl">Kecamatan</p><p class="dv">${i(e.kecamatan)}</p></div>
+          <div><p class="dl">Kode Pos</p><p class="dv">${i(e.kode_pos)}</p></div>
+        </div>
+      </div>
+
+      <!-- Orang Tua -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👨‍👩‍👧 Data Keluarga</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Nama Ayah</p><p class="dv">${i(e.nama_ayah)}</p></div>
+          <div><p class="dl">Pekerjaan Ayah</p><p class="dv">${i(e.pekerjaan_ayah)}</p></div>
+          <div><p class="dl">Nama Ibu</p><p class="dv">${i(e.nama_ibu)}</p></div>
+          <div><p class="dl">Pekerjaan Ibu</p><p class="dv">${i(e.pekerjaan_ibu)}</p></div>
+          <div><p class="dl">No. KK</p><p class="dv" style="font-family:var(--font-mono);">${i(e.no_kk)}</p></div>
+          <div><p class="dl">Anak Ke</p><p class="dv">${e.anak_ke?`${e.anak_ke} dari ${e.dari_jumlah||`?`}`:`-`}</p></div>
+        </div>
+      </div>
+
+      <!-- Checklist Kelengkapan -->
+      <div style="margin-bottom:8px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📎 Checklist Kelengkapan</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.8rem;">
+          <div>${a(e.nik)} NIK</div><div>${a(e.nama)} Nama</div>
+          <div>${a(e.email)} Email</div><div>${a(e.telepon_1||e.telepon)} Telepon</div>
+          <div>${a(e.tempat_lahir)} Tempat Lahir</div><div>${a(e.tanggal_lahir)} Tanggal Lahir</div>
+          <div>${a(e.gender||e.jenis_kelamin)} Gender</div><div>${a(e.alamat)} Alamat</div>
+          <div>${a(e.prodi_pilihan)} Prodi</div><div>${a(e.asal_sekolah)} Asal Sekolah</div>
+        </div>
       </div>
     </div>
 
-    <!-- Akun Login -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🔐 Akun Login</h4>
-    <div style="background:hsl(215 25% 96%);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
-      ${i(`Username / NIM`,e.nim)}
-      ${i(`Email`,e.email||`-`)}
-      ${i(`Password`,`<code style="background:hsl(215 20% 90%);padding:2px 8px;border-radius:4px;font-size:0.8rem;">mahasiswa123</code>`)}
-      ${i(`Role`,`<span class="badge-sm blue">Mahasiswa</span>`)}
-    </div>
-
-    <!-- Akademik -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🎓 Akademik</h4>
-    ${i(`Program Studi`,e.prodi_pilihan)}
-    ${i(`Angkatan`,e.angkatan)}
-    ${i(`Semester`,e.semester)}
-    ${i(`IPK`,e.ipk?e.ipk.toFixed(2):`Belum ada`)}
-
-    <!-- Data Pribadi -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👤 Data Pribadi</h4>
-    ${i(`NIK`,e.nik)}
-    ${i(`Email`,e.email)}
-    ${i(`Telepon`,e.telepon||e.telepon_1||`-`)}
-    ${i(`Jenis Kelamin`,e.jenis_kelamin===`L`?`Laki-laki`:e.jenis_kelamin===`P`?`Perempuan`:e.gender||`-`)}
-    ${i(`Tempat Lahir`,e.tempat_lahir)}
-    ${i(`Tanggal Lahir`,e.tanggal_lahir)}
-    ${i(`Agama`,e.agama)}
-
-    <!-- Alamat -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">📍 Alamat</h4>
-    ${i(`Alamat`,e.alamat)}
-    ${i(`Kota`,[e.kecamatan,e.kota,e.provinsi].filter(Boolean).join(`, `)||`-`)}
-
-    <!-- Orang Tua -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👨‍👩‍👧 Orang Tua / Wali</h4>
-    ${i(`Nama Ayah`,e.nama_ayah)}
-    ${i(`Nama Ibu`,e.nama_ibu)}
-    ${i(`Pekerjaan Ayah`,e.pekerjaan_ayah||`-`)}
-    ${i(`Asal Sekolah`,e.asal_sekolah||`-`)}
-  `,t.style.display=`flex`}function Yt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Edit Data Mahasiswa`);let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;n.innerHTML=`
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid hsl(215 15% 93%);flex-wrap:wrap;">
+      <button onclick="document.getElementById('mhsModal').style.display='none'; setTimeout(()=>{ const mhsViewBtn = document.querySelector('.mhs-edit-btn[data-id=\\'${e.id}\\']'); if(mhsViewBtn) mhsViewBtn.click(); }, 100);"
+        class="btn btn-secondary btn-sm">✏️ Edit</button>
+      <button onclick="if(confirm('⚠️ Hapus data mahasiswa ${e.nama}?\\n\\nTindakan ini tidak dapat dibatalkan.')) { document.getElementById('mhsModal').style.display='none'; document.querySelector('.mhs-del-btn[data-id=\\'${e.id}\\']')?.click(); }"
+        class="btn btn-danger btn-sm" style="margin-left:auto;">🗑️ Hapus</button>
+    </div>`,t.style.display=`flex`;let m=n.querySelector(`#mhsAccSection`);try{let t=await fetch(`${Vt}/account/${e.id}`);if(t.ok){let n=await t.json(),r=n.plain_password,i=`mhsPwdToggle_`+e.id,a=n.is_validated?`<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${n.validated_by||`BAP`} · ${s(n.validated_at)}</span>`:`<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`;m.innerHTML=`
+        <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,hsl(215 65% 50%),hsl(250 65% 58%));border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;color:hsl(215 60% 35%);text-transform:uppercase;letter-spacing:.06em;">Info Akun Mahasiswa</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">NIM</p>
+              <p style="font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:hsl(215 65% 40%);letter-spacing:.03em;">${n.nim}</p>
+            </div>
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Email Login</p>
+              <p style="font-size:0.8rem;color:hsl(215 50% 40%);">${n.email||`-`}</p>
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Password</p>
+              ${r?`
+              <div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid hsl(215 40% 88%);border-radius:8px;padding:8px 12px;">
+                <span id="${i}" style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:hsl(215 65% 40%);letter-spacing:.08em;flex:1;">••••••••</span>
+                <button onclick="var el=document.getElementById('${i}');if(el.textContent==='••••••••'){el.textContent='${r}';this.title='Sembunyikan';}else{el.textContent='••••••••';this.title='Tampilkan';}"
+                  title="Tampilkan" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button onclick="navigator.clipboard.writeText('${r}').then(()=>{this.title='Tersalin!';setTimeout(()=>this.title='Salin',2000);});"
+                  title="Salin" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">🕒 Dibuat: ${s(n.created_at)}</p>`:`
+              <p style="font-size:0.78rem;color:hsl(38 65% 45%);font-style:italic;">⚠️ Password tidak tersedia</p>`}
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Status Validasi</p>
+              <p style="font-size:0.8rem;">${a}</p>
+            </div>
+          </div>
+        </div>`}else m.innerHTML=`
+        <div style="background:hsl(38 60% 96%);border-radius:12px;padding:12px 16px;border:1px dashed hsl(38 50% 80%);">
+          <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:0;">⚠️ Akun belum tersedia di sistem PMB.</p>
+        </div>`}catch{m.innerHTML=`<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`}}function Yt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Edit Data Mahasiswa`);let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;n.innerHTML=`
     <form id="mhsEditForm" style="max-height:55vh;overflow-y:auto;padding-right:6px;">
       <div class="off-section">
         <h5 class="off-section-title">🎓 Akademik</h5>

@@ -5903,72 +5903,203 @@ function renderMhsTable(list) {
   });
 }
 
-function showMhsProfile(m) {
+async function showMhsProfile(m) {
   const modal = document.getElementById('mhsModal');
   const modalBody = document.getElementById('mhsModalBody');
   const modalTitle = document.getElementById('mhsModalTitle');
   if (!modal || !modalBody) return;
 
-  if (modalTitle) modalTitle.textContent = 'Profil Mahasiswa';
+  if (modalTitle) modalTitle.textContent = 'Detail Mahasiswa';
 
-  const row = (label, value) => `
-    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-50);">
-      <span style="font-size:0.78rem;color:var(--text-muted);">${label}</span>
-      <span style="font-size:0.85rem;font-weight:600;text-align:right;">${value || '-'}</span>
-    </div>`;
+  const v = (val) => val || '<span style="color:hsl(0 60% 55%);font-style:italic;">— kosong</span>';
+  const check = (val) => val ? '✅' : '❌';
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+  const formatDateTime = (d) => d ? new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+  // Count completeness
+  const requiredFields = ['nik','nama','email','telepon_1','prodi_pilihan','asal_sekolah','alamat','tempat_lahir','tanggal_lahir','gender'];
+  const filled = requiredFields.filter(f => m[f] && String(m[f]).trim()).length;
+  const pct = Math.round((filled / requiredFields.length) * 100);
+  const pctColor = pct === 100 ? 'hsl(145 60% 45%)' : pct >= 70 ? 'hsl(38 90% 50%)' : 'hsl(0 70% 55%)';
+
+  const statusColors = { aktif: 'background:hsl(142 60% 90%);color:hsl(142 60% 28%);border:1px solid hsl(142 50% 78%);', cuti: 'background:hsl(38 75% 91%);color:hsl(38 65% 36%);border:1px solid hsl(38 55% 78%);', lulus: 'background:hsl(215 70% 92%);color:hsl(215 65% 38%);border:1px solid hsl(215 55% 80%);', do: 'background:hsl(0 65% 92%);color:hsl(0 60% 40%);border:1px solid hsl(0 50% 80%);' };
+  const sColor = statusColors[m.status_mhs] || statusColors.aktif;
 
   modalBody.innerHTML = `
-    <!-- Header -->
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.2rem;">${(m.nama || '?')[0]}</div>
-      <div>
-        <h3 style="margin:0;font-size:1.1rem;">${m.nama}</h3>
-        <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);">NIM: ${m.nim}</div>
-        <span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : 'blue'}" style="margin-top:4px;">${m.status_mhs}</span>
+    <div style="max-height:60vh;overflow-y:auto;padding-right:6px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid hsl(215 15% 93%);">
+        <div style="width:52px;height:52px;border-radius:14px;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.2rem;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+          ${(m.nama || '?')[0].toUpperCase()}
+        </div>
+        <div style="flex:1;">
+          <h4 style="font-family:var(--font-heading);font-size:1rem;margin-bottom:2px;">${m.nama}</h4>
+          <code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);background:hsl(215 20% 96%);padding:2px 8px;border-radius:6px;">${m.nim}</code>
+        </div>
+        <span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;${sColor}">${m.status_mhs || 'Aktif'}</span>
+      </div>
+
+      <!-- Kelengkapan Data -->
+      <div style="background:hsl(215 40% 97%);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:0.78rem;font-weight:600;">📋 Kelengkapan Data</span>
+          <span style="font-size:0.82rem;font-weight:700;color:${pctColor};">${pct}%</span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${pctColor};border-radius:8px;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Info Akun (async loaded) -->
+      <div id="mhsAccSection" style="margin-bottom:16px;">
+        <div style="background:hsl(215 30% 96%);border-radius:12px;padding:14px 16px;border:1px dashed hsl(215 40% 85%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(215 60% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-size:0.75rem;font-weight:700;color:hsl(215 60% 40%);text-transform:uppercase;letter-spacing:.05em;">Info Akun</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">⏳ Memuat info akun...</p>
+        </div>
+      </div>
+
+      <!-- Akademik -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">🎓 Akademik</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Program Studi</p><p class="dv">${v(m.prodi_pilihan)}</p></div>
+          <div><p class="dl">Angkatan</p><p class="dv">${m.angkatan || '-'}</p></div>
+          <div><p class="dl">Semester</p><p class="dv">${m.semester || 1}</p></div>
+          <div><p class="dl">IPK</p><p class="dv">${m.ipk ? Number(m.ipk).toFixed(2) : '—'}</p></div>
+          <div><p class="dl">Asal Sekolah</p><p class="dv">${v(m.asal_sekolah)}</p></div>
+          <div><p class="dl">Tanggal Daftar</p><p class="dv">${formatDate(m.created_at)}</p></div>
+        </div>
+      </div>
+
+      <!-- Data Pribadi -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👤 Data Pribadi</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">NIK</p><p class="dv" style="font-family:var(--font-mono);">${v(m.nik)}</p></div>
+          <div><p class="dl">NISN</p><p class="dv">${v(m.nisn)}</p></div>
+          <div><p class="dl">Tempat Lahir</p><p class="dv">${v(m.tempat_lahir)}</p></div>
+          <div><p class="dl">Tanggal Lahir</p><p class="dv">${v(m.tanggal_lahir)}</p></div>
+          <div><p class="dl">Gender</p><p class="dv">${v(m.gender || (m.jenis_kelamin==='L'?'Laki-laki':m.jenis_kelamin==='P'?'Perempuan':null))}</p></div>
+          <div><p class="dl">Agama</p><p class="dv">${v(m.agama)}</p></div>
+          <div><p class="dl">Email</p><p class="dv">${v(m.email)}</p></div>
+          <div><p class="dl">Telepon</p><p class="dv">${v(m.telepon_1 || m.telepon)}</p></div>
+        </div>
+      </div>
+
+      <!-- Alamat -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📍 Alamat</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="grid-column:span 2;"><p class="dl">Alamat Lengkap</p><p class="dv">${v(m.alamat)}</p></div>
+          <div><p class="dl">Kota</p><p class="dv">${v(m.kota)}</p></div>
+          <div><p class="dl">Provinsi</p><p class="dv">${v(m.provinsi)}</p></div>
+          <div><p class="dl">Kecamatan</p><p class="dv">${v(m.kecamatan)}</p></div>
+          <div><p class="dl">Kode Pos</p><p class="dv">${v(m.kode_pos)}</p></div>
+        </div>
+      </div>
+
+      <!-- Orang Tua -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👨‍👩‍👧 Data Keluarga</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><p class="dl">Nama Ayah</p><p class="dv">${v(m.nama_ayah)}</p></div>
+          <div><p class="dl">Pekerjaan Ayah</p><p class="dv">${v(m.pekerjaan_ayah)}</p></div>
+          <div><p class="dl">Nama Ibu</p><p class="dv">${v(m.nama_ibu)}</p></div>
+          <div><p class="dl">Pekerjaan Ibu</p><p class="dv">${v(m.pekerjaan_ibu)}</p></div>
+          <div><p class="dl">No. KK</p><p class="dv" style="font-family:var(--font-mono);">${v(m.no_kk)}</p></div>
+          <div><p class="dl">Anak Ke</p><p class="dv">${m.anak_ke ? `${m.anak_ke} dari ${m.dari_jumlah || '?'}` : '-'}</p></div>
+        </div>
+      </div>
+
+      <!-- Checklist Kelengkapan -->
+      <div style="margin-bottom:8px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📎 Checklist Kelengkapan</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.8rem;">
+          <div>${check(m.nik)} NIK</div><div>${check(m.nama)} Nama</div>
+          <div>${check(m.email)} Email</div><div>${check(m.telepon_1||m.telepon)} Telepon</div>
+          <div>${check(m.tempat_lahir)} Tempat Lahir</div><div>${check(m.tanggal_lahir)} Tanggal Lahir</div>
+          <div>${check(m.gender||m.jenis_kelamin)} Gender</div><div>${check(m.alamat)} Alamat</div>
+          <div>${check(m.prodi_pilihan)} Prodi</div><div>${check(m.asal_sekolah)} Asal Sekolah</div>
+        </div>
       </div>
     </div>
 
-    <!-- Akun Login -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🔐 Akun Login</h4>
-    <div style="background:hsl(215 25% 96%);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
-      ${row('Username / NIM', m.nim)}
-      ${row('Email', m.email || '-')}
-      ${row('Password', '<code style="background:hsl(215 20% 90%);padding:2px 8px;border-radius:4px;font-size:0.8rem;">mahasiswa123</code>')}
-      ${row('Role', '<span class="badge-sm blue">Mahasiswa</span>')}
-    </div>
-
-    <!-- Akademik -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">🎓 Akademik</h4>
-    ${row('Program Studi', m.prodi_pilihan)}
-    ${row('Angkatan', m.angkatan)}
-    ${row('Semester', m.semester)}
-    ${row('IPK', m.ipk ? m.ipk.toFixed(2) : 'Belum ada')}
-
-    <!-- Data Pribadi -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👤 Data Pribadi</h4>
-    ${row('NIK', m.nik)}
-    ${row('Email', m.email)}
-    ${row('Telepon', m.telepon || m.telepon_1 || '-')}
-    ${row('Jenis Kelamin', m.jenis_kelamin === 'L' ? 'Laki-laki' : m.jenis_kelamin === 'P' ? 'Perempuan' : (m.gender || '-'))}
-    ${row('Tempat Lahir', m.tempat_lahir)}
-    ${row('Tanggal Lahir', m.tanggal_lahir)}
-    ${row('Agama', m.agama)}
-
-    <!-- Alamat -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">📍 Alamat</h4>
-    ${row('Alamat', m.alamat)}
-    ${row('Kota', [m.kecamatan, m.kota, m.provinsi].filter(Boolean).join(', ') || '-')}
-
-    <!-- Orang Tua -->
-    <h4 style="font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">👨‍👩‍👧 Orang Tua / Wali</h4>
-    ${row('Nama Ayah', m.nama_ayah)}
-    ${row('Nama Ibu', m.nama_ibu)}
-    ${row('Pekerjaan Ayah', m.pekerjaan_ayah || '-')}
-    ${row('Asal Sekolah', m.asal_sekolah || '-')}
-  `;
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid hsl(215 15% 93%);flex-wrap:wrap;">
+      <button onclick="document.getElementById('mhsModal').style.display='none'; setTimeout(()=>{ const mhsViewBtn = document.querySelector('.mhs-edit-btn[data-id=\\'${m.id}\\']'); if(mhsViewBtn) mhsViewBtn.click(); }, 100);"
+        class="btn btn-secondary btn-sm">✏️ Edit</button>
+      <button onclick="if(confirm('⚠️ Hapus data mahasiswa ${m.nama}?\\n\\nTindakan ini tidak dapat dibatalkan.')) { document.getElementById('mhsModal').style.display='none'; document.querySelector('.mhs-del-btn[data-id=\\'${m.id}\\']')?.click(); }"
+        class="btn btn-danger btn-sm" style="margin-left:auto;">🗑️ Hapus</button>
+    </div>`;
 
   modal.style.display = 'flex';
+
+  // ---- Async fetch account info ----
+  const accSection = modalBody.querySelector('#mhsAccSection');
+  try {
+    const accRes = await fetch(`${MHS_API}/account/${m.id}`);
+    if (accRes.ok) {
+      const acc = await accRes.json();
+      const pwd = acc.plain_password;
+      const pwdId = 'mhsPwdToggle_' + m.id;
+      const validatedText = acc.is_validated
+        ? `<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${acc.validated_by || 'BAP'} · ${formatDateTime(acc.validated_at)}</span>`
+        : `<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`;
+
+      accSection.innerHTML = `
+        <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,hsl(215 65% 50%),hsl(250 65% 58%));border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;color:hsl(215 60% 35%);text-transform:uppercase;letter-spacing:.06em;">Info Akun Mahasiswa</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">NIM</p>
+              <p style="font-family:var(--font-mono);font-weight:700;font-size:0.9rem;color:hsl(215 65% 40%);letter-spacing:.03em;">${acc.nim}</p>
+            </div>
+            <div>
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Email Login</p>
+              <p style="font-size:0.8rem;color:hsl(215 50% 40%);">${acc.email || '-'}</p>
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Password</p>
+              ${pwd ? `
+              <div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid hsl(215 40% 88%);border-radius:8px;padding:8px 12px;">
+                <span id="${pwdId}" style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:hsl(215 65% 40%);letter-spacing:.08em;flex:1;">••••••••</span>
+                <button onclick="var el=document.getElementById('${pwdId}');if(el.textContent==='••••••••'){el.textContent='${pwd}';this.title='Sembunyikan';}else{el.textContent='••••••••';this.title='Tampilkan';}"
+                  title="Tampilkan" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button onclick="navigator.clipboard.writeText('${pwd}').then(()=>{this.title='Tersalin!';setTimeout(()=>this.title='Salin',2000);});"
+                  title="Salin" style="background:none;border:none;cursor:pointer;padding:2px;color:hsl(215 55% 50%);display:flex;align-items:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">🕒 Dibuat: ${formatDateTime(acc.created_at)}</p>` : `
+              <p style="font-size:0.78rem;color:hsl(38 65% 45%);font-style:italic;">⚠️ Password tidak tersedia</p>`}
+            </div>
+            <div style="grid-column:span 2;">
+              <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Status Validasi</p>
+              <p style="font-size:0.8rem;">${validatedText}</p>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      accSection.innerHTML = `
+        <div style="background:hsl(38 60% 96%);border-radius:12px;padding:12px 16px;border:1px dashed hsl(38 50% 80%);">
+          <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:0;">⚠️ Akun belum tersedia di sistem PMB.</p>
+        </div>`;
+    }
+  } catch {
+    accSection.innerHTML = `<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`;
+  }
 }
+
 
 function showMhsEditModal(m) {
   const modal = document.getElementById('mhsModal');
