@@ -5699,47 +5699,52 @@ let _mahasiswaList = [];
 
 function bapMahasiswaContent() {
   return `
-    <div class="dash-card">
-      <div class="dash-card-header">
+    <div class="dash-card" style="overflow:visible;">
+      <div class="dash-card-header" style="border-bottom:none;padding-bottom:0;">
         <h2 class="dash-card-title">${I.graduationCap} Data Mahasiswa</h2>
       </div>
-      <div class="dash-card-body">
-        <!-- Stat Cards -->
-        <div class="stat-grid" id="mhsStatCards">
-          <div class="stat-card">
-            <div class="stat-icon blue">${I.users}</div>
-            <div class="stat-num" id="mhsTotal">-</div>
-            <div class="stat-label">Total Mahasiswa</div>
+      <div class="dash-card-body" style="padding-top:16px;">
+
+        <!-- Premium Stat Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+          <div style="background:linear-gradient(135deg,hsl(215 70% 52%),hsl(240 65% 58%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(215,70%,52%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${I.users}</div>
+            <div id="mhsTotal" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Total Mahasiswa</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon green">${I.checkCircle}</div>
-            <div class="stat-num" id="mhsAktif">-</div>
-            <div class="stat-label">Aktif</div>
+          <div style="background:linear-gradient(135deg,hsl(145 60% 42%),hsl(165 55% 38%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(145,60%,42%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${I.checkCircle}</div>
+            <div id="mhsAktif" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Aktif</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon gold">${I.clock}</div>
-            <div class="stat-num" id="mhsCuti">-</div>
-            <div class="stat-label">Cuti</div>
+          <div style="background:linear-gradient(135deg,hsl(38 85% 52%),hsl(28 80% 48%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(38,85%,52%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${I.clock}</div>
+            <div id="mhsCuti" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Cuti</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon purple">${I.award}</div>
-            <div class="stat-num" id="mhsLulus">-</div>
-            <div class="stat-label">Lulus</div>
+          <div style="background:linear-gradient(135deg,hsl(270 60% 55%),hsl(290 55% 50%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(270,60%,55%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${I.award}</div>
+            <div id="mhsLulus" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Lulus</div>
           </div>
         </div>
 
-        <!-- Search & Filters -->
-        <div style="display:flex;gap:10px;margin:20px 0 16px;flex-wrap:wrap;align-items:center;">
-          <div style="flex:1;min-width:220px;position:relative;">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">${I.search}</span>
-            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:38px;">
+        <!-- Search & Filters Row -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:hsl(215 30% 97%);padding:12px 14px;border-radius:12px;border:1px solid hsl(215 20% 92%);">
+          <div style="flex:1;min-width:200px;position:relative;">
+            <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(215 20% 55%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:34px;background:white;border-radius:8px;height:36px;font-size:0.82rem;">
           </div>
-          <select id="mhsFilterProdi" class="form-select" style="min-width:160px;">
+          <select id="mhsFilterProdi" class="form-select" style="min-width:150px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
             <option value="">Semua Prodi</option>
             <option value="Administrasi Negara">Adm. Negara</option>
             <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
-          <select id="mhsFilterStatus" class="form-select" style="min-width:130px;">
+          <select id="mhsFilterStatus" class="form-select" style="min-width:120px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="cuti">Cuti</option>
@@ -5749,17 +5754,15 @@ function bapMahasiswaContent() {
         </div>
 
         <!-- Student Table -->
-        <div id="mhsTableContainer" style="margin-top:8px;">
-          <div style="text-align:center;padding:32px;color:var(--text-muted);">Memuat data mahasiswa...</div>
-        </div>
-        <div id="mhsCount" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);"></div>
+        <div id="mhsTableContainer" style="margin-top:4px;"></div>
+        <div id="mhsCount" style="margin-top:10px;font-size:0.75rem;color:var(--text-muted);padding-left:2px;"></div>
       </div>
     </div>
 
     <!-- Modal for Mahasiswa Profile/Edit -->
     <div id="mhsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
       <div style="background:white;border-radius:16px;width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);margin:auto;">
-        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;">
+        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;border-radius:16px 16px 0 0;">
           <h3 id="mhsModalTitle" style="margin:0;font-size:1rem;font-weight:700;color:hsl(215 40% 18%);">Detail</h3>
           <button onclick="document.getElementById('mhsModal').style.display='none'" style="width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&times;</button>
         </div>
@@ -5767,6 +5770,7 @@ function bapMahasiswaContent() {
       </div>
     </div>`;
 }
+
 
 function initMahasiswaPage() {
   loadMahasiswaList();
@@ -5858,42 +5862,85 @@ function renderMhsTable(list) {
   if (!container) return;
 
   if (list.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:32px;">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <p style="color:var(--text-muted);font-size:var(--text-sm);">Tidak ada mahasiswa ditemukan</p>
+    container.innerHTML = `<div style="text-align:center;padding:48px 32px;">
+      <div style="font-size:3rem;margin-bottom:12px;">👥</div>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);font-weight:500;">Tidak ada mahasiswa ditemukan</p>
     </div>`;
     if (countEl) countEl.textContent = '';
     return;
   }
 
-  container.innerHTML = `
-    <table class="sch-table" style="font-size:0.82rem;">
-      <thead><tr>
-        <th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Semester</th><th>Status</th><th>Aksi</th>
-      </tr></thead>
-      <tbody>
-        ${list.map(m => `<tr class="mhs-tr" data-id="${m.id}" style="cursor:pointer;">
-          <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${m.nim}</td>
-          <td>
-            <strong>${m.nama}</strong><br>
-            <span style="font-size:0.7rem;color:var(--text-muted);">${m.email || '-'}</span>
-          </td>
-          <td style="font-size:0.8rem;">${m.prodi_pilihan || '-'}</td>
-          <td style="text-align:center;">${m.angkatan}</td>
-          <td style="text-align:center;">${m.semester}</td>
-          <td><span class="badge-sm ${m.status_mhs === 'aktif' ? 'success' : m.status_mhs === 'cuti' ? 'warning' : m.status_mhs === 'lulus' ? 'blue' : 'danger'}">${m.status_mhs}</span></td>
-          <td onclick="event.stopPropagation();">
-            <div style="display:flex;gap:4px;">
-              <button class="mgmt-action-btn mhs-view-btn" data-id="${m.id}" title="Lihat Detail" style="color:hsl(210 60% 50%);">👁️</button>
-              <button class="mgmt-action-btn mhs-edit-btn" data-id="${m.id}" title="Edit">✏️</button>
-              <button class="mgmt-action-btn mhs-del-btn" data-id="${m.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  const statusStyle = (s) => {
+    const st = (s||'').toLowerCase();
+    if (st==='aktif')  return 'background:hsl(142 60% 91%);color:hsl(142 60% 28%);border:1px solid hsl(142 45% 82%);';
+    if (st==='cuti')   return 'background:hsl(38 80% 92%);color:hsl(38 65% 35%);border:1px solid hsl(38 55% 80%);';
+    if (st==='lulus')  return 'background:hsl(215 65% 92%);color:hsl(215 60% 35%);border:1px solid hsl(215 50% 82%);';
+    return 'background:hsl(0 60% 92%);color:hsl(0 55% 38%);border:1px solid hsl(0 45% 82%);';
+  };
+  const prodiShort = (p) => (p||'').includes('Niaga') ? '<span style="background:hsl(270 55% 93%);color:hsl(270 55% 40%);border:1px solid hsl(270 40% 84%);padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;">Niaga</span>' :
+    (p||'').includes('Negara') ? '<span style="background:hsl(215 60% 93%);color:hsl(215 60% 38%);border:1px solid hsl(215 45% 84%);padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;">Negara</span>' :
+    '<span style="font-size:0.75rem;color:var(--text-muted);">-</span>';
+  const avatar = (nama) => `<div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,hsl(215 65% 52%),hsl(250 60% 60%));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.9rem;flex-shrink:0;">${(nama||'?')[0].toUpperCase()}</div>`;
 
-  if (countEl) countEl.textContent = `Menampilkan ${list.length} mahasiswa`;
+  container.innerHTML = `
+    <div style="border:1px solid hsl(215 20% 92%);border-radius:14px;overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+        <thead>
+          <tr style="background:linear-gradient(135deg,hsl(215 30% 95%),hsl(240 25% 96%));">
+            <th style="padding:12px 16px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;white-space:nowrap;">NIM</th>
+            <th style="padding:12px 16px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Mahasiswa</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Prodi</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Angkatan</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Sem.</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Status</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((m,i) => `<tr class="mhs-tr" data-id="${m.id}" style="cursor:pointer;transition:background .15s;border-top:1px solid hsl(215 15% 94%);" onmouseover="this.style.background='hsl(215 30% 98%)'" onmouseout="this.style.background=''">
+            <td style="padding:12px 16px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;color:hsl(215 60% 40%);white-space:nowrap;">${m.nim}</td>
+            <td style="padding:12px 16px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                ${avatar(m.nama)}
+                <div>
+                  <div style="font-weight:700;font-size:0.85rem;color:hsl(215 35% 18%);">${m.nama}</div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);margin-top:1px;">${m.email || '—'}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding:12px 16px;text-align:center;">${prodiShort(m.prodi_pilihan)}</td>
+            <td style="padding:12px 16px;text-align:center;font-weight:600;color:hsl(215 30% 40%);">${m.angkatan}</td>
+            <td style="padding:12px 16px;text-align:center;">
+              <span style="background:hsl(215 20% 93%);color:hsl(215 30% 40%);padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:700;">Sem ${m.semester}</span>
+            </td>
+            <td style="padding:12px 16px;text-align:center;">
+              <span style="padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;text-transform:capitalize;${statusStyle(m.status_mhs)}">${m.status_mhs||'Aktif'}</span>
+            </td>
+            <td style="padding:12px 16px;text-align:center;" onclick="event.stopPropagation();">
+              <div style="display:flex;gap:4px;justify-content:center;">
+                <button class="mhs-view-btn" data-id="${m.id}" title="Lihat Detail"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(215 60% 94%);color:hsl(215 60% 45%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(215 60% 87%)'" onmouseout="this.style.background='hsl(215 60% 94%)'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="mhs-edit-btn" data-id="${m.id}" title="Edit"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(38 75% 93%);color:hsl(38 65% 38%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(38 65% 86%)'" onmouseout="this.style.background='hsl(38 75% 93%)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="mhs-del-btn" data-id="${m.id}" title="Hapus"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(0 65% 94%);color:hsl(0 60% 45%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(0 55% 87%)'" onmouseout="this.style.background='hsl(0 65% 94%)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  if (countEl) countEl.textContent = `📊 Menampilkan ${list.length} dari ${_mahasiswaList.length} mahasiswa`;
 
   // Row click → profile modal
   container.querySelectorAll('.mhs-tr').forEach(row => {

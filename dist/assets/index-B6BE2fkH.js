@@ -3261,47 +3261,52 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;
         <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
       </div>
     </form>`,n.style.display=`flex`,document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`editSaveBtn`);n.disabled=!0,n.textContent=`Menyimpan...`;let r=new FormData(t.target),i={},a=t.target.querySelectorAll(`input[type="file"]`),o=new Set([...a].map(e=>e.name));r.forEach((e,t)=>{e&&!o.has(t)&&(i[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(i)}),r=await t.json();if(t.ok){let t=new FormData,n=!1;if(a.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),n=!0)}),n)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+r.message),document.getElementById(`pmbDetailModal`).style.display=`none`,B()}else alert(`❌ `+(r.error||`Gagal menyimpan`)),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}})}var Vt=`/api/pmb`,W=[];function Ht(){return`
-    <div class="dash-card">
-      <div class="dash-card-header">
+    <div class="dash-card" style="overflow:visible;">
+      <div class="dash-card-header" style="border-bottom:none;padding-bottom:0;">
         <h2 class="dash-card-title">${F.graduationCap} Data Mahasiswa</h2>
       </div>
-      <div class="dash-card-body">
-        <!-- Stat Cards -->
-        <div class="stat-grid" id="mhsStatCards">
-          <div class="stat-card">
-            <div class="stat-icon blue">${F.users}</div>
-            <div class="stat-num" id="mhsTotal">-</div>
-            <div class="stat-label">Total Mahasiswa</div>
+      <div class="dash-card-body" style="padding-top:16px;">
+
+        <!-- Premium Stat Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+          <div style="background:linear-gradient(135deg,hsl(215 70% 52%),hsl(240 65% 58%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(215,70%,52%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${F.users}</div>
+            <div id="mhsTotal" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Total Mahasiswa</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon green">${F.checkCircle}</div>
-            <div class="stat-num" id="mhsAktif">-</div>
-            <div class="stat-label">Aktif</div>
+          <div style="background:linear-gradient(135deg,hsl(145 60% 42%),hsl(165 55% 38%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(145,60%,42%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${F.checkCircle}</div>
+            <div id="mhsAktif" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Aktif</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon gold">${F.clock}</div>
-            <div class="stat-num" id="mhsCuti">-</div>
-            <div class="stat-label">Cuti</div>
+          <div style="background:linear-gradient(135deg,hsl(38 85% 52%),hsl(28 80% 48%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(38,85%,52%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${F.clock}</div>
+            <div id="mhsCuti" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Cuti</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon purple">${F.award}</div>
-            <div class="stat-num" id="mhsLulus">-</div>
-            <div class="stat-label">Lulus</div>
+          <div style="background:linear-gradient(135deg,hsl(270 60% 55%),hsl(290 55% 50%));border-radius:14px;padding:16px 18px;color:white;box-shadow:0 4px 20px hsla(270,60%,55%,.35);position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;top:-10px;width:64px;height:64px;background:rgba(255,255,255,.1);border-radius:50%;"></div>
+            <div style="font-size:1.6rem;margin-bottom:4px;">${F.award}</div>
+            <div id="mhsLulus" style="font-size:1.8rem;font-weight:800;line-height:1;">-</div>
+            <div style="font-size:0.72rem;opacity:.85;margin-top:4px;font-weight:600;">Lulus</div>
           </div>
         </div>
 
-        <!-- Search & Filters -->
-        <div style="display:flex;gap:10px;margin:20px 0 16px;flex-wrap:wrap;align-items:center;">
-          <div style="flex:1;min-width:220px;position:relative;">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">${F.search}</span>
-            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:38px;">
+        <!-- Search & Filters Row -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:hsl(215 30% 97%);padding:12px 14px;border-radius:12px;border:1px solid hsl(215 20% 92%);">
+          <div style="flex:1;min-width:200px;position:relative;">
+            <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(215 20% 55%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:34px;background:white;border-radius:8px;height:36px;font-size:0.82rem;">
           </div>
-          <select id="mhsFilterProdi" class="form-select" style="min-width:160px;">
+          <select id="mhsFilterProdi" class="form-select" style="min-width:150px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
             <option value="">Semua Prodi</option>
             <option value="Administrasi Negara">Adm. Negara</option>
             <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
-          <select id="mhsFilterStatus" class="form-select" style="min-width:130px;">
+          <select id="mhsFilterStatus" class="form-select" style="min-width:120px;height:36px;font-size:0.82rem;background:white;border-radius:8px;">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="cuti">Cuti</option>
@@ -3311,51 +3316,80 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;
         </div>
 
         <!-- Student Table -->
-        <div id="mhsTableContainer" style="margin-top:8px;">
-          <div style="text-align:center;padding:32px;color:var(--text-muted);">Memuat data mahasiswa...</div>
-        </div>
-        <div id="mhsCount" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);"></div>
+        <div id="mhsTableContainer" style="margin-top:4px;"></div>
+        <div id="mhsCount" style="margin-top:10px;font-size:0.75rem;color:var(--text-muted);padding-left:2px;"></div>
       </div>
     </div>
 
     <!-- Modal for Mahasiswa Profile/Edit -->
     <div id="mhsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;animation:fadeIn .2s ease;">
       <div style="background:white;border-radius:16px;width:580px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);margin:auto;">
-        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;">
+        <div style="padding:18px 24px 14px;border-bottom:1px solid hsl(215 15% 93%);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;border-radius:16px 16px 0 0;">
           <h3 id="mhsModalTitle" style="margin:0;font-size:1rem;font-weight:700;color:hsl(215 40% 18%);">Detail</h3>
           <button onclick="document.getElementById('mhsModal').style.display='none'" style="width:32px;height:32px;border:none;border-radius:8px;background:hsl(215 15% 95%);color:hsl(215 15% 50%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&times;</button>
         </div>
         <div id="mhsModalBody" style="padding:20px 24px;"></div>
       </div>
-    </div>`}function Ut(){Wt(),document.getElementById(`mhsSearch`)?.addEventListener(`input`,Kt),document.getElementById(`mhsFilterProdi`)?.addEventListener(`change`,Kt),document.getElementById(`mhsFilterStatus`)?.addEventListener(`change`,Kt)}async function Wt(){try{let e=await fetch(`${Vt}/registrations`);if(!e.ok)throw Error(`Gagal memuat data`);let t=await e.json(),n=(Array.isArray(t)?t:t.data||[]).filter(e=>(e.status||``).toLowerCase()===`diterima`);if(n.length===0)W=te.map(e=>({...e}));else{let e=await Promise.allSettled(n.map(e=>fetch(`${Vt}/account/${e.id}`).then(e=>e.ok?e.json():null).catch(()=>null)));W=n.map((t,n)=>{let r=e[n],i=r?.status===`fulfilled`?r.value:null,a=i?.nim||t.nim||`PMB${String(t.id).padStart(4,`0`)}`,o=t.created_at?new Date(t.created_at).getFullYear():2026;return{...t,nim:a,email:i?.email||t.email||``,angkatan:o,semester:t.semester||1,status_mhs:(i?.is_validated,`aktif`),prodi:t.prodi_pilihan||t.jurusan_pilihan||`-`}})}Gt(),qt(W)}catch{W=te.map(e=>({...e})),Gt(),qt(W)}}function Gt(){let e=W.length,t=W.filter(e=>e.status_mhs===`aktif`).length,n=W.filter(e=>e.status_mhs===`cuti`).length,r=W.filter(e=>e.status_mhs===`lulus`).length,i=e=>document.getElementById(e);i(`mhsTotal`)&&(i(`mhsTotal`).textContent=e),i(`mhsAktif`)&&(i(`mhsAktif`).textContent=t),i(`mhsCuti`)&&(i(`mhsCuti`).textContent=n),i(`mhsLulus`)&&(i(`mhsLulus`).textContent=r)}function Kt(){let e=(document.getElementById(`mhsSearch`)?.value||``).toLowerCase(),t=document.getElementById(`mhsFilterProdi`)?.value||``,n=document.getElementById(`mhsFilterStatus`)?.value||``;qt(W.filter(r=>{let i=!e||(r.nama||``).toLowerCase().includes(e)||(r.nim||``).toLowerCase().includes(e)||(r.nik||``).includes(e),a=!t||r.prodi_pilihan===t,o=!n||r.status_mhs===n;return i&&a&&o}))}function qt(e){let t=document.getElementById(`mhsTableContainer`),n=document.getElementById(`mhsCount`);if(t){if(e.length===0){t.innerHTML=`<div style="text-align:center;padding:32px;">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <p style="color:var(--text-muted);font-size:var(--text-sm);">Tidak ada mahasiswa ditemukan</p>
-    </div>`,n&&(n.textContent=``);return}t.innerHTML=`
-    <table class="sch-table" style="font-size:0.82rem;">
-      <thead><tr>
-        <th>NIM</th><th>Nama</th><th>Prodi</th><th>Angkatan</th><th>Semester</th><th>Status</th><th>Aksi</th>
-      </tr></thead>
-      <tbody>
-        ${e.map(e=>`<tr class="mhs-tr" data-id="${e.id}" style="cursor:pointer;">
-          <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${e.nim}</td>
-          <td>
-            <strong>${e.nama}</strong><br>
-            <span style="font-size:0.7rem;color:var(--text-muted);">${e.email||`-`}</span>
-          </td>
-          <td style="font-size:0.8rem;">${e.prodi_pilihan||`-`}</td>
-          <td style="text-align:center;">${e.angkatan}</td>
-          <td style="text-align:center;">${e.semester}</td>
-          <td><span class="badge-sm ${e.status_mhs===`aktif`?`success`:e.status_mhs===`cuti`?`warning`:e.status_mhs===`lulus`?`blue`:`danger`}">${e.status_mhs}</span></td>
-          <td onclick="event.stopPropagation();">
-            <div style="display:flex;gap:4px;">
-              <button class="mgmt-action-btn mhs-view-btn" data-id="${e.id}" title="Lihat Detail" style="color:hsl(210 60% 50%);">👁️</button>
-              <button class="mgmt-action-btn mhs-edit-btn" data-id="${e.id}" title="Edit">✏️</button>
-              <button class="mgmt-action-btn mhs-del-btn" data-id="${e.id}" title="Hapus" style="color:hsl(0 65% 50%);">🗑️</button>
-            </div>
-          </td>
-        </tr>`).join(``)}
-      </tbody>
-    </table>`,n&&(n.textContent=`Menampilkan ${e.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-view-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Yt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Wt();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}}async function Jt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Detail Mahasiswa`);let i=e=>e||`<span style="color:hsl(0 60% 55%);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,c=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],l=c.filter(t=>e[t]&&String(e[t]).trim()).length,u=Math.round(l/c.length*100),d=u===100?`hsl(145 60% 45%)`:u>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`,f={aktif:`background:hsl(142 60% 90%);color:hsl(142 60% 28%);border:1px solid hsl(142 50% 78%);`,cuti:`background:hsl(38 75% 91%);color:hsl(38 65% 36%);border:1px solid hsl(38 55% 78%);`,lulus:`background:hsl(215 70% 92%);color:hsl(215 65% 38%);border:1px solid hsl(215 55% 80%);`,do:`background:hsl(0 65% 92%);color:hsl(0 60% 40%);border:1px solid hsl(0 50% 80%);`},p=f[e.status_mhs]||f.aktif;n.innerHTML=`
+    </div>`}function Ut(){Wt(),document.getElementById(`mhsSearch`)?.addEventListener(`input`,Kt),document.getElementById(`mhsFilterProdi`)?.addEventListener(`change`,Kt),document.getElementById(`mhsFilterStatus`)?.addEventListener(`change`,Kt)}async function Wt(){try{let e=await fetch(`${Vt}/registrations`);if(!e.ok)throw Error(`Gagal memuat data`);let t=await e.json(),n=(Array.isArray(t)?t:t.data||[]).filter(e=>(e.status||``).toLowerCase()===`diterima`);if(n.length===0)W=te.map(e=>({...e}));else{let e=await Promise.allSettled(n.map(e=>fetch(`${Vt}/account/${e.id}`).then(e=>e.ok?e.json():null).catch(()=>null)));W=n.map((t,n)=>{let r=e[n],i=r?.status===`fulfilled`?r.value:null,a=i?.nim||t.nim||`PMB${String(t.id).padStart(4,`0`)}`,o=t.created_at?new Date(t.created_at).getFullYear():2026;return{...t,nim:a,email:i?.email||t.email||``,angkatan:o,semester:t.semester||1,status_mhs:(i?.is_validated,`aktif`),prodi:t.prodi_pilihan||t.jurusan_pilihan||`-`}})}Gt(),qt(W)}catch{W=te.map(e=>({...e})),Gt(),qt(W)}}function Gt(){let e=W.length,t=W.filter(e=>e.status_mhs===`aktif`).length,n=W.filter(e=>e.status_mhs===`cuti`).length,r=W.filter(e=>e.status_mhs===`lulus`).length,i=e=>document.getElementById(e);i(`mhsTotal`)&&(i(`mhsTotal`).textContent=e),i(`mhsAktif`)&&(i(`mhsAktif`).textContent=t),i(`mhsCuti`)&&(i(`mhsCuti`).textContent=n),i(`mhsLulus`)&&(i(`mhsLulus`).textContent=r)}function Kt(){let e=(document.getElementById(`mhsSearch`)?.value||``).toLowerCase(),t=document.getElementById(`mhsFilterProdi`)?.value||``,n=document.getElementById(`mhsFilterStatus`)?.value||``;qt(W.filter(r=>{let i=!e||(r.nama||``).toLowerCase().includes(e)||(r.nim||``).toLowerCase().includes(e)||(r.nik||``).includes(e),a=!t||r.prodi_pilihan===t,o=!n||r.status_mhs===n;return i&&a&&o}))}function qt(e){let t=document.getElementById(`mhsTableContainer`),n=document.getElementById(`mhsCount`);if(!t)return;if(e.length===0){t.innerHTML=`<div style="text-align:center;padding:48px 32px;">
+      <div style="font-size:3rem;margin-bottom:12px;">👥</div>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);font-weight:500;">Tidak ada mahasiswa ditemukan</p>
+    </div>`,n&&(n.textContent=``);return}let r=e=>{let t=(e||``).toLowerCase();return t===`aktif`?`background:hsl(142 60% 91%);color:hsl(142 60% 28%);border:1px solid hsl(142 45% 82%);`:t===`cuti`?`background:hsl(38 80% 92%);color:hsl(38 65% 35%);border:1px solid hsl(38 55% 80%);`:t===`lulus`?`background:hsl(215 65% 92%);color:hsl(215 60% 35%);border:1px solid hsl(215 50% 82%);`:`background:hsl(0 60% 92%);color:hsl(0 55% 38%);border:1px solid hsl(0 45% 82%);`},i=e=>(e||``).includes(`Niaga`)?`<span style="background:hsl(270 55% 93%);color:hsl(270 55% 40%);border:1px solid hsl(270 40% 84%);padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;">Niaga</span>`:(e||``).includes(`Negara`)?`<span style="background:hsl(215 60% 93%);color:hsl(215 60% 38%);border:1px solid hsl(215 45% 84%);padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;">Negara</span>`:`<span style="font-size:0.75rem;color:var(--text-muted);">-</span>`,a=e=>`<div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,hsl(215 65% 52%),hsl(250 60% 60%));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.9rem;flex-shrink:0;">${(e||`?`)[0].toUpperCase()}</div>`;t.innerHTML=`
+    <div style="border:1px solid hsl(215 20% 92%);border-radius:14px;overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+        <thead>
+          <tr style="background:linear-gradient(135deg,hsl(215 30% 95%),hsl(240 25% 96%));">
+            <th style="padding:12px 16px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;white-space:nowrap;">NIM</th>
+            <th style="padding:12px 16px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Mahasiswa</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Prodi</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Angkatan</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Sem.</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Status</th>
+            <th style="padding:12px 16px;text-align:center;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;color:hsl(215 30% 45%);font-weight:700;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${e.map((e,t)=>`<tr class="mhs-tr" data-id="${e.id}" style="cursor:pointer;transition:background .15s;border-top:1px solid hsl(215 15% 94%);" onmouseover="this.style.background='hsl(215 30% 98%)'" onmouseout="this.style.background=''">
+            <td style="padding:12px 16px;font-family:var(--font-mono);font-size:0.78rem;font-weight:700;color:hsl(215 60% 40%);white-space:nowrap;">${e.nim}</td>
+            <td style="padding:12px 16px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                ${a(e.nama)}
+                <div>
+                  <div style="font-weight:700;font-size:0.85rem;color:hsl(215 35% 18%);">${e.nama}</div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);margin-top:1px;">${e.email||`—`}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding:12px 16px;text-align:center;">${i(e.prodi_pilihan)}</td>
+            <td style="padding:12px 16px;text-align:center;font-weight:600;color:hsl(215 30% 40%);">${e.angkatan}</td>
+            <td style="padding:12px 16px;text-align:center;">
+              <span style="background:hsl(215 20% 93%);color:hsl(215 30% 40%);padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:700;">Sem ${e.semester}</span>
+            </td>
+            <td style="padding:12px 16px;text-align:center;">
+              <span style="padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;text-transform:capitalize;${r(e.status_mhs)}">${e.status_mhs||`Aktif`}</span>
+            </td>
+            <td style="padding:12px 16px;text-align:center;" onclick="event.stopPropagation();">
+              <div style="display:flex;gap:4px;justify-content:center;">
+                <button class="mhs-view-btn" data-id="${e.id}" title="Lihat Detail"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(215 60% 94%);color:hsl(215 60% 45%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(215 60% 87%)'" onmouseout="this.style.background='hsl(215 60% 94%)'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="mhs-edit-btn" data-id="${e.id}" title="Edit"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(38 75% 93%);color:hsl(38 65% 38%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(38 65% 86%)'" onmouseout="this.style.background='hsl(38 75% 93%)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="mhs-del-btn" data-id="${e.id}" title="Hapus"
+                  style="width:30px;height:30px;border:none;border-radius:8px;background:hsl(0 65% 94%);color:hsl(0 60% 45%);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:background .15s;"
+                  onmouseover="this.style.background='hsl(0 55% 87%)'" onmouseout="this.style.background='hsl(0 65% 94%)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>`).join(``)}
+        </tbody>
+      </table>
+    </div>`,n&&(n.textContent=`📊 Menampilkan ${e.length} dari ${W.length} mahasiswa`),t.querySelectorAll(`.mhs-tr`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-view-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Jt(n)})}),t.querySelectorAll(`.mhs-edit-btn`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);n&&Yt(n)})}),t.querySelectorAll(`.mhs-del-btn`).forEach(e=>{e.addEventListener(`click`,async()=>{let t=e.dataset.id,n=W.find(e=>e.id==t||e.id===t);if(n&&confirm(`⚠️ Hapus data mahasiswa ${n.nama}?\n\nAkun dan data terkait akan dihapus.`))try{let e=await fetch(`${R}/registration/${t}`,{method:`DELETE`});if(e.ok)alert(`✅ Data mahasiswa berhasil dihapus`),Wt();else{let t=await e.json();alert(`❌ `+(t.error||`Gagal menghapus`))}}catch(e){alert(`❌ `+e.message)}})})}async function Jt(e){let t=document.getElementById(`mhsModal`),n=document.getElementById(`mhsModalBody`),r=document.getElementById(`mhsModalTitle`);if(!t||!n)return;r&&(r.textContent=`Detail Mahasiswa`);let i=e=>e||`<span style="color:hsl(0 60% 55%);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,c=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],l=c.filter(t=>e[t]&&String(e[t]).trim()).length,u=Math.round(l/c.length*100),d=u===100?`hsl(145 60% 45%)`:u>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`,f={aktif:`background:hsl(142 60% 90%);color:hsl(142 60% 28%);border:1px solid hsl(142 50% 78%);`,cuti:`background:hsl(38 75% 91%);color:hsl(38 65% 36%);border:1px solid hsl(38 55% 78%);`,lulus:`background:hsl(215 70% 92%);color:hsl(215 65% 38%);border:1px solid hsl(215 55% 80%);`,do:`background:hsl(0 65% 92%);color:hsl(0 60% 40%);border:1px solid hsl(0 50% 80%);`},p=f[e.status_mhs]||f.aktif;n.innerHTML=`
     <div style="max-height:60vh;overflow-y:auto;padding-right:6px;">
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid hsl(215 15% 93%);">
