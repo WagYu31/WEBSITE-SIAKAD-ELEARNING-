@@ -295,8 +295,7 @@ function updateRegistration($id) {
                 'catatan','dokumen','telepon_1','telepon_2','anak_ke',
                 'dari_jumlah','nama_ayah','nama_ibu','pekerjaan_ayah',
                 'pekerjaan_ibu','nik_ayah','nik_ibu','no_kk',
-                'file_pasfoto','file_ktp','file_ijazah','file_rapor','file_surat_sehat',
-                'updated_at'];
+                'file_pasfoto','file_ktp','file_ijazah','file_rapor','file_surat_sehat'];
     $input = array_intersect_key($input, array_flip($allowed));
 
     if (empty($input)) {
@@ -309,8 +308,12 @@ function updateRegistration($id) {
     $sets[] = "updated_at = NOW()";
     $vals[] = $id;
 
-    $db->prepare("UPDATE pmb_registrations SET " . implode(', ', $sets) . " WHERE id = ?")->execute($vals);
-    jsonResponse(['message' => 'Data berhasil diupdate']);
+    try {
+        $db->prepare("UPDATE pmb_registrations SET " . implode(', ', $sets) . " WHERE id = ?")->execute($vals);
+        jsonResponse(['message' => 'Data berhasil diupdate']);
+    } catch (Exception $e) {
+        jsonResponse(['error' => 'DB error: ' . $e->getMessage()], 500);
+    }
 }
 
 // DELETE /api/pmb/registration/:id

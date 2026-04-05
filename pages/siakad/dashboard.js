@@ -6332,8 +6332,11 @@ function showMhsEditModal(m) {
 
     try {
       const res = await fetch(`${PMB_API}/registration/${m.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HTTP-Method-Override': 'PUT',
+        },
         body: JSON.stringify(data),
       });
       let result = {};

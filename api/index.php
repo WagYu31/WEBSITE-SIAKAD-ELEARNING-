@@ -9,6 +9,16 @@ require_once __DIR__ . '/config.php';
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Support X-HTTP-Method-Override for servers/proxies that block PUT/DELETE
+if ($method === 'POST') {
+    $override = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']
+              ?? $_SERVER['HTTP_X_METHOD_OVERRIDE']
+              ?? '';
+    if (in_array(strtoupper($override), ['PUT', 'DELETE', 'PATCH'])) {
+        $method = strtoupper($override);
+    }
+}
+
 // Remove query string for routing
 $path = parse_url($uri, PHP_URL_PATH);
 // Remove /api prefix
