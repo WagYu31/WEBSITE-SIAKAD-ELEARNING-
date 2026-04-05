@@ -6573,9 +6573,11 @@ async function showMhsEditModal(m) {
           ${(()=>{
             const BASE = 'https://stiabayuanggajobs.online/api/';
             const berkas = [
-              { key:'file_ijazah',      name:'file_ijazah',   label:'Ijazah SMA/SMK/MA', icon:'📜', accept:'.pdf,.jpg,.jpeg,.png' },
-              { key:'file_ktp',         name:'file_ktp',      label:'KTP / KK',           icon:'🪪', accept:'.pdf,.jpg,.jpeg,.png' },
-              { key:'file_pasfoto',     name:'file_pasfoto',  label:'Pas Foto 3×4',       icon:'📷', accept:'.jpg,.jpeg,.png' },
+              { key:'file_ijazah',      name:'file_ijazah',      label:'Ijazah SMA/SMK/MA', icon:'📜', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_ktp',         name:'file_ktp',         label:'KTP / KK',           icon:'🪪', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_pasfoto',     name:'file_pasfoto',     label:'Pas Foto 3×4',       icon:'📷', accept:'.jpg,.jpeg,.png' },
+              { key:'file_rapor',       name:'file_rapor',       label:'Rapor',               icon:'📊', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_surat_sehat', name:'file_surat_sehat', label:'Surat Sehat',         icon:'🏥', accept:'.pdf,.jpg,.jpeg,.png', full:true },
             ];
             return berkas.map(b => {
               const path = m[b.key];
@@ -6591,7 +6593,7 @@ async function showMhsEditModal(m) {
               const statusBadge = path
                 ? `<span style="background:hsl(145 55% 90%);color:hsl(145 50% 30%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">✅ Ada</span>`
                 : `<span style="background:hsl(38 90% 90%);color:hsl(38 60% 35%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">⚠️ Kosong</span>`;
-              return `<div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 90%);border-radius:10px;padding:10px;">
+              return `<div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 90%);border-radius:10px;padding:10px;${b.full ? 'grid-column:span 2;' : ''}">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                   <span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">${b.icon} ${b.label}</span>
                   ${statusBadge}
