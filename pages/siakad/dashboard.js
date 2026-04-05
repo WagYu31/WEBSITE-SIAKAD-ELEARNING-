@@ -4741,8 +4741,22 @@ function renderPMBTable(registrations) {
           <td style="font-family:var(--font-mono);font-weight:600;white-space:nowrap;">${r.no_pendaftaran}</td>
           <td><strong>${r.nama}</strong><br><span style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">${r.nik}</span></td>
           <td style="font-size:0.8rem;">${r.prodi_pilihan || '-'}</td>
-          <td><span class="badge-sm ${r.metode==='online'?'blue':'warning'}">${r.metode==='online'?'Online':'Offline'}</span></td>
-          <td><span class="badge-sm ${r.status==='diterima'?'success':r.status==='ditolak'?'danger':r.status==='proses'?'blue':'warning'}">${r.status}</span></td>
+          <td><span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap;
+            ${r.metode==='online'
+              ? 'background:hsl(215 80% 93%);color:hsl(215 70% 38%);border:1px solid hsl(215 60% 82%);'
+              : 'background:hsl(270 60% 93%);color:hsl(270 55% 42%);border:1px solid hsl(270 45% 82%);'}
+          ">${r.metode==='online' ? '🌐 Online' : '🏢 Offline'}</span></td>
+          <td><span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap;
+            ${r.status==='diterima' ? 'background:hsl(142 65% 90%);color:hsl(142 60% 28%);border:1px solid hsl(142 50% 78%);'
+              : r.status==='ditolak' ? 'background:hsl(0 70% 92%);color:hsl(0 65% 38%);border:1px solid hsl(0 55% 80%);'
+              : r.status==='proses' ? 'background:hsl(225 70% 92%);color:hsl(225 65% 40%);border:1px solid hsl(225 55% 80%);'
+              : 'background:hsl(38 80% 91%);color:hsl(38 70% 36%);border:1px solid hsl(38 60% 78%);'}
+          ">${
+            r.status==='diterima' ? '✅ Diterima'
+            : r.status==='ditolak' ? '❌ Ditolak'
+            : r.status==='proses' ? '🔄 Proses'
+            : '⏳ Menunggu'
+          }</span></td>
           <td style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">${r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
           <td>
             <div style="display:flex;gap:4px;white-space:nowrap;flex-wrap:wrap;align-items:center;">
