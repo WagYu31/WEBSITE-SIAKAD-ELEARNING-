@@ -5166,6 +5166,19 @@ async function handleMgmtAction(action, data) {
       case 'confirm-pay': {
         const reg = _pmbRegistrations.find(r => String(r.id) === String(data.id));
         const nama = reg ? reg.nama : 'Pendaftar';
+
+        // ✅ Cek dari backend apakah sudah lunas sebelum prompt
+        const payCheckRes = await fetch(`${PMB_API}/status/${encodeURIComponent(reg?.no_pendaftaran || '')}`);
+        if (payCheckRes.ok) {
+          const payCheckData = await payCheckRes.json();
+          if (payCheckData.payment && payCheckData.payment.status === 'paid') {
+            const paidAt = payCheckData.payment.paid_at ? new Date(payCheckData.payment.paid_at).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) : '-';
+            const paidMetode = payCheckData.payment.metode_bayar === 'cash' ? '💵 Cash' : '🌐 Online';
+            alert(`✅ Pembayaran sudah LUNAS!\n\n👤 Pendaftar: ${nama}\n📅 Dibayar: ${paidAt}\n💳 Metode: ${paidMetode}\n\nTidak perlu bayar ulang.`);
+            return;
+          }
+        }
+
         const metode = prompt(`💰 Pembayaran untuk: ${nama}\n\nPilih metode:\n1 = Cash (langsung konfirmasi)\n2 = Online (Midtrans)\n\nKetik 1 atau 2:`);
         if (!metode || !['1','2'].includes(metode.trim())) { alert('Dibatalkan'); return; }
 
