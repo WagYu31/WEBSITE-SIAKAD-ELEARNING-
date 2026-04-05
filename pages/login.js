@@ -117,9 +117,6 @@ export function renderLogin(container) {
                 Masuk
               </button>
 
-              <div class="login-demo-hint" role="note">
-                <p><span aria-hidden="true">💡</span> <strong>Demo Mode:</strong> Klik role di atas, lalu klik Masuk — tidak perlu password.</p>
-              </div>
             </form>
 
             <div class="login-footer">
@@ -153,18 +150,17 @@ function initLoginInteractions() {
       opt.setAttribute('aria-checked', 'true');
       selectedRole = opt.dataset.role;
       
-      // Update label and placeholder
       const labels = {
-        mahasiswa: { label: 'NIM', placeholder: 'Masukkan NIM', value: '2024101001' },
-        dosen: { label: 'NIP', placeholder: 'Masukkan NIP', value: DOSEN_LIST.length > 0 ? DOSEN_LIST[0].nip : '' },
-        kaprodi: { label: 'NIP', placeholder: 'Masukkan NIP', value: '197809152005011001' },
-        bap: { label: 'NIP', placeholder: 'Masukkan NIP', value: '198203202008012001' }
+        mahasiswa: { label: 'NIM', placeholder: 'Masukkan NIM' },
+        dosen:     { label: 'NIP', placeholder: 'Masukkan NIP' },
+        kaprodi:   { label: 'NIP', placeholder: 'Masukkan NIP' },
+        bap:       { label: 'NIP', placeholder: 'Masukkan NIP' },
       };
       
       const l = labels[selectedRole];
       loginIdLabel.textContent = l.label;
       loginIdInput.placeholder = l.placeholder;
-      loginIdInput.value = l.value;
+      loginIdInput.value = '';
     });
   });
 
@@ -178,44 +174,74 @@ function initLoginInteractions() {
     passwordToggle.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
   });
 
-  // Login form submit
+  // Login form submit — REAL API
   const loginForm = document.getElementById('loginForm');
   const loginBtn = document.getElementById('loginBtn');
 
-  loginForm?.addEventListener('submit', (e) => {
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // Set loading state
-    loginBtn.innerHTML = `
-      <span class="spinner"></span> Memproses...
-    `;
+
+    const identifier = loginIdInput.value.trim();
+    const password   = passwordInput.value.trim();
+
+    if (!identifier) {
+      showLoginError(selectedRole === 'mahasiswa' ? 'NIM wajib diisi' : 'NIP wajib diisi');
+      return;
+    }
+    if (!password) {
+      showLoginError('Password wajib diisi');
+      return;
+    }
+
+    loginBtn.innerHTML = `<span class="spinner"></span> Memproses...`;
     loginBtn.disabled = true;
-    
-    // Simulate login delay
-    setTimeout(() => {
-      let user;
-      if (selectedRole === 'dosen') {
-        const nip = loginIdInput.value.trim();
-        const dsn = DOSEN_LIST.find(d => d.nip === nip) || DOSEN_LIST[0];
-        user = {
-          id: dsn.id,
-          nip: dsn.nip,
-          nama: dsn.nama,
-          email: dsn.email,
-          jabatan: dsn.jabatanFungsional,
-          totalMK: dsn.totalMK,
-          totalMahasiswa: dsn.totalMahasiswaBimbingan,
-          avatar: dsn.avatar,
-          role: 'dosen'
-        };
-      } else {
-        user = USERS[selectedRole];
+    clearLoginError();
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: selectedRole, identifier, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const msg = data.error || 'Login gagal. Periksa kembali NIM/NIP dan password Anda.';
+        showLoginError(msg);
+        loginBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk`;
+        loginBtn.disabled = false;
+        return;
       }
-      setUser(user);
+
+      // SUCCESS — set user and navigate
+      setUser(data);
       navigate('#/portal');
-    }, 800);
+
+    } catch (err) {
+      showLoginError('Gagal terhubung ke server. Periksa koneksi Anda.');
+      loginBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Masuk`;
+      loginBtn.disabled = false;
+    }
   });
 
-  // Set initial value
-  loginIdInput.value = '2024101001';
+  function showLoginError(msg) {
+    let el = document.getElementById('loginErrorBox');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'loginErrorBox';
+      el.style.cssText = 'margin-top:12px;padding:10px 14px;background:hsl(0 60% 96%);border:1px solid hsl(0 50% 85%);border-radius:8px;font-size:0.83rem;color:hsl(0 60% 40%);display:flex;align-items:center;gap:8px;';
+      loginBtn.insertAdjacentElement('afterend', el);
+    }
+    el.innerHTML = `<span>❌</span><span>${msg}</span>`;
+    el.style.display = 'flex';
+  }
+
+  function clearLoginError() {
+    const el = document.getElementById('loginErrorBox');
+    if (el) el.style.display = 'none';
+  }
+
+  // Clear initial value — user must type their own NIM
+  loginIdInput.value = '';
 }

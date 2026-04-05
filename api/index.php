@@ -29,6 +29,12 @@ if ($path === '/health' && $method === 'GET') {
     jsonResponse(['service' => 'STIA Bayuangga API', 'status' => 'OK', 'version' => '1.0.0', 'db' => 'MySQL']);
 }
 
+// ===================== AUTH =====================
+if ($path === '/auth/login' && $method === 'POST') {
+    require_once __DIR__ . '/auth.php';
+    authLogin();
+}
+
 // ===================== JADWAL PERTEMUAN =====================
 if ($path === '/jadwal-pertemuan/all' && $method === 'GET') {
     require_once __DIR__ . '/jadwal-pertemuan.php';
