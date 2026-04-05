@@ -5620,36 +5620,48 @@ function showEditForm(regId) {
         <div class="form-group"><label class="form-label">Asal Sekolah *</label><input type="text" name="asal_sekolah" value="${v(reg.asal_sekolah)}" class="form-input"></div>
       </div>
 
-      <!-- Upload Berkas -->
+      <!-- Berkas Persyaratan -->
       <div class="off-section">
-        <h5 class="off-section-title">📎 Upload Berkas Persyaratan</h5>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Upload ulang untuk mengganti file. Format: PDF, JPG, PNG (maks. 5MB)</p>
+        <h5 class="off-section-title">📎 Berkas Persyaratan</h5>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">File sudah terupload ditampilkan di bawah. Klik <strong>Ganti</strong> untuk upload ulang.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-size:1.2rem;">📄</span><span style="font-size:0.75rem;font-weight:600;">Ijazah</span>
-            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
-            <input type="file" name="file_ijazah" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
-          </label>
-          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-size:1.2rem;">🪪</span><span style="font-size:0.75rem;font-weight:600;">KTP/KK</span>
-            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
-            <input type="file" name="file_ktp_kk" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
-          </label>
-          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-size:1.2rem;">📷</span><span style="font-size:0.75rem;font-weight:600;">Pas Foto</span>
-            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
-            <input type="file" name="file_pas_foto" accept=".jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
-          </label>
-          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span style="font-size:1.2rem;">📊</span><span style="font-size:0.75rem;font-weight:600;">Rapor</span>
-            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
-            <input type="file" name="file_rapor" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
-          </label>
-          <label style="border:2px dashed hsl(215 30% 82%);border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;grid-column:span 2;">
-            <span style="font-size:1.2rem;">🏥</span><span style="font-size:0.75rem;font-weight:600;">Surat Sehat</span>
-            <span class="pmb-upload-name" style="font-size:0.68rem;color:var(--primary-500);">Pilih file...</span>
-            <input type="file" name="file_surat_sehat" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="this.parentElement.querySelector('.pmb-upload-name').textContent = this.files[0]?.name || 'Pilih file...'">
-          </label>
+          ${(()=>{
+            const BASE = 'https://stiabayuanggajobs.online/api/';
+            const berkas = [
+              { key:'file_ijazah',      name:'file_ijazah',      label:'Ijazah/SKHUN',  icon:'📜', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_ktp',         name:'file_ktp_kk',      label:'KTP/KK',        icon:'🪪', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_pasfoto',     name:'file_pas_foto',    label:'Pas Foto',       icon:'📷', accept:'.jpg,.jpeg,.png' },
+              { key:'file_rapor',       name:'file_rapor',       label:'Rapor',          icon:'📊', accept:'.pdf,.jpg,.jpeg,.png' },
+              { key:'file_surat_sehat', name:'file_surat_sehat', label:'Surat Sehat',    icon:'🏥', accept:'.pdf,.jpg,.jpeg,.png', full:true },
+            ];
+            return berkas.map(b => {
+              const path = reg[b.key];
+              const isImg = path && /\.(jpg|jpeg|png|webp)$/i.test(path);
+              const isPdf = path && /\.pdf$/i.test(path);
+              const uid = 'upload_' + b.name;
+              const previewHtml = path
+                ? (isImg
+                    ? `<a href="${BASE+path}" target="_blank"><img src="${BASE+path}" alt="${b.label}" style="width:100%;max-height:70px;object-fit:cover;border-radius:6px;cursor:pointer;margin-bottom:4px;"></a>`
+                    : isPdf
+                    ? `<a href="${BASE+path}" target="_blank" style="display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:600;color:hsl(215 60% 45%);text-decoration:none;margin-bottom:4px;">📋 Buka PDF</a>`
+                    : `<span style="font-size:0.72rem;color:hsl(215 55% 48%);">📎 Lihat Berkas</span>`)
+                : `<span style="font-size:0.72rem;color:hsl(38 65% 50%);font-style:italic;">⚠️ Belum diupload</span>`;
+              const statusBadge = path
+                ? `<span style="background:hsl(145 55% 90%);color:hsl(145 50% 30%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">✅ Ada</span>`
+                : `<span style="background:hsl(38 90% 90%);color:hsl(38 60% 35%);border-radius:12px;padding:1px 8px;font-size:0.65rem;font-weight:700;">⚠️ Kosong</span>`;
+              return `<div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 90%);border-radius:10px;padding:10px;${b.full ? 'grid-column:span 2;' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">${b.icon} ${b.label}</span>
+                  ${statusBadge}
+                </div>
+                ${previewHtml}
+                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;color:hsl(215 60% 45%);cursor:pointer;margin-top:4px;font-weight:600;">
+                  🔄 Ganti
+                  <input type="file" name="${b.name}" accept="${b.accept}" style="display:none;" onchange="this.closest('div').querySelector('span[data-newname]') ? this.closest('div').querySelector('span[data-newname]').textContent = this.files[0]?.name||'' : null; this.insertAdjacentHTML('afterend','<span data-newname style=\\'font-size:0.65rem;color:hsl(145 55% 38%);display:block;margin-top:2px;\\'>'+(this.files[0]?.name||'')+'</span>')">
+                </label>
+              </div>`;
+            }).join('');
+          })()}
         </div>
       </div>
 
