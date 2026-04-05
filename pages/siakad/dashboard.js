@@ -5744,26 +5744,39 @@ function initMahasiswaPage() {
 
 async function loadMahasiswaList() {
   try {
-    // Get accounts (validated = mahasiswa aktif)
+    // Get all registrations
     const res = await fetch(`${MHS_API}/registrations`);
     if (!res.ok) throw new Error('Gagal memuat data');
     const response = await res.json();
     const registrations = Array.isArray(response) ? response : (response.data || []);
 
-    // Filter only those with accounts (status = diterima)
-    _mahasiswaList = registrations
-      .filter(r => r.status === 'diterima')
-      .map((r, idx) => ({
-        ...r,
-        nim: r.nim || `20260${String(idx + 1).padStart(4, '0')}`,
-        angkatan: r.angkatan || (r.created_at ? new Date(r.created_at).getFullYear() : 2026),
-        semester: r.semester || 1,
-        status_mhs: r.status_mhs || 'aktif',
-      }));
+    // Filter accepted students (case-insensitive)
+    const accepted = registrations.filter(r => (r.status || '').toLowerCase() === 'diterima');
 
-    // If API returned empty, use local data
-    if (_mahasiswaList.length === 0) {
+    if (accepted.length === 0) {
+      // Fallback to local MAHASISWA_DATA when no accepted students from PMB
       _mahasiswaList = MAHASISWA_DATA.map(m => ({...m}));
+    } else {
+      // Fetch account info (NIM) for each accepted registration in parallel
+      const accountResults = await Promise.allSettled(
+        accepted.map(r => fetch(`${MHS_API}/account/${r.id}`).then(res => res.ok ? res.json() : null).catch(() => null))
+      );
+
+      _mahasiswaList = accepted.map((r, idx) => {
+        const accResult = accountResults[idx];
+        const acc = accResult?.status === 'fulfilled' ? accResult.value : null;
+        const nim = acc?.nim || r.nim || `PMB${String(r.id).padStart(4,'0')}`;
+        const angkatan = r.created_at ? new Date(r.created_at).getFullYear() : 2026;
+        return {
+          ...r,
+          nim,
+          email: acc?.email || r.email || '',
+          angkatan,
+          semester: r.semester || 1,
+          status_mhs: acc?.is_validated ? 'aktif' : 'aktif', // validated = aktif
+          prodi: r.prodi_pilihan || r.jurusan_pilihan || '-',
+        };
+      });
     }
 
     updateMhsStats();
