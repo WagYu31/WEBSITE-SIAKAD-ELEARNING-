@@ -100,11 +100,20 @@ function bapCreateAccount() {
         $hashedPwd,
     ]);
 
+    // Send email: Akun Dibuat (with credentials)
+    try {
+        require_once __DIR__ . '/email.php';
+        $akunData = ['nim' => $nim, 'email' => $email];
+        emailAkunDibuat($reg, $akunData, $plainPwd);
+    } catch (Exception $e) {
+        error_log('[EMAIL] bapCreateAccount email error: ' . $e->getMessage());
+    }
+
     jsonResponse([
         'message' => '✅ Akun berhasil dibuat!',
-        'nim' => $nim,
-        'password' => $plainPwd,
-        'email' => $email,
+        'nim'     => $nim,
+        'password'=> $plainPwd,
+        'email'   => $email,
     ], 201);
 }
 
@@ -162,9 +171,22 @@ function validateAccountByBAP($regId) {
     $db->prepare('UPDATE pmb_registrations SET status = ?, updated_at = NOW() WHERE id = ?')
        ->execute(['Diterima', $regId]);
 
+    // Send email: Akun Tervalidasi
+    try {
+        require_once __DIR__ . '/email.php';
+        $stmt2 = $db->prepare('SELECT * FROM pmb_registrations WHERE id = ?');
+        $stmt2->execute([$regId]);
+        $reg = $stmt2->fetch();
+        if ($reg) {
+            emailAkunValidasi($reg, $account);
+        }
+    } catch (Exception $e) {
+        error_log('[EMAIL] validateAccount email error: ' . $e->getMessage());
+    }
+
     jsonResponse([
         'message' => '✅ Akun berhasil divalidasi oleh BAP!',
-        'nim' => $account['nim'],
+        'nim'     => $account['nim'],
     ]);
 }
 

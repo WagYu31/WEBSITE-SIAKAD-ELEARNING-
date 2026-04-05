@@ -35,6 +35,12 @@ if ($path === '/auth/login' && $method === 'POST') {
     authLogin();
 }
 
+// ===================== EMAIL TEST =====================
+if ($path === '/email/test' && $method === 'GET') {
+    require_once __DIR__ . '/email.php';
+    emailTest();
+}
+
 // ===================== JADWAL PERTEMUAN =====================
 if ($path === '/jadwal-pertemuan/all' && $method === 'GET') {
     require_once __DIR__ . '/jadwal-pertemuan.php';

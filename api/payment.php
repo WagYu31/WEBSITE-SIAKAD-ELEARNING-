@@ -187,6 +187,20 @@ function confirmPayment($id) {
     $db->prepare('UPDATE pmb_registrations SET status = ?, updated_at = NOW() WHERE id = ?')
        ->execute(['Proses', $payment['registration_id']]);
 
+    // Send email notification
+    try {
+        require_once __DIR__ . '/email.php';
+        $stmt2 = $db->prepare('SELECT * FROM pmb_registrations WHERE id = ?');
+        $stmt2->execute([$payment['registration_id']]);
+        $reg = $stmt2->fetch();
+        if ($reg && !empty($reg['email'])) {
+            $paymentFull = array_merge($payment, ['status'=>'paid','paid_at'=>date('Y-m-d H:i:s'),'metode_bayar'=>'cash']);
+            emailPaymentSuccess($reg, $paymentFull);
+        }
+    } catch (Exception $e) {
+        error_log('[EMAIL] confirmPayment error: ' . $e->getMessage());
+    }
+
     jsonResponse(['message' => '✅ Pembayaran cash dikonfirmasi!', 'jumlah' => (float)$payment['jumlah']]);
 }
 
@@ -253,6 +267,20 @@ function handlePaymentNotification() {
     if ($status === 'paid') {
         $db->prepare('UPDATE pmb_registrations SET status = ?, updated_at = NOW() WHERE id = ?')
            ->execute(['Proses', $payment['registration_id']]);
+
+        // Send email notification
+        try {
+            require_once __DIR__ . '/email.php';
+            $stmt3 = $db->prepare('SELECT * FROM pmb_registrations WHERE id = ?');
+            $stmt3->execute([$payment['registration_id']]);
+            $reg = $stmt3->fetch();
+            if ($reg && !empty($reg['email'])) {
+                $paymentFull = array_merge($payment, ['status'=>'paid','paid_at'=>date('Y-m-d H:i:s')]);
+                emailPaymentSuccess($reg, $paymentFull);
+            }
+        } catch (Exception $e) {
+            error_log('[EMAIL] Midtrans webhook email error: ' . $e->getMessage());
+        }
     }
 
     jsonResponse(['message' => 'OK', 'status' => $status]);
