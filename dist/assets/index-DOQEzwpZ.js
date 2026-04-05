@@ -3251,11 +3251,56 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
         </div>
       </div>
 
+      <!-- Info Akun Mahasiswa (async) -->
+      <div class="off-section" id="editAkunSection">
+        <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+        <div id="editAkunContent" style="display:flex;align-items:center;gap:8px;padding:12px 0;color:var(--text-muted);font-size:0.82rem;">
+          <div class="anim-spin" style="width:16px;height:16px;border:2px solid var(--gray-200);border-top-color:var(--primary-500);border-radius:50%;flex-shrink:0;"></div>
+          Memuat info akun...
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
         <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
       </div>
-    </form>`,n.style.display=`flex`,document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`editSaveBtn`);n.disabled=!0,n.textContent=`Menyimpan...`;let r=new FormData(t.target),i={},a=t.target.querySelectorAll(`input[type="file"]`),o=new Set([...a].map(e=>e.name));r.forEach((e,t)=>{e&&!o.has(t)&&(i[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(i)}),r=await t.json();if(t.ok){let t=new FormData,n=!1;if(a.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),n=!0)}),n)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+r.message),document.getElementById(`pmbDetailModal`).style.display=`none`,B()}else alert(`❌ `+(r.error||`Gagal menyimpan`)),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}})}var Bt=`/api/pmb`,W=[];function Vt(){return`
+    </form>`,n.style.display=`flex`,(async()=>{let t=document.getElementById(`editAkunContent`);if(t)try{let n=await fetch(`${R}/account/${e}`);if(!n.ok){t.innerHTML=`
+          <div style="background:hsl(38 100% 96%);border:1px solid hsl(38 80% 80%);border-radius:10px;padding:14px 16px;width:100%;font-size:0.82rem;">
+            <p style="margin:0;color:hsl(38 60% 35%);">⚠️ Akun belum dibuat. Gunakan tombol <strong>② Akun</strong> di tabel untuk membuat akun.</p>
+          </div>`;return}let r=await n.json(),i=r.is_validated?`<span style="display:inline-flex;align-items:center;gap:4px;background:hsl(145 55% 90%);color:hsl(145 55% 30%);border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">✅ Tervalidasi</span>`:`<span style="display:inline-flex;align-items:center;gap:4px;background:hsl(38 90% 90%);color:hsl(38 60% 35%);border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">⏳ Belum Validasi</span>`;t.innerHTML=`
+        <div style="width:100%;">
+          <div class="off-row" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label">NIM</label>
+              <input type="text" id="editAkunNim" value="${r.nim||``}" class="form-input" placeholder="NIM mahasiswa">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Login</label>
+              <input type="email" id="editAkunEmail" value="${r.email||``}" class="form-input" placeholder="Email login">
+            </div>
+          </div>
+          <div class="off-row" style="align-items:center;">
+            <div class="form-group">
+              <label class="form-label">Status Validasi</label>
+              <div style="display:flex;align-items:center;gap:12px;padding-top:6px;">${i}
+                <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;">
+                  <input type="checkbox" id="editAkunValidasi" ${r.is_validated?`checked`:``} style="width:16px;height:16px;cursor:pointer;">
+                  Toggle validasi
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <div style="display:flex;gap:6px;padding-top:4px;">
+                <input type="text" id="editAkunPwd" value="${r.plain_password?`••••••••`:`—`}" class="form-input" readonly style="flex:1;cursor:default;background:hsl(215 20% 97%);" placeholder="Password tersimpan">
+                <button type="button" id="btnResetPwd" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:8px;background:hsl(0 70% 95%);color:hsl(0 65% 45%);font-size:0.72rem;font-weight:600;cursor:pointer;white-space:nowrap;" title="Reset password ke password baru">🔄 Reset</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button type="button" id="btnSaveAkun" class="btn btn-primary" style="font-size:0.82rem;padding:7px 18px;">💾 Simpan Akun</button>
+          </div>
+        </div>`,document.getElementById(`btnSaveAkun`)?.addEventListener(`click`,async()=>{let e=document.getElementById(`editAkunNim`)?.value.trim(),t=document.getElementById(`editAkunEmail`)?.value.trim(),n=document.getElementById(`editAkunValidasi`)?.checked?1:0,i=document.getElementById(`btnSaveAkun`);i.disabled=!0,i.textContent=`Menyimpan...`;try{let a=await fetch(`${R}/account/${r.id}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify({nim:e,email:t,is_validated:n})}),o=await a.json();a.ok?(i.textContent=`✅ Tersimpan!`,setTimeout(()=>{i.disabled=!1,i.textContent=`💾 Simpan Akun`},2e3),B()):(alert(`❌ `+(o.error||`Gagal menyimpan akun`)),i.disabled=!1,i.textContent=`💾 Simpan Akun`)}catch(e){alert(`❌ Error: `+e.message),i.disabled=!1,i.textContent=`💾 Simpan Akun`}}),document.getElementById(`btnResetPwd`)?.addEventListener(`click`,async()=>{if(!confirm(`Reset password akun NIM ${r.nim}?\n\nPassword baru akan di-generate otomatis dan dikirim via email.`))return;let e=document.getElementById(`btnResetPwd`);e.disabled=!0,e.textContent=`...`;try{let e=await fetch(`${R}/account/${r.id}/reset-password`,{method:`POST`}),t=await e.json();e.ok?(document.getElementById(`editAkunPwd`).value=t.new_password||`(cek email)`,alert(`✅ Password berhasil direset!\n\nPassword baru: ${t.new_password||`(sudah dikirim via email)`}`)):alert(`❌ `+(t.error||`Gagal reset password`))}catch(e){alert(`❌ Error: `+e.message)}finally{e.disabled=!1,e.textContent=`🔄 Reset`}})}catch{t.innerHTML=`<p style="color:var(--danger-500);font-size:0.82rem;">❌ Gagal memuat info akun</p>`}})(),document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`editSaveBtn`);n.disabled=!0,n.textContent=`Menyimpan...`;let r=new FormData(t.target),i={},a=t.target.querySelectorAll(`input[type="file"]`),o=new Set([...a].map(e=>e.name));r.forEach((e,t)=>{e&&!o.has(t)&&(i[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(i)}),r=await t.json();if(t.ok){let t=new FormData,n=!1;if(a.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),n=!0)}),n)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+r.message),document.getElementById(`pmbDetailModal`).style.display=`none`,B()}else alert(`❌ `+(r.error||`Gagal menyimpan`)),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}})}var Bt=`/api/pmb`,W=[];function Vt(){return`
     <div class="dash-card">
       <div class="dash-card-header">
         <h2 class="dash-card-title">${F.graduationCap} Data Mahasiswa</h2>

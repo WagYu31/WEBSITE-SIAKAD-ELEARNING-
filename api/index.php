@@ -223,6 +223,10 @@ if (preg_match('#^/pmb/account/(\d+)/validate$#', $path, $m) && $method === 'PUT
     require_once __DIR__ . '/account.php';
     validateAccountByBAP((int)$m[1]);
 }
+if (preg_match('#^/pmb/account/(\d+)/reset-password$#', $path, $m) && $method === 'POST') {
+    require_once __DIR__ . '/account.php';
+    resetAccountPassword((int)$m[1]);
+}
 if (preg_match('#^/pmb/account/(\d+)$#', $path, $m) && $method === 'PUT') {
     require_once __DIR__ . '/account.php';
     updateAccount((int)$m[1]);

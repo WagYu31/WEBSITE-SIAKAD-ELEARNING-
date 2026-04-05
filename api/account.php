@@ -254,3 +254,41 @@ function updateAccount($regId) {
         jsonResponse(['error' => 'DB error: ' . $e->getMessage()], 500);
     }
 }
+
+// POST /api/pmb/account/:id/reset-password (id = account.id)
+function resetAccountPassword($accountId) {
+    $db = getDB();
+    $stmt = $db->prepare('SELECT a.*, r.nama, r.email as reg_email, r.prodi_pilihan FROM pmb_accounts a LEFT JOIN pmb_registrations r ON r.id = a.registration_id WHERE a.id = ?');
+    $stmt->execute([$accountId]);
+    $account = $stmt->fetch();
+
+    if (!$account) {
+        jsonResponse(['error' => 'Akun tidak ditemukan'], 404);
+        return;
+    }
+
+    $newPwd = generatePassword();
+    $hashed = password_hash($newPwd, PASSWORD_DEFAULT);
+
+    $db->prepare('UPDATE pmb_accounts SET password_hash = ?, plain_password = ?, updated_at = NOW() WHERE id = ?')
+       ->execute([$hashed, $newPwd, $accountId]);
+
+    // Send email with new password
+    try {
+        require_once __DIR__ . '/email.php';
+        $toEmail = !empty($account['email']) ? $account['email'] : $account['reg_email'];
+        if ($toEmail) {
+            $reg = ['nama' => $account['nama'], 'email' => $account['reg_email'], 'prodi_pilihan' => $account['prodi_pilihan']];
+            $akun = ['nim' => $account['nim'], 'email' => $account['email']];
+            emailAkunDibuat($reg, $akun, $newPwd);
+        }
+    } catch (Exception $e) {
+        error_log('[EMAIL] resetPassword email error: ' . $e->getMessage());
+    }
+
+    jsonResponse([
+        'message'      => '✅ Password berhasil direset dan dikirim via email',
+        'new_password' => $newPwd,
+        'nim'          => $account['nim'],
+    ]);
+}

@@ -5653,6 +5653,15 @@ function showEditForm(regId) {
         </div>
       </div>
 
+      <!-- Info Akun Mahasiswa (async) -->
+      <div class="off-section" id="editAkunSection">
+        <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+        <div id="editAkunContent" style="display:flex;align-items:center;gap:8px;padding:12px 0;color:var(--text-muted);font-size:0.82rem;">
+          <div class="anim-spin" style="width:16px;height:16px;border:2px solid var(--gray-200);border-top-color:var(--primary-500);border-radius:50%;flex-shrink:0;"></div>
+          Memuat info akun...
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
         <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
@@ -5660,6 +5669,98 @@ function showEditForm(regId) {
     </form>`;
 
   modal.style.display = 'flex';
+
+  // Async load account info
+  (async () => {
+    const akunEl = document.getElementById('editAkunContent');
+    if (!akunEl) return;
+    try {
+      const res = await fetch(`${PMB_API}/account/${regId}`);
+      if (!res.ok) {
+        akunEl.innerHTML = `
+          <div style="background:hsl(38 100% 96%);border:1px solid hsl(38 80% 80%);border-radius:10px;padding:14px 16px;width:100%;font-size:0.82rem;">
+            <p style="margin:0;color:hsl(38 60% 35%);">⚠️ Akun belum dibuat. Gunakan tombol <strong>② Akun</strong> di tabel untuk membuat akun.</p>
+          </div>`;
+        return;
+      }
+      const acc = await res.json();
+      const validBadge = acc.is_validated
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:hsl(145 55% 90%);color:hsl(145 55% 30%);border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">✅ Tervalidasi</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:4px;background:hsl(38 90% 90%);color:hsl(38 60% 35%);border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;">⏳ Belum Validasi</span>`;
+      akunEl.innerHTML = `
+        <div style="width:100%;">
+          <div class="off-row" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label">NIM</label>
+              <input type="text" id="editAkunNim" value="${acc.nim || ''}" class="form-input" placeholder="NIM mahasiswa">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Login</label>
+              <input type="email" id="editAkunEmail" value="${acc.email || ''}" class="form-input" placeholder="Email login">
+            </div>
+          </div>
+          <div class="off-row" style="align-items:center;">
+            <div class="form-group">
+              <label class="form-label">Status Validasi</label>
+              <div style="display:flex;align-items:center;gap:12px;padding-top:6px;">${validBadge}
+                <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;">
+                  <input type="checkbox" id="editAkunValidasi" ${acc.is_validated ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;">
+                  Toggle validasi
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <div style="display:flex;gap:6px;padding-top:4px;">
+                <input type="text" id="editAkunPwd" value="${acc.plain_password ? '••••••••' : '—'}" class="form-input" readonly style="flex:1;cursor:default;background:hsl(215 20% 97%);" placeholder="Password tersimpan">
+                <button type="button" id="btnResetPwd" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:8px;background:hsl(0 70% 95%);color:hsl(0 65% 45%);font-size:0.72rem;font-weight:600;cursor:pointer;white-space:nowrap;" title="Reset password ke password baru">🔄 Reset</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+            <button type="button" id="btnSaveAkun" class="btn btn-primary" style="font-size:0.82rem;padding:7px 18px;">💾 Simpan Akun</button>
+          </div>
+        </div>`;
+
+      // Save akun button
+      document.getElementById('btnSaveAkun')?.addEventListener('click', async () => {
+        const nim   = document.getElementById('editAkunNim')?.value.trim();
+        const email = document.getElementById('editAkunEmail')?.value.trim();
+        const isVal = document.getElementById('editAkunValidasi')?.checked ? 1 : 0;
+        const saveBtn = document.getElementById('btnSaveAkun');
+        saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+        try {
+          const r = await fetch(`${PMB_API}/account/${acc.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nim, email, is_validated: isVal }),
+          });
+          const result = await r.json();
+          if (r.ok) { saveBtn.textContent = '✅ Tersimpan!'; setTimeout(() => { saveBtn.disabled = false; saveBtn.textContent = '💾 Simpan Akun'; }, 2000); loadRegistrationList(); }
+          else { alert('❌ ' + (result.error || 'Gagal menyimpan akun')); saveBtn.disabled = false; saveBtn.textContent = '💾 Simpan Akun'; }
+        } catch (err) { alert('❌ Error: ' + err.message); saveBtn.disabled = false; saveBtn.textContent = '💾 Simpan Akun'; }
+      });
+
+      // Reset password button
+      document.getElementById('btnResetPwd')?.addEventListener('click', async () => {
+        if (!confirm(`Reset password akun NIM ${acc.nim}?\n\nPassword baru akan di-generate otomatis dan dikirim via email.`)) return;
+        const resetBtn = document.getElementById('btnResetPwd');
+        resetBtn.disabled = true; resetBtn.textContent = '...';
+        try {
+          const r = await fetch(`${PMB_API}/account/${acc.id}/reset-password`, { method: 'POST' });
+          const result = await r.json();
+          if (r.ok) {
+            document.getElementById('editAkunPwd').value = result.new_password || '(cek email)';
+            alert(`✅ Password berhasil direset!\n\nPassword baru: ${result.new_password || '(sudah dikirim via email)'}`);
+          } else { alert('❌ ' + (result.error || 'Gagal reset password')); }
+        } catch (err) { alert('❌ Error: ' + err.message); }
+        finally { resetBtn.disabled = false; resetBtn.textContent = '🔄 Reset'; }
+      });
+
+    } catch (err) {
+      akunEl.innerHTML = `<p style="color:var(--danger-500);font-size:0.82rem;">❌ Gagal memuat info akun</p>`;
+    }
+  })();
 
   document.getElementById('editRegForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
