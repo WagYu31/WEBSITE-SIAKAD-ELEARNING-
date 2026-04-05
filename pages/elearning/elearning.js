@@ -3,7 +3,7 @@
 // Separate E-Learning module
 // ============================================
 
-import { CAMPUS, KELAS_LIST, TUGAS_LIST, DOSEN_LIST, getInitials, getDeadlineStatus, generatePertemuanDates, formatTanggalShort, formatTanggalFull } from '../../js/data.js';
+import { CAMPUS, KELAS_LIST, TUGAS_LIST, DOSEN_LIST, KURIKULUM_DATA, getInitials, getDeadlineStatus, generatePertemuanDates, formatTanggalShort, formatTanggalFull } from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 
 // ---- SVG Icons ----
@@ -1976,30 +1976,46 @@ export async function renderElearning(container) {
       }
     } catch(e) { console.warn('Gagal fetch jadwal dosen:', e); }
 
-    // Fallback: use DOSEN_LIST static data (same source as SIAKAD dosen jadwal)
+    // Fallback: build from KURIKULUM_DATA same as SIAKAD's initJadwalDummy+getDosenJadwal
     if (built.length === 0) {
-      const dosenData = DOSEN_LIST.find(d => d.nip === user.nip || d.nama === user.nama);
-      if (dosenData && dosenData.mataKuliah && dosenData.mataKuliah.length > 0) {
-        const hariList = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-        const jamList = ['07:30-09:10','09:20-11:00','13:00-14:40','14:50-16:30'];
-        built = dosenData.mataKuliah.map((mk, i) => ({
-          id: 100 + i,
-          kode: 'MK' + String(101 + i).padStart(3,'0'),
-          nama: mk,
-          dosen: user.nama,
-          sks: 3,
-          semester: 'Genap 2025/2026',
-          kelas: i % 2 === 0 ? 'A' : 'B',
-          hari: hariList[i % hariList.length],
-          jam: jamList[i % jamList.length],
-          jadwal: hariList[i % hariList.length] + ', ' + jamList[i % jamList.length],
-          ruang: 'R.' + (201 + i),
-          mahasiswa: 25 + (i * 3),
-          progress: 50,
-          totalMateri: 14,
-          materiSelesai: 7,
-        }));
-      }
+      const dosenNama = user.nama || '';
+      const days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+      const timeSlots = ['07:30-09:10','09:20-11:00','13:00-14:40','14:50-16:30'];
+      let idx = 0;
+      const seen2 = new Set();
+      ['negara','niaga'].forEach(prodi => {
+        const d = KURIKULUM_DATA[prodi];
+        if (!d) return;
+        (d.semester || []).forEach(sem => {
+          const kelas = sem.no <= 2 ? 'A' : sem.no <= 4 ? 'B' : 'C';
+          (sem.mk || []).forEach(mk => {
+            if (!mk.dosen || mk.dosen === '-') return;
+            const dosenNames = mk.dosen.split('/').map(n => n.trim());
+            if (!dosenNames.some(dn => dn === dosenNama)) return;
+            if (seen2.has(mk.kode)) return;
+            seen2.add(mk.kode);
+            const hari = days[idx % days.length];
+            const jam = timeSlots[idx % timeSlots.length];
+            built.push({
+              id: 100 + idx,
+              kode: mk.kode,
+              nama: mk.nama,
+              dosen: dosenNama,
+              sks: mk.sks || 3,
+              semester: 'Genap 2025/2026',
+              kelas,
+              hari, jam,
+              jadwal: hari + ', ' + jam,
+              ruang: prodi === 'niaga' ? 'RN-10' + (idx%5+1) : 'RA-20' + (idx%5+1),
+              mahasiswa: 25 + (idx * 3),
+              progress: 50,
+              totalMateri: 14,
+              materiSelesai: 7,
+            });
+            idx++;
+          });
+        });
+      });
     }
 
     if (built.length > 0) DOSEN_KELAS_LIST = built;
