@@ -2735,7 +2735,7 @@
           </td>
         </tr>`).join(``)}
       </tbody>
-    </table>`}function At(){let e=document.getElementById(`pmbBulkBar`),t=document.getElementById(`pmbBulkCount`);e&&(U.size>0?(e.style.display=`flex`,t&&(t.textContent=`${U.size} pendaftar dipilih`)):e.style.display=`none`)}async function jt(){if(!confirm(`Validasi ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/${n}/validate`,{method:`PUT`})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Mt(){if(!confirm(`Buat akun untuk ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:n})})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Nt(){if(!confirm(`⚠️ HAPUS ${U.size} pendaftar?\n\nAksi ini tidak bisa dibatalkan!`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/registration/${n}`,{method:`DELETE`})).ok?e++:t++}catch{t++}alert(`✅ Terhapus: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}function Pt(){window.__pmbClickHandler&&document.removeEventListener(`click`,window.__pmbClickHandler,!0),window.__pmbClickHandler=function(e){let t=e.target.closest(`.pmb-act`);if(t&&t.dataset.act&&t.dataset.rid){e.preventDefault(),e.stopPropagation(),Lt(t.dataset.act,{id:t.dataset.rid,email:t.dataset.email||``,prodi:t.dataset.prodi||``});return}let n=e.target.closest(`.pmb-tr`);if(n&&!e.target.closest(`.pmb-act`)&&!e.target.closest(`input[type="checkbox"]`)){let e=parseInt(n.dataset.id),t=z.find(t=>t.id===e);t&&Ft(t)}},document.addEventListener(`click`,window.__pmbClickHandler,!0),document.querySelectorAll(`.sortable-th`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.sort;H.key===t?H.dir=H.dir===`asc`?`desc`:`asc`:H={key:t,dir:`asc`},Dt()})}),document.getElementById(`pmbSelectAll`)?.addEventListener(`change`,e=>{document.querySelectorAll(`.pmb-chk`).forEach(t=>{let n=parseInt(t.dataset.id);e.target.checked?U.add(n):U.delete(n),t.checked=e.target.checked}),At()}),document.querySelectorAll(`.pmb-chk`).forEach(e=>{e.addEventListener(`change`,()=>{let t=parseInt(e.dataset.id);e.checked?U.add(t):U.delete(t),At()})})}async function Ft(e){let t=document.getElementById(`pmbDetailModal`),n=document.getElementById(`pmbDetailContent`);if(!t||!n)return;let r={diterima:`badge-success`,ditolak:`badge-danger`,proses:`badge-primary`,menunggu:`badge-warning`},i=e=>e||`<span style="color:var(--danger-400);font-style:italic;">— kosong</span>`,a=e=>e?`✅`:`❌`,o=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,s=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,c=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],l=c.filter(t=>e[t]&&String(e[t]).trim()).length,u=Math.round(l/c.length*100),d=u===100?`hsl(145 60% 45%)`:u>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`;n.innerHTML=`
+    </table>`}function At(){let e=document.getElementById(`pmbBulkBar`),t=document.getElementById(`pmbBulkCount`);e&&(U.size>0?(e.style.display=`flex`,t&&(t.textContent=`${U.size} pendaftar dipilih`)):e.style.display=`none`)}async function jt(){if(!confirm(`Validasi ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/${n}/validate`,{method:`PUT`})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Mt(){if(!confirm(`Buat akun untuk ${U.size} pendaftar sekaligus?`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:n})})).ok?e++:t++}catch{t++}alert(`✅ Berhasil: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}async function Nt(){if(!confirm(`⚠️ HAPUS ${U.size} pendaftar?\n\nAksi ini tidak bisa dibatalkan!`))return;let e=0,t=0;for(let n of U)try{(await fetch(`${R}/registration/${n}`,{method:`DELETE`})).ok?e++:t++}catch{t++}alert(`✅ Terhapus: ${e}\n❌ Gagal: ${t}`),U.clear(),B()}function Pt(){window.__pmbClickHandler&&document.removeEventListener(`click`,window.__pmbClickHandler,!0),window.__pmbClickHandler=function(e){let t=e.target.closest(`.pmb-act`);if(t&&t.dataset.act&&t.dataset.rid){e.preventDefault(),e.stopPropagation(),Lt(t.dataset.act,{id:t.dataset.rid,email:t.dataset.email||``,prodi:t.dataset.prodi||``});return}let n=e.target.closest(`.pmb-tr`);if(n&&!e.target.closest(`.pmb-act`)&&!e.target.closest(`input[type="checkbox"]`)){let e=parseInt(n.dataset.id),t=z.find(t=>t.id===e);t&&Ft(t)}},document.addEventListener(`click`,window.__pmbClickHandler,!0),document.querySelectorAll(`.sortable-th`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.dataset.sort;H.key===t?H.dir=H.dir===`asc`?`desc`:`asc`:H={key:t,dir:`asc`},Dt()})}),document.getElementById(`pmbSelectAll`)?.addEventListener(`change`,e=>{document.querySelectorAll(`.pmb-chk`).forEach(t=>{let n=parseInt(t.dataset.id);e.target.checked?U.add(n):U.delete(n),t.checked=e.target.checked}),At()}),document.querySelectorAll(`.pmb-chk`).forEach(e=>{e.addEventListener(`change`,()=>{let t=parseInt(e.dataset.id);e.checked?U.add(t):U.delete(t),At()})})}async function Ft(e){let t=document.getElementById(`pmbDetailModal`),n=document.getElementById(`pmbDetailContent`);if(!t||!n)return;let r=t.querySelector(`h3`);r&&(r.innerHTML=`👁️ Detail Pendaftar`);let i=t.querySelector(`div`);i&&(i.style.borderTop=`4px solid hsl(210 70% 55%)`);let a={diterima:`badge-success`,ditolak:`badge-danger`,proses:`badge-primary`,menunggu:`badge-warning`},o=e=>e||`<span style="color:var(--danger-400);font-style:italic;">— kosong</span>`,s=e=>e?`✅`:`❌`,c=e=>e?new Date(e).toLocaleDateString(`id-ID`,{day:`numeric`,month:`long`,year:`numeric`}):`-`,l=e=>e?new Date(e).toLocaleString(`id-ID`,{day:`2-digit`,month:`short`,year:`numeric`,hour:`2-digit`,minute:`2-digit`}):`-`,u=[`nik`,`nama`,`email`,`telepon_1`,`prodi_pilihan`,`asal_sekolah`,`alamat`,`tempat_lahir`,`tanggal_lahir`,`gender`],d=u.filter(t=>e[t]&&String(e[t]).trim()).length,f=Math.round(d/u.length*100),p=f===100?`hsl(145 60% 45%)`:f>=70?`hsl(38 90% 50%)`:`hsl(0 70% 55%)`;n.innerHTML=`
     <div style="max-height:65vh;overflow-y:auto;padding-right:6px;">
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);">
@@ -2746,17 +2746,17 @@
           <h4 style="font-family:var(--font-heading);font-size:1rem;margin-bottom:2px;">${e.nama}</h4>
           <code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);background:var(--gray-50);padding:2px 8px;border-radius:var(--radius-sm);">${e.no_pendaftaran}</code>
         </div>
-        <span class="badge ${r[e.status]||`badge-warning`}" style="font-size:0.75rem;">${e.status}</span>
+        <span class="badge ${a[e.status]||`badge-warning`}" style="font-size:0.75rem;">${e.status}</span>
       </div>
 
       <!-- Kelengkapan Data -->
       <div style="background:hsl(215 40% 97%);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-size:0.78rem;font-weight:600;">📋 Kelengkapan Data</span>
-          <span style="font-size:0.82rem;font-weight:700;color:${d};">${u}%</span>
+          <span style="font-size:0.82rem;font-weight:700;color:${p};">${f}%</span>
         </div>
         <div style="background:#e2e8f0;border-radius:8px;height:6px;overflow:hidden;">
-          <div style="width:${u}%;height:100%;background:${d};border-radius:8px;transition:width .3s;"></div>
+          <div style="width:${f}%;height:100%;background:${p};border-radius:8px;transition:width .3s;"></div>
         </div>
       </div>
 
@@ -2775,17 +2775,17 @@
       <div style="margin-bottom:14px;">
         <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👤 Data Pribadi</h5>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div><p class="dl">NIK</p><p class="dv" style="font-family:var(--font-mono);">${i(e.nik)}</p></div>
-          <div><p class="dl">NISN</p><p class="dv">${i(e.nisn)}</p></div>
-          <div><p class="dl">Tempat Lahir</p><p class="dv">${i(e.tempat_lahir)}</p></div>
-          <div><p class="dl">Tanggal Lahir</p><p class="dv">${i(e.tanggal_lahir)}</p></div>
-          <div><p class="dl">Gender</p><p class="dv">${i(e.gender)}</p></div>
-          <div><p class="dl">Agama</p><p class="dv">${i(e.agama)}</p></div>
-          <div><p class="dl">Email</p><p class="dv">${i(e.email)}</p></div>
-          <div><p class="dl">Telepon 1</p><p class="dv">${i(e.telepon_1)}</p></div>
-          <div><p class="dl">Telepon 2</p><p class="dv">${i(e.telepon_2)}</p></div>
-          <div><p class="dl">KIP</p><p class="dv">${i(e.kip)}</p></div>
-          <div><p class="dl">KKS</p><p class="dv">${i(e.kks)}</p></div>
+          <div><p class="dl">NIK</p><p class="dv" style="font-family:var(--font-mono);">${o(e.nik)}</p></div>
+          <div><p class="dl">NISN</p><p class="dv">${o(e.nisn)}</p></div>
+          <div><p class="dl">Tempat Lahir</p><p class="dv">${o(e.tempat_lahir)}</p></div>
+          <div><p class="dl">Tanggal Lahir</p><p class="dv">${o(e.tanggal_lahir)}</p></div>
+          <div><p class="dl">Gender</p><p class="dv">${o(e.gender)}</p></div>
+          <div><p class="dl">Agama</p><p class="dv">${o(e.agama)}</p></div>
+          <div><p class="dl">Email</p><p class="dv">${o(e.email)}</p></div>
+          <div><p class="dl">Telepon 1</p><p class="dv">${o(e.telepon_1)}</p></div>
+          <div><p class="dl">Telepon 2</p><p class="dv">${o(e.telepon_2)}</p></div>
+          <div><p class="dl">KIP</p><p class="dv">${o(e.kip)}</p></div>
+          <div><p class="dl">KKS</p><p class="dv">${o(e.kks)}</p></div>
         </div>
       </div>
 
@@ -2793,12 +2793,12 @@
       <div style="margin-bottom:14px;">
         <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📍 Alamat</h5>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div style="grid-column:span 2;"><p class="dl">Alamat Lengkap</p><p class="dv">${i(e.alamat)}</p></div>
-          <div><p class="dl">Kota</p><p class="dv">${i(e.kota)}</p></div>
-          <div><p class="dl">Provinsi</p><p class="dv">${i(e.provinsi)}</p></div>
-          <div><p class="dl">Kecamatan</p><p class="dv">${i(e.kecamatan)}</p></div>
-          <div><p class="dl">Kelurahan</p><p class="dv">${i(e.kelurahan)}</p></div>
-          <div><p class="dl">Kode Pos</p><p class="dv">${i(e.kode_pos)}</p></div>
+          <div style="grid-column:span 2;"><p class="dl">Alamat Lengkap</p><p class="dv">${o(e.alamat)}</p></div>
+          <div><p class="dl">Kota</p><p class="dv">${o(e.kota)}</p></div>
+          <div><p class="dl">Provinsi</p><p class="dv">${o(e.provinsi)}</p></div>
+          <div><p class="dl">Kecamatan</p><p class="dv">${o(e.kecamatan)}</p></div>
+          <div><p class="dl">Kelurahan</p><p class="dv">${o(e.kelurahan)}</p></div>
+          <div><p class="dl">Kode Pos</p><p class="dv">${o(e.kode_pos)}</p></div>
         </div>
       </div>
 
@@ -2807,13 +2807,13 @@
         <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">👨‍👩‍👧 Data Keluarga</h5>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div><p class="dl">Anak Ke</p><p class="dv">${e.anak_ke||`-`} dari ${e.dari_jumlah||`-`}</p></div>
-          <div><p class="dl">No. KK</p><p class="dv">${i(e.no_kk)}</p></div>
-          <div><p class="dl">Nama Ayah</p><p class="dv">${i(e.nama_ayah)}</p></div>
-          <div><p class="dl">Pekerjaan Ayah</p><p class="dv">${i(e.pekerjaan_ayah)}</p></div>
-          <div><p class="dl">NIK Ayah</p><p class="dv">${i(e.nik_ayah)}</p></div>
-          <div><p class="dl">Nama Ibu</p><p class="dv">${i(e.nama_ibu)}</p></div>
-          <div><p class="dl">Pekerjaan Ibu</p><p class="dv">${i(e.pekerjaan_ibu)}</p></div>
-          <div><p class="dl">NIK Ibu</p><p class="dv">${i(e.nik_ibu)}</p></div>
+          <div><p class="dl">No. KK</p><p class="dv">${o(e.no_kk)}</p></div>
+          <div><p class="dl">Nama Ayah</p><p class="dv">${o(e.nama_ayah)}</p></div>
+          <div><p class="dl">Pekerjaan Ayah</p><p class="dv">${o(e.pekerjaan_ayah)}</p></div>
+          <div><p class="dl">NIK Ayah</p><p class="dv">${o(e.nik_ayah)}</p></div>
+          <div><p class="dl">Nama Ibu</p><p class="dv">${o(e.nama_ibu)}</p></div>
+          <div><p class="dl">Pekerjaan Ibu</p><p class="dv">${o(e.pekerjaan_ibu)}</p></div>
+          <div><p class="dl">NIK Ibu</p><p class="dv">${o(e.nik_ibu)}</p></div>
         </div>
       </div>
 
@@ -2821,10 +2821,10 @@
       <div style="margin-bottom:14px;">
         <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">🎓 Akademik</h5>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div><p class="dl">Program Studi</p><p class="dv">${i(e.prodi_pilihan)}</p></div>
-          <div><p class="dl">Asal Sekolah</p><p class="dv">${i(e.asal_sekolah)}</p></div>
+          <div><p class="dl">Program Studi</p><p class="dv">${o(e.prodi_pilihan)}</p></div>
+          <div><p class="dl">Asal Sekolah</p><p class="dv">${o(e.asal_sekolah)}</p></div>
           <div><p class="dl">Metode</p><span class="badge ${e.metode===`online`?`badge-primary`:`badge-warning`}" style="font-size:0.72rem;">${e.metode===`online`?`Online`:`Offline`}</span></div>
-          <div><p class="dl">Tanggal Daftar</p><p class="dv">${o(e.created_at)}</p></div>
+          <div><p class="dl">Tanggal Daftar</p><p class="dv">${c(e.created_at)}</p></div>
         </div>
       </div>
 
@@ -2832,16 +2832,16 @@
       <div style="margin-bottom:14px;">
         <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:8px;">📎 Checklist Kelengkapan</h5>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.8rem;">
-          <div>${a(e.nik)} NIK</div>
-          <div>${a(e.nama)} Nama</div>
-          <div>${a(e.email)} Email</div>
-          <div>${a(e.telepon_1)} Telepon</div>
-          <div>${a(e.tempat_lahir)} Tempat Lahir</div>
-          <div>${a(e.tanggal_lahir)} Tanggal Lahir</div>
-          <div>${a(e.gender)} Gender</div>
-          <div>${a(e.alamat)} Alamat</div>
-          <div>${a(e.prodi_pilihan)} Prodi</div>
-          <div>${a(e.asal_sekolah)} Asal Sekolah</div>
+          <div>${s(e.nik)} NIK</div>
+          <div>${s(e.nama)} Nama</div>
+          <div>${s(e.email)} Email</div>
+          <div>${s(e.telepon_1)} Telepon</div>
+          <div>${s(e.tempat_lahir)} Tempat Lahir</div>
+          <div>${s(e.tanggal_lahir)} Tanggal Lahir</div>
+          <div>${s(e.gender)} Gender</div>
+          <div>${s(e.alamat)} Alamat</div>
+          <div>${s(e.prodi_pilihan)} Prodi</div>
+          <div>${s(e.asal_sekolah)} Asal Sekolah</div>
         </div>
       </div>
 
@@ -2864,7 +2864,7 @@
       <button class="btn btn-primary btn-sm mgmt-action-btn" data-action="create-account" data-id="${e.id}" data-email="${e.email}" data-prodi="${e.prodi_pilihan}">🔐 Buat Akun</button>
       <button class="btn btn-secondary btn-sm mgmt-action-btn" data-action="edit" data-id="${e.id}">✏️ Edit</button>
       <button class="btn btn-danger btn-sm mgmt-action-btn" data-action="delete" data-id="${e.id}" style="margin-left:auto;">🗑️ Hapus</button>
-    </div>`,n.querySelectorAll(`.mgmt-action-btn`).forEach(e=>{e.addEventListener(`click`,t=>{t.stopPropagation(),Lt(e.dataset.action,e.dataset)})}),t.style.display=`flex`;let f=n.querySelector(`#pmbAccSection`);try{let t=await fetch(`${R}/account/${e.id}`);if(t.ok){let n=await t.json(),r=n.plain_password,i=`pmbPwdToggle_`+e.id,a=n.is_validated?`<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${n.validated_by||`BAP`} · ${s(n.validated_at)}</span>`:`<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`,o=s(n.created_at);f.innerHTML=`
+    </div>`,n.querySelectorAll(`.mgmt-action-btn`).forEach(e=>{e.addEventListener(`click`,t=>{t.stopPropagation(),Lt(e.dataset.action,e.dataset)})}),t.style.display=`flex`;let m=n.querySelector(`#pmbAccSection`);try{let t=await fetch(`${R}/account/${e.id}`);if(t.ok){let n=await t.json(),r=n.plain_password,i=`pmbPwdToggle_`+e.id,a=n.is_validated?`<span style="color:hsl(145 55% 40%);font-weight:600;">✅ Tervalidasi</span> <span style="font-size:0.72rem;color:var(--text-muted);">oleh ${n.validated_by||`BAP`} · ${l(n.validated_at)}</span>`:`<span style="color:hsl(38 75% 45%);font-weight:600;">⏳ Belum Divalidasi</span>`,o=l(n.created_at);m.innerHTML=`
         <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
             <div style="width:28px;height:28px;background:linear-gradient(135deg,hsl(215 65% 50%),hsl(250 65% 58%));border-radius:8px;display:flex;align-items:center;justify-content:center;">
@@ -2903,14 +2903,14 @@
               <p style="font-size:0.8rem;">${a}</p>
             </div>
           </div>
-        </div>`}else f.innerHTML=`
+        </div>`}else m.innerHTML=`
         <div style="background:hsl(38 60% 96%);border-radius:12px;padding:12px 16px;border:1px dashed hsl(38 50% 80%);">
           <div style="display:flex;align-items:center;gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="hsl(38 65% 50%)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <span style="font-size:0.78rem;font-weight:600;color:hsl(38 60% 40%);">Info Akun Mahasiswa</span>
           </div>
           <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:6px 0 0;">⚠️ Akun belum dibuat — klik <strong>🔐 Buat Akun</strong> untuk membuatkan akun login.</p>
-        </div>`}catch{f.innerHTML=`<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`}}function It(e){if(!e.length){alert(`Tidak ada data untuk diexport.`);return}let t=[[`No Pendaftaran`,`Nama`,`NIK`,`Email`,`Prodi`,`Metode`,`Status`,`Asal Sekolah`,`Telepon`],...e.map(e=>[e.no_pendaftaran,e.nama,e.nik,e.email||``,e.prodi_pilihan||``,e.metode||``,e.status,e.asal_sekolah||``,e.telepon_1||``])].map(e=>e.map(e=>`"${e}"`).join(`,`)).join(`
+        </div>`}catch{m.innerHTML=`<div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`}}function It(e){if(!e.length){alert(`Tidak ada data untuk diexport.`);return}let t=[[`No Pendaftaran`,`Nama`,`NIK`,`Email`,`Prodi`,`Metode`,`Status`,`Asal Sekolah`,`Telepon`],...e.map(e=>[e.no_pendaftaran,e.nama,e.nik,e.email||``,e.prodi_pilihan||``,e.metode||``,e.status,e.asal_sekolah||``,e.telepon_1||``])].map(e=>e.map(e=>`"${e}"`).join(`,`)).join(`
 `),n=new Blob([t],{type:`text/csv`}),r=URL.createObjectURL(n),i=document.createElement(`a`);i.href=r,i.download=`PMB_Data_${new Date().toISOString().slice(0,10)}.csv`,i.click(),URL.revokeObjectURL(r)}async function Lt(e,t){try{let n,r;switch(e){case`view`:{let e=z.find(e=>String(e.id)===String(t.id));e?Ft(e):(console.error(`PMB reg not found, id:`,t.id,`available:`,z.map(e=>e.id)),alert(`Data tidak ditemukan. Coba refresh halaman.`));return}case`create-account`:if(n=await fetch(`${R}/account/create`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:parseInt(t.id)})}),r=await n.json(),n.ok){let e=r.password;alert(e?`✅ Akun dibuat!\n\nNIM: ${r.nim}\nPassword: ${e}\nEmail: ${r.email}`:`ℹ️ Akun sudah dibuat sebelumnya.\n\nNIM: ${r.nim}\nEmail: ${r.email}\n\nPassword hanya ditampilkan saat pertama kali dibuat.`)}else alert(`❌ `+(r.error||`Gagal membuat akun`));break;case`validate`:if(!(await fetch(`${R}/account/${t.id}`)).ok){alert(`❌ Akun belum dibuat. Buat akun terlebih dahulu.`);return}let e=await fetch(`${R}/account/${t.id}/validate`,{method:`PUT`});r=await e.json(),e.ok?(alert(`✅ `+r.message),B()):alert(`❌ `+(r.error||`Gagal validasi`));break;case`confirm-pay`:{let e=z.find(e=>String(e.id)===String(t.id)),n=e?e.nama:`Pendaftar`,r=prompt(`💰 Pembayaran untuk: ${n}\n\nPilih metode:\n1 = Cash (langsung konfirmasi)\n2 = Online (Midtrans)\n\nKetik 1 atau 2:`);if(!r||![`1`,`2`].includes(r.trim())){alert(`Dibatalkan`);return}let i=r.trim()===`1`?`cash`:`online`,a=await fetch(`${R}/payment`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({registration_id:parseInt(t.id),metode_bayar:i})}),o=await a.json();if(!a.ok){alert(`❌ `+(o.error||`Gagal membuat pembayaran`));return}if(i===`cash`){let e=await fetch(`${R}/payment/${o.id}/confirm`,{method:`PUT`});if(e.ok){let t=await e.json();alert(`✅ Pembayaran cash dikonfirmasi!
 Rp `+Number(t.jumlah||0).toLocaleString(`id-ID`)),B()}else alert(`❌ Gagal konfirmasi pembayaran`)}else{let e=o.snap_token;if(!e){alert(`⚠️ Snap token gagal dibuat.
 
@@ -3108,7 +3108,7 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
               </div>
             `:``}
             <button onclick="document.querySelector('.pmb-mgmt-btn').click()" style="background:hsl(215 70% 50%);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px;">← Kembali ke Daftar</button>
-          </div>`}else alert(`❌ `+(r.error||`Gagal`)),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}}))}function zt(e){let t=z.find(t=>String(t.id)===String(e));if(!t){console.error(`Edit: reg not found for id`,e);return}let n=document.getElementById(`pmbDetailModal`),r=document.getElementById(`pmbDetailContent`);if(!n||!r)return;let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;r.innerHTML=`
+          </div>`}else alert(`❌ `+(r.error||`Gagal`)),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}}))}function zt(e){let t=z.find(t=>String(t.id)===String(e));if(!t){console.error(`Edit: reg not found for id`,e);return}let n=document.getElementById(`pmbDetailModal`),r=document.getElementById(`pmbDetailContent`);if(!n||!r)return;let i=n.querySelector(`h3`);i&&(i.innerHTML=`✏️ Edit Pendaftar`);let a=n.querySelector(`div`);a&&(a.style.borderTop=`4px solid hsl(30 90% 55%)`);let o=[`Administrasi Negara`,`Administrasi Niaga`],s=e=>e||``;r.innerHTML=`
     <form id="editRegForm" style="max-height:65vh;overflow-y:auto;padding-right:8px;">
       <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 16px;">No. Daftar: <strong>${t.no_pendaftaran}</strong></p>
 
@@ -3119,7 +3119,7 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
           <div class="form-group">
             <label class="form-label">Program Studi *</label>
             <select name="prodi_pilihan" required class="form-select">
-              ${i.map(e=>`<option value="${e}" ${t.prodi_pilihan===e?`selected`:``}>${e}</option>`).join(``)}
+              ${o.map(e=>`<option value="${e}" ${t.prodi_pilihan===e?`selected`:``}>${e}</option>`).join(``)}
             </select>
           </div>
           <div class="form-group">
@@ -3135,19 +3135,19 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
       <div class="off-section">
         <h5 class="off-section-title">👤 Data Pribadi</h5>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">NISN</label><input type="text" name="nisn" value="${a(t.nisn)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">KIP</label><input type="text" name="kip" value="${a(t.kip)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NISN</label><input type="text" name="nisn" value="${s(t.nisn)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">KIP</label><input type="text" name="kip" value="${s(t.kip)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">KKS</label><input type="text" name="kks" value="${a(t.kks)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" value="${a(t.nik)}" required class="form-input" pattern="[0-9]{16}" maxlength="16" minlength="16"></div>
+          <div class="form-group"><label class="form-label">KKS</label><input type="text" name="kks" value="${s(t.kks)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK *</label><input type="text" name="nik" value="${s(t.nik)}" required class="form-input" pattern="[0-9]{16}" maxlength="16" minlength="16"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Nama Lengkap *</label><input type="text" name="nama" value="${a(t.nama)}" required class="form-input"></div>
-          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${a(t.tempat_lahir)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Nama Lengkap *</label><input type="text" name="nama" value="${s(t.nama)}" required class="form-input"></div>
+          <div class="form-group"><label class="form-label">Tempat Lahir</label><input type="text" name="tempat_lahir" value="${s(t.tempat_lahir)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${a(t.tanggal_lahir)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" name="tanggal_lahir" value="${s(t.tanggal_lahir)}" class="form-input"></div>
           <div class="form-group"><label class="form-label">Gender</label>
             <div style="display:flex;gap:16px;padding-top:8px;">
               <label style="display:flex;align-items:center;gap:6px;font-size:var(--text-sm);cursor:pointer;"><input type="radio" name="gender" value="Laki-laki" ${t.gender===`Laki-laki`?`checked`:``}> Laki-laki</label>
@@ -3162,11 +3162,11 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
               ${[`Islam`,`Kristen`,`Katolik`,`Hindu`,`Budha`,`Konghucu`].map(e=>`<option value="${e}" ${t.agama===e?`selected`:``}>${e}</option>`).join(``)}
             </select>
           </div>
-          <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" value="${a(t.email)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" value="${s(t.email)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" value="${a(t.telepon_1)}" class="form-input" maxlength="12"></div>
-          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" value="${a(t.telepon_2)}" class="form-input" maxlength="12"></div>
+          <div class="form-group"><label class="form-label">Telepon 1 *</label><input type="tel" name="telepon_1" value="${s(t.telepon_1)}" class="form-input" maxlength="12"></div>
+          <div class="form-group"><label class="form-label">Telepon 2</label><input type="tel" name="telepon_2" value="${s(t.telepon_2)}" class="form-input" maxlength="12"></div>
         </div>
       </div>
 
@@ -3175,18 +3175,18 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
         <h5 class="off-section-title">📍 Alamat</h5>
         <div class="form-group" style="margin-bottom:14px;">
           <label class="form-label">Alamat Lengkap</label>
-          <textarea name="alamat" class="form-input" rows="2" style="resize:vertical;">${a(t.alamat)}</textarea>
+          <textarea name="alamat" class="form-input" rows="2" style="resize:vertical;">${s(t.alamat)}</textarea>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${a(t.provinsi)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Kota/Kabupaten</label><input type="text" name="kota" value="${a(t.kota)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Provinsi</label><input type="text" name="provinsi" value="${s(t.provinsi)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Kota/Kabupaten</label><input type="text" name="kota" value="${s(t.kota)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Kecamatan</label><input type="text" name="kecamatan" value="${a(t.kecamatan)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Desa/Kelurahan</label><input type="text" name="kelurahan" value="${a(t.kelurahan)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Kecamatan</label><input type="text" name="kecamatan" value="${s(t.kecamatan)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Desa/Kelurahan</label><input type="text" name="kelurahan" value="${s(t.kelurahan)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Kode Pos</label><input type="text" name="kode_pos" value="${a(t.kode_pos)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Kode Pos</label><input type="text" name="kode_pos" value="${s(t.kode_pos)}" class="form-input"></div>
           <div class="form-group"><label class="form-label">Anak Ke</label><input type="number" name="anak_ke" value="${t.anak_ke||``}" class="form-input"></div>
         </div>
       </div>
@@ -3196,26 +3196,26 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:zt(t.id);return;
         <h5 class="off-section-title">👨‍👩‍👧 Data Orang Tua / Wali</h5>
         <div class="off-row">
           <div class="form-group"><label class="form-label">Dari Jumlah Anak</label><input type="number" name="dari_jumlah" value="${t.dari_jumlah||``}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Nama Ayah</label><input type="text" name="nama_ayah" value="${a(t.nama_ayah)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Nama Ayah</label><input type="text" name="nama_ayah" value="${s(t.nama_ayah)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Nama Ibu</label><input type="text" name="nama_ibu" value="${a(t.nama_ibu)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">Pekerjaan Ayah</label><input type="text" name="pekerjaan_ayah" value="${a(t.pekerjaan_ayah)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Nama Ibu</label><input type="text" name="nama_ibu" value="${s(t.nama_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Pekerjaan Ayah</label><input type="text" name="pekerjaan_ayah" value="${s(t.pekerjaan_ayah)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">Pekerjaan Ibu</label><input type="text" name="pekerjaan_ibu" value="${a(t.pekerjaan_ibu)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">NIK Ayah</label><input type="text" name="nik_ayah" value="${a(t.nik_ayah)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Pekerjaan Ibu</label><input type="text" name="pekerjaan_ibu" value="${s(t.pekerjaan_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK Ayah</label><input type="text" name="nik_ayah" value="${s(t.nik_ayah)}" class="form-input"></div>
         </div>
         <div class="off-row">
-          <div class="form-group"><label class="form-label">NIK Ibu</label><input type="text" name="nik_ibu" value="${a(t.nik_ibu)}" class="form-input"></div>
-          <div class="form-group"><label class="form-label">No. KK</label><input type="text" name="no_kk" value="${a(t.no_kk)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">NIK Ibu</label><input type="text" name="nik_ibu" value="${s(t.nik_ibu)}" class="form-input"></div>
+          <div class="form-group"><label class="form-label">No. KK</label><input type="text" name="no_kk" value="${s(t.no_kk)}" class="form-input"></div>
         </div>
       </div>
 
       <!-- Asal Sekolah -->
       <div class="off-section">
         <h5 class="off-section-title">🏫 Asal Sekolah</h5>
-        <div class="form-group"><label class="form-label">Asal Sekolah *</label><input type="text" name="asal_sekolah" value="${a(t.asal_sekolah)}" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Asal Sekolah *</label><input type="text" name="asal_sekolah" value="${s(t.asal_sekolah)}" class="form-input"></div>
       </div>
 
       <!-- Upload Berkas -->

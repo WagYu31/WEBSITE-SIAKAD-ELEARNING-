@@ -4848,6 +4848,12 @@ async function showRegistrantDetail(reg) {
   const content = document.getElementById('pmbDetailContent');
   if (!modal || !content) return;
 
+  // Reset modal title to "Detail Pendaftar" (read-only mode)
+  const titleEl = modal.querySelector('h3');
+  if (titleEl) titleEl.innerHTML = `👁️ Detail Pendaftar`;
+  const modalBox = modal.querySelector('div');
+  if (modalBox) modalBox.style.borderTop = '4px solid hsl(210 70% 55%)';
+
   const statusColors = { diterima: 'badge-success', ditolak: 'badge-danger', proses: 'badge-primary', menunggu: 'badge-warning' };
   const v = (val) => val || '<span style="color:var(--danger-400);font-style:italic;">— kosong</span>';
   const check = (val) => val ? '✅' : '❌';
@@ -5493,6 +5499,13 @@ function showEditForm(regId) {
   const modal = document.getElementById('pmbDetailModal');
   const content = document.getElementById('pmbDetailContent');
   if (!modal || !content) return;
+
+  // Update modal title to "Edit Pendaftar" (not "Detail Pendaftar")
+  const titleEl = modal.querySelector('h3');
+  if (titleEl) titleEl.innerHTML = `✏️ Edit Pendaftar`;
+  // Add visual indicator: orange left border on modal
+  const modalBox = modal.querySelector('div');
+  if (modalBox) modalBox.style.borderTop = '4px solid hsl(30 90% 55%)';
 
   const prodiOptions = ['Administrasi Negara','Administrasi Niaga'];
   const v = (val) => val || '';
