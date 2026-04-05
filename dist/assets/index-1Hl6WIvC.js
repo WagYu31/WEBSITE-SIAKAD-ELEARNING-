@@ -2849,6 +2849,18 @@
           <div>${a(e.asal_sekolah)} Asal Sekolah</div>
         </div>
       </div>
+
+      <!-- Berkas Persyaratan -->
+      <div style="margin-bottom:14px;">
+        <h5 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-500);font-weight:700;margin-bottom:10px;">📂 Berkas Persyaratan</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          ${(()=>{let t=`https://stiabayuanggajobs.online/api/`;return[{key:`file_pasfoto`,label:`Pas Foto`,icon:`🖼️`},{key:`file_ktp`,label:`KTP/Kartu ID`,icon:`🪪`},{key:`file_ijazah`,label:`Ijazah/SKHUN`,icon:`📜`},{key:`file_rapor`,label:`Rapor`,icon:`📋`},{key:`file_surat_sehat`,label:`Surat Sehat`,icon:`🏥`}].map(n=>{let r=e[n.key],i=r&&/\.(jpg|jpeg|png|webp)$/i.test(r),a=r&&/\.pdf$/i.test(r);return`<div style="background:hsl(215 20% 97%);border:1px solid hsl(215 20% 90%);border-radius:10px;padding:10px;">
+                <p style="font-size:0.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:6px;">${n.icon} ${n.label}</p>
+                ${r?i?`<a href="${t+r}" target="_blank"><img src="${t+r}" alt="${n.label}" style="width:100%;max-height:80px;object-fit:cover;border-radius:6px;cursor:pointer;"></a>`:a?`<a href="${t+r}" target="_blank" style="display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:600;color:hsl(215 60% 45%);text-decoration:none;"><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14,2 14,8 20,8'/></svg> Buka PDF</a>`:`<span style='font-size:0.75rem;color:hsl(215 55% 48%);'>📎 Lihat Berkas</span>`:`<span style="font-size:0.72rem;color:hsl(38 60% 50%);font-style:italic;">⚠️ Belum diupload</span>`}
+              </div>`}).join(``)})()}
+        </div>
+      </div>
+
     </div>
 
     <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-100);flex-wrap:wrap;">
