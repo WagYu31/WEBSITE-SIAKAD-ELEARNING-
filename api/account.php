@@ -172,3 +172,63 @@ function validateAccountByBAP($regId) {
 function validateAccountByEmail($token) {
     jsonResponse(['message' => 'Email validation not yet implemented', 'token' => $token]);
 }
+
+// PUT /api/pmb/account/:registration_id — update NIM, email, password, validation
+function updateAccount($regId) {
+    $db = getDB();
+    $input = getJsonBody();
+
+    // Find account
+    $stmt = $db->prepare('SELECT * FROM pmb_accounts WHERE registration_id = ?');
+    $stmt->execute([$regId]);
+    $account = $stmt->fetch();
+
+    if (!$account) {
+        jsonResponse(['error' => 'Akun tidak ditemukan'], 404);
+        return;
+    }
+
+    $sets = []; $vals = [];
+
+    // Updatable fields: nim, email, is_validated
+    if (isset($input['nim']) && $input['nim'] !== '') {
+        $sets[] = 'nim = ?'; $vals[] = $input['nim'];
+        // Also update profiles table
+        $db->prepare('UPDATE profiles SET nim = ? WHERE nim = ?')->execute([$input['nim'], $account['nim']]);
+    }
+    if (isset($input['email']) && $input['email'] !== '') {
+        $sets[] = 'email = ?'; $vals[] = $input['email'];
+    }
+    if (isset($input['is_validated'])) {
+        $sets[] = 'is_validated = ?';
+        $vals[] = $input['is_validated'] ? 1 : 0;
+        if ($input['is_validated']) {
+            $sets[] = 'validated_by = ?'; $vals[] = 'bap';
+            $sets[] = 'validated_at = NOW()';
+        }
+    }
+
+    // Reset password
+    $newPwd = null;
+    if (!empty($input['reset_password'])) {
+        $newPwd = generatePassword();
+        $hashed = password_hash($newPwd, PASSWORD_DEFAULT);
+        $sets[] = 'password_hash = ?'; $vals[] = $hashed;
+        $sets[] = 'plain_password = ?'; $vals[] = $newPwd;
+    }
+
+    if (empty($sets)) {
+        jsonResponse(['message' => 'Tidak ada perubahan'], 200);
+        return;
+    }
+
+    $vals[] = $account['id'];
+    try {
+        $db->prepare('UPDATE pmb_accounts SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($vals);
+        $resp = ['message' => '✅ Info akun berhasil diperbarui'];
+        if ($newPwd) $resp['new_password'] = $newPwd;
+        jsonResponse($resp);
+    } catch (Exception $e) {
+        jsonResponse(['error' => 'DB error: ' . $e->getMessage()], 500);
+    }
+}

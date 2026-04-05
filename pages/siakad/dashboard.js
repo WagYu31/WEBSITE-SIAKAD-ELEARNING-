@@ -6247,7 +6247,7 @@ async function showMhsProfile(m) {
 }
 
 
-function showMhsEditModal(m) {
+async function showMhsEditModal(m) {
   const modal = document.getElementById('mhsModal');
   const modalBody = document.getElementById('mhsModalBody');
   const modalTitle = document.getElementById('mhsModalTitle');
@@ -6260,6 +6260,14 @@ function showMhsEditModal(m) {
 
   modalBody.innerHTML = `
     <form id="mhsEditForm" style="max-height:60vh;overflow-y:auto;padding-right:4px;">
+
+      <!-- ===== INFO AKUN (async) ===== -->
+      <div class="off-section" style="margin-bottom:16px;" id="editAccSection">
+        <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+        <div style="background:hsl(215 30% 96%);border-radius:10px;padding:12px;border:1px dashed hsl(215 40% 85%);text-align:center;">
+          <span style="font-size:0.78rem;color:var(--text-muted);">⏳ Memuat info akun...</span>
+        </div>
+      </div>
 
       <!-- ===== AKADEMIK ===== -->
       <div class="off-section" style="margin-bottom:16px;">
@@ -6439,6 +6447,89 @@ function showMhsEditModal(m) {
 
   modal.style.display = 'flex';
 
+  // ---- Async load Info Akun ----
+  const accSection = modalBody.querySelector('#editAccSection');
+  let _accId = null; // account.id (not registration_id)
+  try {
+    const accRes = await fetch(`${MHS_API}/account/${m.id}`);
+    if (accRes.ok) {
+      const acc = await accRes.json();
+      _accId = acc.id;
+      const pwdId = 'editPwd_' + m.id;
+      accSection.innerHTML = `
+        <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+        <div style="background:linear-gradient(135deg,hsl(215 70% 96%),hsl(250 60% 97%));border-radius:12px;padding:14px 16px;border:1px solid hsl(215 50% 88%);">
+          <div class="off-row">
+            <div class="form-group">
+              <label class="form-label">NIM</label>
+              <input type="text" id="editAccNim" class="form-input" value="${acc.nim || ''}" placeholder="NIM mahasiswa" style="font-family:var(--font-mono);font-weight:700;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Akun Login</label>
+              <input type="email" id="editAccEmail" class="form-input" value="${acc.email || ''}" placeholder="Email login mahasiswa">
+            </div>
+          </div>
+          <div class="off-row" style="margin-top:4px;">
+            <div class="form-group">
+              <label class="form-label">Password Saat Ini</label>
+              <div style="display:flex;align-items:center;gap:6px;background:white;border:1px solid hsl(215 30% 85%);border-radius:8px;padding:6px 10px;">
+                <span id="${pwdId}" style="font-family:var(--font-mono);font-size:0.85rem;font-weight:700;color:hsl(215 65% 40%);flex:1;">••••••••</span>
+                <button type="button" onclick="var el=document.getElementById('${pwdId}');el.textContent=el.textContent==='••••••••'?'${acc.plain_password||'(tidak ada)'}':'••••••••';"
+                  style="background:none;border:none;cursor:pointer;color:hsl(215 55% 50%);display:flex;padding:2px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
+              <label class="form-label" style="visibility:hidden;">-</label>
+              <button type="button" id="editAccResetPwd" class="btn btn-secondary" style="font-size:0.78rem;height:36px;">
+                🔄 Reset Password Baru
+              </button>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid hsl(215 30% 88%);display:flex;align-items:center;gap:10px;">
+            <label style="font-size:0.78rem;font-weight:600;color:hsl(215 50% 40%);">Status Validasi Akun:</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="editAccValidated" ${acc.is_validated ? 'checked' : ''} style="width:16px;height:16px;accent-color:hsl(145 60% 45%);">
+              <span style="font-size:0.78rem;">${acc.is_validated ? '✅ Tervalidasi' : '⏳ Belum Divalidasi'}</span>
+            </label>
+          </div>
+          <div id="editAccNewPwdBox" style="display:none;margin-top:8px;background:hsl(145 60% 95%);border-radius:8px;padding:8px 12px;border:1px solid hsl(145 50% 80%);">
+            <span style="font-size:0.75rem;font-weight:600;color:hsl(145 55% 35%);">🔑 Password baru akan digenerate saat simpan</span>
+          </div>
+        </div>`;
+
+      // Reset pwd button toggle
+      let _resetPwd = false;
+      document.getElementById('editAccResetPwd')?.addEventListener('click', () => {
+        _resetPwd = !_resetPwd;
+        const box = document.getElementById('editAccNewPwdBox');
+        const btn = document.getElementById('editAccResetPwd');
+        if (_resetPwd) { box.style.display = 'block'; btn.textContent = '↩️ Batalkan Reset'; btn.style.background = 'hsl(0 60% 95%)'; }
+        else { box.style.display = 'none'; btn.textContent = '🔄 Reset Password Baru'; btn.style.background = ''; }
+      });
+
+      // Store refs for submit handler
+      accSection._getAccData = () => ({
+        nim: document.getElementById('editAccNim')?.value || '',
+        email: document.getElementById('editAccEmail')?.value || '',
+        is_validated: document.getElementById('editAccValidated')?.checked ? true : false,
+        reset_password: _resetPwd,
+      });
+    } else {
+      accSection.innerHTML = `
+        <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+        <div style="background:hsl(38 60% 96%);border-radius:10px;padding:12px;border:1px dashed hsl(38 50% 80%);">
+          <p style="font-size:0.78rem;color:hsl(38 55% 45%);margin:0;">⚠️ Akun belum dibuat untuk mahasiswa ini. Buat akun terlebih dahulu melalui tombol <strong>Akun</strong> di halaman Manajemen PMB.</p>
+        </div>`;
+    }
+  } catch {
+    accSection.innerHTML = `
+      <h5 class="off-section-title">🔐 Info Akun Mahasiswa</h5>
+      <div style="font-size:0.75rem;color:var(--text-muted);padding:8px;">Gagal memuat info akun.</div>`;
+  }
+
+  // ---- Submit handler ----
   document.getElementById('mhsEditForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('mhsEditSaveBtn');
@@ -6449,44 +6540,52 @@ function showMhsEditModal(m) {
     const data = {};
     formData.forEach((v, k) => { data[k] = v; });
 
-    // Kolom yang TIDAK ada di tabel pmb_registrations — harus dibuang
-    const INVALID_COLS = ['nim', 'semester', 'status_mhs'];
-    INVALID_COLS.forEach(k => delete data[k]);
-
-    // status_mhs di form dipetakan ke kolom 'status' di DB
-    const rawStatus = formData.get('status_mhs');
-    if (rawStatus) data['status'] = rawStatus;
-
     try {
-      const res = await fetch(`${PMB_API}/registration/${m.id}`, {
+      // 1. Save registration data
+      const regRes = await fetch(`${PMB_API}/registration/${m.id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-HTTP-Method-Override': 'PUT',
-        },
+        headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
         body: JSON.stringify(data),
       });
-      let result = {};
-      const text = await res.text();
-      try { result = JSON.parse(text); } catch { result = { message: 'OK', error: text }; }
-      if (res.ok) {
-        alert('✅ ' + (result.message || 'Data berhasil diperbarui'));
-        modal.style.display = 'none';
-        loadMahasiswaList();
-      } else {
-        // Tampilkan error asli dari server jika ada
-        const errMsg = result.error || result.message || text || 'Gagal menyimpan';
-        alert('❌ ' + errMsg);
-        btn.disabled = false;
-        btn.textContent = '💾 Simpan';
+      const regText = await regRes.text();
+      let regResult = {}; try { regResult = JSON.parse(regText); } catch { regResult = { error: regText }; }
+
+      if (!regRes.ok) {
+        alert('❌ ' + (regResult.error || regResult.message || 'Gagal menyimpan data'));
+        btn.disabled = false; btn.textContent = '💾 Simpan Perubahan';
+        return;
       }
+
+      // 2. Save account data (if account exists)
+      const accData = accSection._getAccData?.();
+      if (accData && _accId !== null) {
+        const accRes = await fetch(`${MHS_API}/account/${m.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
+          body: JSON.stringify(accData),
+        });
+        const accText = await accRes.text();
+        let accResult = {}; try { accResult = JSON.parse(accText); } catch { accResult = { error: accText }; }
+
+        if (accResult.new_password) {
+          alert(`✅ Data berhasil disimpan!\n\n🔑 Password baru mahasiswa: ${accResult.new_password}\n\nCatat password ini!`);
+        } else {
+          alert('✅ ' + (regResult.message || 'Data berhasil diperbarui'));
+        }
+      } else {
+        alert('✅ ' + (regResult.message || 'Data berhasil diperbarui'));
+      }
+
+      modal.style.display = 'none';
+      loadMahasiswaList();
     } catch (err) {
       alert('❌ ' + err.message);
       btn.disabled = false;
-      btn.textContent = '💾 Simpan';
+      btn.textContent = '💾 Simpan Perubahan';
     }
   });
 }
+
 
 // ---- Content Router ----
 // ============================================
