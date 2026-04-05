@@ -108,7 +108,10 @@ export function renderPortal(container) {
 
   const userId = user.nim || user.nip || user.id;
   const profileInfo = getProfileInfo(user);
-  const stats = getWelcomeStats(user);
+  // Use placeholder stats while we fetch real ones
+  const stats = user.role === 'mahasiswa'
+    ? [{ value: user.ipk ?? '—', label: 'Indeks Prestasi Kumulatif' }, { value: user.totalSks ?? '—', label: 'SKS Lulus' }]
+    : getWelcomeStats(user);
 
   container.innerHTML = `
   <div class="portal" role="main" aria-label="Portal STIA Bayuangga">
@@ -171,10 +174,10 @@ export function renderPortal(container) {
         <div class="portal-welcome-text">
           <h2>${getGreeting()}, ${user.nama.split(' ')[0]}</h2>
           <p>${getDayDate()} &nbsp;•&nbsp; <span class="portal-clock-icon">${I.clock}</span> <span id="portalClock">${getTimeString()}</span></p>
-          <div class="portal-welcome-stats">
-            ${stats.map(s => `
+          <div class="portal-welcome-stats" id="portalStats">
+            ${stats.map((s, i) => `
               <div class="portal-welcome-stat">
-                <strong>${s.value}</strong>
+                <strong id="portalStat${i}">${s.value}</strong>
                 <span>${s.label}</span>
               </div>
             `).join('')}
@@ -270,6 +273,22 @@ export function renderPortal(container) {
   // ---- Event Handlers ----
   // Logout
   document.getElementById('portalLogoutBtn')?.addEventListener('click', () => logout());
+
+  // Async fetch real academic stats for mahasiswa
+  if (user.role === 'mahasiswa' && user.nim) {
+    fetch(`/api/transkip/${encodeURIComponent(user.nim)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        const ipk = data.ipk ? Number(data.ipk).toFixed(2) : '—';
+        const sks = data.totalSks ?? data.total_sks ?? '—';
+        const el0 = document.getElementById('portalStat0');
+        const el1 = document.getElementById('portalStat1');
+        if (el0) el0.textContent = ipk;
+        if (el1) el1.textContent = sks;
+      })
+      .catch(() => {}); // silent fail
+  }
 
   // Mobile sidebar toggle
   const mobileToggle = document.getElementById('portalMobileToggle');

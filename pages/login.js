@@ -2,11 +2,14 @@
 // STIA BAYUANGGA - Login Page
 // ============================================
 
-import { CAMPUS, USERS, DOSEN_LIST } from '../js/data.js';
+import { CAMPUS } from '../js/data.js';
 import { setUser } from '../js/app.js';
 import { navigate } from '../js/router.js';
 
 export function renderLogin(container) {
+  // Always clear old session when visiting login page
+  sessionStorage.removeItem('user');
+
   container.innerHTML = `
     <div class="login-page">
       <div class="login-bg" aria-hidden="true">
