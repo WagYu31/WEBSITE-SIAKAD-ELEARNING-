@@ -118,37 +118,78 @@ function loginDosenByNIP($db, $nip, $password) {
 
 // ============ STAFF (BAP / KAPRODI) ============
 function loginStaff($db, $role, $nip, $password) {
-    // Check staff table or use hardcoded admin credentials
-    // Extend this as needed
-    $stmt = $db->prepare('SELECT * FROM staff WHERE nip = ? AND role = ? LIMIT 1');
-    $stmt->execute([$nip, $role]);
-    $staff = $stmt->fetch();
+    // Hardcoded staff accounts (extend via staff table later)
+    $hardcoded = [
+        'bap' => [
+            '198203202008012001' => [
+                'password'  => 'bap123',
+                'nama'      => 'Hj. Dwi Rahmawati, S.AP., M.AP.',
+                'email'     => 'dwi.rahmawati@stiabayuangga.ac.id',
+                'jabatan'   => 'Kepala BAP',
+            ],
+        ],
+        'kaprodi' => [
+            '197809152005011001' => [
+                'password'  => 'kaprodi123',
+                'nama'      => 'Prof. Dr. Sri Wahyuni, M.AP.',
+                'email'     => 'sri.wahyuni@stiabayuangga.ac.id',
+                'jabatan'   => 'Ketua Program Studi',
+                'prodi'     => 'Administrasi Negara',
+            ],
+        ],
+    ];
 
-    if (!$staff) {
-        // Fallback: check hardcoded admin for BAP
+    $accounts = $hardcoded[$role] ?? [];
+    $account  = $accounts[$nip] ?? null;
+
+    if ($account && $account['password'] === $password) {
+        jsonResponse([
+            'success' => true,
+            'role'    => $role,
+            'id'      => $nip,
+            'nip'     => $nip,
+            'nama'    => $account['nama'],
+            'email'   => $account['email'],
+            'jabatan' => $account['jabatan'],
+            'prodi'   => $account['prodi'] ?? null,
+            'avatar'  => null,
+        ]);
+        return;
+    }
+
+    // Fallback: check staff table in DB
+    try {
+        $stmt = $db->prepare('SELECT * FROM staff WHERE nip = ? AND role = ? LIMIT 1');
+        $stmt->execute([$nip, $role]);
+        $staff = $stmt->fetch();
+
+        if (!$staff) {
+            jsonResponse(['error' => 'Akun tidak ditemukan'], 401);
+            return;
+        }
+
+        $valid = false;
+        if (!empty($staff['password_hash'])) {
+            $valid = password_verify($password, $staff['password_hash']);
+        } elseif (!empty($staff['password'])) {
+            $valid = ($password === $staff['password']);
+        }
+
+        if (!$valid) {
+            jsonResponse(['error' => 'Password salah'], 401);
+            return;
+        }
+
+        jsonResponse([
+            'success' => true,
+            'role'    => $role,
+            'id'      => (int)$staff['id'],
+            'nip'     => $staff['nip'],
+            'nama'    => $staff['nama'],
+            'email'   => $staff['email'] ?? '',
+            'avatar'  => null,
+        ]);
+    } catch (Exception $e) {
         jsonResponse(['error' => 'Akun tidak ditemukan'], 401);
-        return;
     }
-
-    $valid = false;
-    if (isset($staff['password_hash']) && $staff['password_hash']) {
-        $valid = password_verify($password, $staff['password_hash']);
-    } elseif (isset($staff['password'])) {
-        $valid = ($password === $staff['password']);
-    }
-
-    if (!$valid) {
-        jsonResponse(['error' => 'Password salah'], 401);
-        return;
-    }
-
-    jsonResponse([
-        'success' => true,
-        'role'    => $role,
-        'id'      => (int)$staff['id'],
-        'nip'     => $staff['nip'],
-        'nama'    => $staff['nama'],
-        'email'   => $staff['email'] ?? '',
-        'avatar'  => null,
-    ]);
 }
