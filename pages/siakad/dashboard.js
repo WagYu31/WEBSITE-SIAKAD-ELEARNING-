@@ -5742,18 +5742,18 @@ function bapMahasiswaContent() {
 
         </div>
 
-        <!-- Search & Filters — ISO 9241: controls grouped, consistent height 36px -->
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-          <div style="flex:1;min-width:200px;position:relative;">
+        <!-- Search & Filters — inline, consistent height -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:nowrap;">
+          <div style="flex:1;min-width:0;position:relative;">
             <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:hsl(215 15% 55%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:32px;height:36px;font-size:0.82rem;border-color:hsl(215 20% 88%);">
+            <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:32px;height:36px;font-size:0.82rem;border-color:hsl(215 20% 88%);width:100%;box-sizing:border-box;">
           </div>
-          <select id="mhsFilterProdi" class="form-select" style="height:36px;font-size:0.82rem;min-width:140px;border-color:hsl(215 20% 88%);">
+          <select id="mhsFilterProdi" class="form-select" style="height:36px;font-size:0.82rem;width:150px;flex-shrink:0;border-color:hsl(215 20% 88%);">
             <option value="">Semua Prodi</option>
             <option value="Administrasi Negara">Adm. Negara</option>
             <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
-          <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;min-width:120px;border-color:hsl(215 20% 88%);">
+          <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;width:130px;flex-shrink:0;border-color:hsl(215 20% 88%);">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="cuti">Cuti</option>
@@ -6320,7 +6320,7 @@ function showMhsEditModal(m) {
 
     const formData = new FormData(e.target);
     const data = {};
-    formData.forEach((v, k) => { if (v) data[k] = v; });
+    formData.forEach((v, k) => { data[k] = v; }); // include all fields including empty
 
     try {
       const res = await fetch(`${PMB_API}/registration/${m.id}`, {
@@ -6328,13 +6328,15 @@ function showMhsEditModal(m) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const result = await res.json();
+      let result = {};
+      const text = await res.text();
+      try { result = JSON.parse(text); } catch { result = { message: 'Tersimpan', error: text }; }
       if (res.ok) {
-        alert('✅ Data berhasil diperbarui');
-        modal.classList.remove('active');
+        alert('✅ ' + (result.message || 'Data berhasil diperbarui'));
+        modal.style.display = 'none';
         loadMahasiswaList();
       } else {
-        alert('❌ ' + (result.error || 'Gagal'));
+        alert('❌ ' + (result.error || result.message || 'Gagal menyimpan'));
         btn.disabled = false;
         btn.textContent = '💾 Simpan';
       }
