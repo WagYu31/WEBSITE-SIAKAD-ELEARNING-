@@ -2912,7 +2912,7 @@ Detail: `+(o.error_detail||o.error||`Unknown`));break}if(window.snap&&typeof win
 Metode: `+(e.payment_type||`-`)+`
 Order ID: `+(e.order_id||`-`)),B()},onPending:function(e){alert(`⏳ Pembayaran pending.
 Silakan selesaikan pembayaran.`),B()},onError:function(e){alert(`❌ Pembayaran gagal.`),B()},onClose:function(){B()}});else{let t=o.snap_url||`https://app.sandbox.midtrans.com/snap/v4/redirection/${e}`;window.open(t,`_blank`),alert(`💳 Halaman pembayaran dibuka di tab baru.
-Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(parseInt(t.id));return;case`delete`:let i=z.find(e=>String(e.id)===String(t.id));if(!i||!confirm(`⚠️ Hapus data pendaftaran?\n\n${i.nama} (${i.no_pendaftaran})\n\nSemua data terkait (akun, pembayaran) juga akan dihapus.`))return;n=await fetch(`${R}/registration/${t.id}`,{method:`DELETE`}),r=await n.json(),n.ok?(alert(`✅ `+r.message),B()):alert(`❌ `+(r.error||`Gagal menghapus`));break}}catch(e){alert(`❌ Error: `+e.message)}}function zt(){let e=document.getElementById(`pmbMgmtContent`);e&&(e.innerHTML=`
+Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(t.id);return;case`delete`:let i=z.find(e=>String(e.id)===String(t.id));if(!i||!confirm(`⚠️ Hapus data pendaftaran?\n\n${i.nama} (${i.no_pendaftaran})\n\nSemua data terkait (akun, pembayaran) juga akan dihapus.`))return;n=await fetch(`${R}/registration/${t.id}`,{method:`DELETE`}),r=await n.json(),n.ok?(alert(`✅ `+r.message),B()):alert(`❌ `+(r.error||`Gagal menghapus`));break}}catch(e){alert(`❌ Error: `+e.message)}}function zt(){let e=document.getElementById(`pmbMgmtContent`);e&&(e.innerHTML=`
     <form id="offlineRegForm" style="max-width:640px;">
       <h4 style="font-family:var(--font-heading);margin:0 0 20px;display:flex;align-items:center;gap:8px;">
         ${F.userPlus} Input Data Mahasiswa Baru (Offline)
@@ -3101,7 +3101,7 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(parseInt(t.id
               </div>
             `:``}
             <button onclick="document.querySelector('.pmb-mgmt-btn').click()" style="background:hsl(215 70% 50%);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px;">← Kembali ke Daftar</button>
-          </div>`}else alert(`❌ `+(r.error||`Gagal`)),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}}))}function Bt(e){let t=z.find(t=>t.id===e);if(!t)return;let n=document.getElementById(`pmbDetailModal`),r=document.getElementById(`pmbDetailContent`);if(!n||!r)return;let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;r.innerHTML=`
+          </div>`}else alert(`❌ `+(r.error||`Gagal`)),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`📝 Daftarkan & Buat Akun`}}))}function Bt(e){let t=z.find(t=>String(t.id)===String(e));if(!t){console.error(`Edit: reg not found for id`,e);return}let n=document.getElementById(`pmbDetailModal`),r=document.getElementById(`pmbDetailContent`);if(!n||!r)return;let i=[`Administrasi Negara`,`Administrasi Niaga`],a=e=>e||``;r.innerHTML=`
     <form id="editRegForm" style="max-height:65vh;overflow-y:auto;padding-right:8px;">
       <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 16px;">No. Daftar: <strong>${t.no_pendaftaran}</strong></p>
 
@@ -3118,7 +3118,7 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(parseInt(t.id
           <div class="form-group">
             <label class="form-label">Status</label>
             <select name="status" class="form-select">
-              ${[`menunggu`,`proses`,`diterima`,`ditolak`].map(e=>`<option value="${e}" ${t.status===e?`selected`:``}>${e}</option>`).join(``)}
+              ${[`Menunggu`,`Proses`,`Diterima`,`Ditolak`].map(e=>`<option value="${e}" ${(t.status||``).toLowerCase()===e.toLowerCase()?`selected`:``}>${e}</option>`).join(``)}
             </select>
           </div>
         </div>
@@ -3248,7 +3248,7 @@ Setelah selesai bayar, refresh halaman ini.`)}}break}case`edit`:Bt(parseInt(t.id
         <button type="submit" class="btn btn-primary" style="flex:1;" id="editSaveBtn">💾 Simpan Perubahan</button>
         <button type="button" class="btn btn-secondary" style="flex:0;" onclick="document.getElementById('pmbDetailModal').style.display='none'">Batal</button>
       </div>
-    </form>`,n.style.display=`flex`,document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let r=document.getElementById(`editSaveBtn`);r.disabled=!0,r.textContent=`Menyimpan...`;let i=new FormData(t.target),a={},o=t.target.querySelectorAll(`input[type="file"]`),s=new Set([...o].map(e=>e.name));i.forEach((e,t)=>{e&&!s.has(t)&&(a[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(a)}),i=await t.json();if(t.ok){let t=new FormData,r=!1;if(o.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),r=!0)}),r)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+i.message),n.classList.remove(`active`),B()}else alert(`❌ `+(i.error||`Gagal menyimpan`)),r.disabled=!1,r.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),r.disabled=!1,r.textContent=`💾 Simpan Perubahan`}})}var Vt=`/api/pmb`,W=[];function Ht(){return`
+    </form>`,n.style.display=`flex`,document.getElementById(`editRegForm`)?.addEventListener(`submit`,async t=>{t.preventDefault();let n=document.getElementById(`editSaveBtn`);n.disabled=!0,n.textContent=`Menyimpan...`;let r=new FormData(t.target),i={},a=t.target.querySelectorAll(`input[type="file"]`),o=new Set([...a].map(e=>e.name));r.forEach((e,t)=>{e&&!o.has(t)&&(i[t]=e)});try{let t=await fetch(`${R}/registration/${e}`,{method:`PUT`,headers:{"Content-Type":`application/json`},body:JSON.stringify(i)}),r=await t.json();if(t.ok){let t=new FormData,n=!1;if(a.forEach(e=>{e.files.length>0&&(t.append(e.name,e.files[0]),n=!0)}),n)try{await fetch(`${R}/registration/${e}/upload`,{method:`POST`,body:t})}catch{}alert(`✅ `+r.message),document.getElementById(`pmbDetailModal`).style.display=`none`,B()}else alert(`❌ `+(r.error||`Gagal menyimpan`)),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}catch(e){alert(`❌ `+e.message),n.disabled=!1,n.textContent=`💾 Simpan Perubahan`}})}var Vt=`/api/pmb`,W=[];function Ht(){return`
     <div class="dash-card">
       <div class="dash-card-header">
         <h2 class="dash-card-title">${F.graduationCap} Data Mahasiswa</h2>

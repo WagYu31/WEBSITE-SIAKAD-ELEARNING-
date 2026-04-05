@@ -5188,7 +5188,7 @@ async function handleMgmtAction(action, data) {
       }
 
       case 'edit':
-        showEditForm(parseInt(data.id));
+        showEditForm(data.id); // pass as-is (string), showEditForm handles String comparison
         return; // don't reload list
 
       case 'delete':
@@ -5452,8 +5452,8 @@ function showOfflineForm() {
 
 // ---- Edit Registration Form (Modal) ----
 function showEditForm(regId) {
-  const reg = _pmbRegistrations.find(r => r.id === regId);
-  if (!reg) return;
+  const reg = _pmbRegistrations.find(r => String(r.id) === String(regId));
+  if (!reg) { console.error('Edit: reg not found for id', regId); return; }
 
   const modal = document.getElementById('pmbDetailModal');
   const content = document.getElementById('pmbDetailContent');
@@ -5479,7 +5479,7 @@ function showEditForm(regId) {
           <div class="form-group">
             <label class="form-label">Status</label>
             <select name="status" class="form-select">
-              ${['menunggu','proses','diterima','ditolak'].map(s => `<option value="${s}" ${reg.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+              ${['Menunggu','Proses','Diterima','Ditolak'].map(s => `<option value="${s}" ${(reg.status||'').toLowerCase() === s.toLowerCase() ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -5640,7 +5640,7 @@ function showEditForm(regId) {
         if (hasFiles) { try { await fetch(`${PMB_API}/registration/${regId}/upload`, { method: 'POST', body: uploadData }); } catch {} }
 
         alert('✅ ' + result.message);
-        modal.classList.remove('active');
+        document.getElementById('pmbDetailModal').style.display = 'none';
         loadRegistrationList();
       } else {
         alert('❌ ' + (result.error || 'Gagal menyimpan'));
