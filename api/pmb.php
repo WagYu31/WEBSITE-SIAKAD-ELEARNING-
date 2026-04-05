@@ -287,6 +287,23 @@ function updateRegistration($id) {
     $input = getJsonBody();
     unset($input['id'], $input['no_pendaftaran'], $input['created_at']);
 
+    // Whitelist of valid columns in pmb_registrations
+    $allowed = ['nama','email','phone','nik','tempat_lahir','tanggal_lahir',
+                'jenis_kelamin','gender','agama','alamat','kota','provinsi',
+                'kecamatan','kelurahan','kode_pos','asal_sekolah','nisn',
+                'kip','kks','jalur','prodi_pilihan','jurusan_pilihan','status',
+                'catatan','dokumen','telepon_1','telepon_2','anak_ke',
+                'dari_jumlah','nama_ayah','nama_ibu','pekerjaan_ayah',
+                'pekerjaan_ibu','nik_ayah','nik_ibu','no_kk',
+                'file_pasfoto','file_ktp','file_ijazah','file_rapor','file_surat_sehat',
+                'updated_at'];
+    $input = array_intersect_key($input, array_flip($allowed));
+
+    if (empty($input)) {
+        jsonResponse(['message' => 'Tidak ada data untuk diupdate']);
+        return;
+    }
+
     $sets = []; $vals = [];
     foreach ($input as $key => $val) { $sets[] = "`$key` = ?"; $vals[] = $val; }
     $sets[] = "updated_at = NOW()";

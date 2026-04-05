@@ -5743,17 +5743,17 @@ function bapMahasiswaContent() {
         </div>
 
         <!-- Search & Filters — inline, consistent height -->
-        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:nowrap;">
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
           <div style="flex:1;min-width:0;position:relative;">
             <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:hsl(215 15% 55%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" id="mhsSearch" placeholder="Cari NIM atau Nama..." class="form-input" style="padding-left:32px;height:36px;font-size:0.82rem;border-color:hsl(215 20% 88%);width:100%;box-sizing:border-box;">
           </div>
-          <select id="mhsFilterProdi" class="form-select" style="height:36px;font-size:0.82rem;width:150px;flex-shrink:0;border-color:hsl(215 20% 88%);">
+          <select id="mhsFilterProdi" class="form-select" style="height:36px;font-size:0.82rem;flex-shrink:0;border-color:hsl(215 20% 88%);max-width:160px;">
             <option value="">Semua Prodi</option>
             <option value="Administrasi Negara">Adm. Negara</option>
             <option value="Administrasi Niaga">Adm. Niaga</option>
           </select>
-          <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;width:130px;flex-shrink:0;border-color:hsl(215 20% 88%);">
+          <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;flex-shrink:0;border-color:hsl(215 20% 88%);max-width:160px;">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="cuti">Cuti</option>
@@ -6320,7 +6320,15 @@ function showMhsEditModal(m) {
 
     const formData = new FormData(e.target);
     const data = {};
-    formData.forEach((v, k) => { data[k] = v; }); // include all fields including empty
+    formData.forEach((v, k) => { data[k] = v; });
+
+    // Kolom yang TIDAK ada di tabel pmb_registrations — harus dibuang
+    const INVALID_COLS = ['nim', 'semester', 'status_mhs'];
+    INVALID_COLS.forEach(k => delete data[k]);
+
+    // status_mhs di form dipetakan ke kolom 'status' di DB
+    const rawStatus = formData.get('status_mhs');
+    if (rawStatus) data['status'] = rawStatus;
 
     try {
       const res = await fetch(`${PMB_API}/registration/${m.id}`, {
@@ -6330,13 +6338,15 @@ function showMhsEditModal(m) {
       });
       let result = {};
       const text = await res.text();
-      try { result = JSON.parse(text); } catch { result = { message: 'Tersimpan', error: text }; }
+      try { result = JSON.parse(text); } catch { result = { message: 'OK', error: text }; }
       if (res.ok) {
         alert('✅ ' + (result.message || 'Data berhasil diperbarui'));
         modal.style.display = 'none';
         loadMahasiswaList();
       } else {
-        alert('❌ ' + (result.error || result.message || 'Gagal menyimpan'));
+        // Tampilkan error asli dari server jika ada
+        const errMsg = result.error || result.message || text || 'Gagal menyimpan';
+        alert('❌ ' + errMsg);
         btn.disabled = false;
         btn.textContent = '💾 Simpan';
       }
