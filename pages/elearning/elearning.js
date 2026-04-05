@@ -3,7 +3,7 @@
 // Separate E-Learning module
 // ============================================
 
-import { CAMPUS, KELAS_LIST, TUGAS_LIST, getInitials, getDeadlineStatus, generatePertemuanDates, formatTanggalShort, formatTanggalFull } from '../../js/data.js';
+import { CAMPUS, KELAS_LIST, TUGAS_LIST, DOSEN_LIST, getInitials, getDeadlineStatus, generatePertemuanDates, formatTanggalShort, formatTanggalFull } from '../../js/data.js';
 import { getUser, logout } from '../../js/app.js';
 
 // ---- SVG Icons ----
@@ -1934,40 +1934,75 @@ export async function renderElearning(container) {
   const user = getUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  // If dosen, fetch their jadwal mengajar from API and build dynamic kelas list
-  if (user.role === 'dosen' && user.nip) {
+  // If dosen, build kelas list from jadwal API → fallback to DOSEN_LIST static data
+  if (user.role === 'dosen') {
+    let built = [];
     try {
-      const res = await fetch(`/api/dosen/jadwal-mengajar/${encodeURIComponent(user.nip)}`);
-      if (res.ok) {
-        const json = await res.json();
-        const jadwalArr = json.data || json.jadwal || json || [];
-        // Deduplicate by kode_mk — each unique MK = 1 kelas
-        const seen = new Set();
-        DOSEN_KELAS_LIST = jadwalArr.reduce((acc, j) => {
-          const key = j.kode_mk || j.mata_kuliah_id || j.mata_kuliah;
-          if (key && !seen.has(key)) {
-            seen.add(key);
-            acc.push({
-              id: j.mata_kuliah_id || j.id || acc.length + 100,
-              kode: j.kode_mk || '-',
-              nama: j.mata_kuliah || j.nama_mk || '-',
-              dosen: user.nama,
-              sks: j.sks || 3,
-              semester: j.tahun_ajaran || 'Genap 2025/2026',
-              kelas: j.kelas || 'A',
-              hari: j.hari || '-',
-              jadwal: (j.hari || '-') + ', ' + (j.jam || '-'),
-              ruang: j.ruang || '-',
-              mahasiswa: j.jumlah_mahasiswa || 30,
-              progress: 50,
-              totalMateri: 14,
-              materiSelesai: 7,
-            });
-          }
-          return acc;
-        }, []);
+      if (user.nip) {
+        const res = await fetch(`/api/dosen/jadwal-mengajar/${encodeURIComponent(user.nip)}`);
+        if (res.ok) {
+          const json = await res.json();
+          const jadwalArr = Array.isArray(json.data) ? json.data : [];
+          // API response shape: { id, mata_kuliah_id, kelas, waktu, ruang, mata_kuliah: {id,kode,nama,sks}, jumlah_mhs }
+          const seen = new Set();
+          jadwalArr.forEach(j => {
+            const mk = j.mata_kuliah || {};
+            const key = mk.id || j.mata_kuliah_id;
+            if (key && !seen.has(key)) {
+              seen.add(key);
+              // Parse waktu e.g. "Senin, 07:30-09:10"
+              const waktuParts = (j.waktu || '').split(',');
+              const hari = (waktuParts[0] || '-').trim();
+              const jam = (waktuParts[1] || '-').trim();
+              built.push({
+                id: mk.id || j.mata_kuliah_id || built.length + 100,
+                kode: mk.kode || '-',
+                nama: mk.nama || '-',
+                dosen: user.nama,
+                sks: mk.sks || j.sks || 3,
+                semester: j.tahun_ajaran || 'Genap 2025/2026',
+                kelas: j.kelas || 'A',
+                hari, jam,
+                jadwal: j.waktu || (hari + ', ' + jam),
+                ruang: j.ruang || '-',
+                mahasiswa: j.jumlah_mhs || 30,
+                progress: 50,
+                totalMateri: 14,
+                materiSelesai: 7,
+              });
+            }
+          });
+        }
       }
     } catch(e) { console.warn('Gagal fetch jadwal dosen:', e); }
+
+    // Fallback: use DOSEN_LIST static data (same source as SIAKAD dosen jadwal)
+    if (built.length === 0) {
+      const dosenData = DOSEN_LIST.find(d => d.nip === user.nip || d.nama === user.nama);
+      if (dosenData && dosenData.mataKuliah && dosenData.mataKuliah.length > 0) {
+        const hariList = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+        const jamList = ['07:30-09:10','09:20-11:00','13:00-14:40','14:50-16:30'];
+        built = dosenData.mataKuliah.map((mk, i) => ({
+          id: 100 + i,
+          kode: 'MK' + String(101 + i).padStart(3,'0'),
+          nama: mk,
+          dosen: user.nama,
+          sks: 3,
+          semester: 'Genap 2025/2026',
+          kelas: i % 2 === 0 ? 'A' : 'B',
+          hari: hariList[i % hariList.length],
+          jam: jamList[i % jamList.length],
+          jadwal: hariList[i % hariList.length] + ', ' + jamList[i % jamList.length],
+          ruang: 'R.' + (201 + i),
+          mahasiswa: 25 + (i * 3),
+          progress: 50,
+          totalMateri: 14,
+          materiSelesai: 7,
+        }));
+      }
+    }
+
+    if (built.length > 0) DOSEN_KELAS_LIST = built;
   }
 
   let currentPage = 'home';
