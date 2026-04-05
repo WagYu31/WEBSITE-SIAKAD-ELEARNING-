@@ -5756,9 +5756,11 @@ function bapMahasiswaContent() {
           <select id="mhsFilterStatus" class="form-select" style="height:36px;font-size:0.82rem;flex-shrink:0;border-color:hsl(215 20% 88%);max-width:160px;">
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
+            <option value="menunggu">Menunggu</option>
+            <option value="proses">Proses</option>
             <option value="cuti">Cuti</option>
             <option value="lulus">Lulus</option>
-            <option value="do">DO</option>
+            <option value="ditolak">Ditolak</option>
           </select>
         </div>
 
@@ -5792,62 +5794,77 @@ function initMahasiswaPage() {
 
 async function loadMahasiswaList() {
   try {
-    // Get all registrations
+    // Get ALL registrations from PMB
     const res = await fetch(`${MHS_API}/registrations`);
     if (!res.ok) throw new Error('Gagal memuat data');
     const response = await res.json();
     const registrations = Array.isArray(response) ? response : (response.data || []);
 
-    // Filter accepted students (case-insensitive)
-    const accepted = registrations.filter(r => (r.status || '').toLowerCase() === 'diterima');
-
-    if (accepted.length === 0) {
-      // Fallback to local MAHASISWA_DATA when no accepted students from PMB
-      _mahasiswaList = MAHASISWA_DATA.map(m => ({...m}));
-    } else {
-      // Fetch account info (NIM) for each accepted registration in parallel
-      const accountResults = await Promise.allSettled(
-        accepted.map(r => fetch(`${MHS_API}/account/${r.id}`).then(res => res.ok ? res.json() : null).catch(() => null))
-      );
-
-      _mahasiswaList = accepted.map((r, idx) => {
-        const accResult = accountResults[idx];
-        const acc = accResult?.status === 'fulfilled' ? accResult.value : null;
-        const nim = acc?.nim || r.nim || `PMB${String(r.id).padStart(4,'0')}`;
-        const angkatan = r.created_at ? new Date(r.created_at).getFullYear() : 2026;
-        return {
-          ...r,
-          nim,
-          email: acc?.email || r.email || '',
-          angkatan,
-          semester: r.semester || 1,
-          status_mhs: acc?.is_validated ? 'aktif' : 'aktif', // validated = aktif
-          prodi: r.prodi_pilihan || r.jurusan_pilihan || '-',
-        };
-      });
+    if (registrations.length === 0) {
+      _mahasiswaList = [];
+      updateMhsStats();
+      renderMhsTable(_mahasiswaList);
+      return;
     }
+
+    // Fetch account info (NIM) for ALL registrations in parallel
+    const accountResults = await Promise.allSettled(
+      registrations.map(r => fetch(`${MHS_API}/account/${r.id}`).then(res => res.ok ? res.json() : null).catch(() => null))
+    );
+
+    // Map PMB status → student status
+    const statusMap = {
+      'menunggu': 'menunggu',
+      'proses':   'proses',
+      'diterima': 'aktif',
+      'ditolak':  'ditolak',
+    };
+
+    _mahasiswaList = registrations.map((r, idx) => {
+      const accResult = accountResults[idx];
+      const acc = accResult?.status === 'fulfilled' ? accResult.value : null;
+      const nim = acc?.nim || r.nim || `PMB${String(r.id).padStart(4,'0')}`;
+      const angkatan = r.created_at ? new Date(r.created_at).getFullYear() : 2026;
+      const pmbStatus = (r.status || 'menunggu').toLowerCase();
+      const status_mhs = statusMap[pmbStatus] || pmbStatus;
+      return {
+        ...r,
+        nim,
+        email: acc?.email || r.email || '',
+        angkatan,
+        semester: r.semester || 1,
+        status_mhs,
+        prodi: r.prodi_pilihan || r.jurusan_pilihan || '-',
+      };
+    });
 
     updateMhsStats();
     renderMhsTable(_mahasiswaList);
   } catch (err) {
-    // Fallback to local MAHASISWA_DATA when API is unavailable
-    _mahasiswaList = MAHASISWA_DATA.map(m => ({...m}));
+    // Show empty state when API is unavailable (no fake data)
+    _mahasiswaList = [];
     updateMhsStats();
     renderMhsTable(_mahasiswaList);
+    const ctr = document.getElementById('mhsTableContainer');
+    if (ctr) ctr.innerHTML = `<div style="text-align:center;padding:48px;color:hsl(215 15% 55%);">❌ Gagal memuat data: ${err.message}</div>`;
   }
 }
 
 function updateMhsStats() {
   const total = _mahasiswaList.length;
-  const aktif = _mahasiswaList.filter(m => m.status_mhs === 'aktif').length;
-  const cuti = _mahasiswaList.filter(m => m.status_mhs === 'cuti').length;
-  const lulus = _mahasiswaList.filter(m => m.status_mhs === 'lulus').length;
+  const aktif = _mahasiswaList.filter(m => ['aktif','diterima'].includes(m.status_mhs)).length;
+  const proses = _mahasiswaList.filter(m => ['menunggu','proses'].includes(m.status_mhs)).length;
+  const lulus  = _mahasiswaList.filter(m => m.status_mhs === 'lulus').length;
 
   const el = (id) => document.getElementById(id);
   if (el('mhsTotal')) el('mhsTotal').textContent = total;
   if (el('mhsAktif')) el('mhsAktif').textContent = aktif;
-  if (el('mhsCuti')) el('mhsCuti').textContent = cuti;
+  if (el('mhsCuti'))  el('mhsCuti').textContent  = proses;  // shows pending/process count
   if (el('mhsLulus')) el('mhsLulus').textContent = lulus;
+
+  // Update stat card labels dynamically
+  const cutiLabel = el('mhsCuti')?.nextElementSibling;
+  if (cutiLabel) cutiLabel.textContent = 'Proses';
 }
 
 function filterMahasiswa() {
@@ -5856,8 +5873,12 @@ function filterMahasiswa() {
   const status = document.getElementById('mhsFilterStatus')?.value || '';
 
   const filtered = _mahasiswaList.filter(m => {
-    const matchSearch = !query || (m.nama || '').toLowerCase().includes(query) || (m.nim || '').toLowerCase().includes(query) || (m.nik || '').includes(query);
-    const matchProdi = !prodi || m.prodi_pilihan === prodi;
+    const matchSearch = !query ||
+      (m.nama || '').toLowerCase().includes(query) ||
+      (m.nim  || '').toLowerCase().includes(query) ||
+      (m.nik  || '').includes(query) ||
+      (m.prodi || '').toLowerCase().includes(query.toLowerCase());
+    const matchProdi  = !prodi  || m.prodi_pilihan === prodi || m.prodi === prodi || m.jurusan_pilihan === prodi;
     const matchStatus = !status || m.status_mhs === status;
     return matchSearch && matchProdi && matchStatus;
   });
