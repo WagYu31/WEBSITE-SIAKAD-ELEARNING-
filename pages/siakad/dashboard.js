@@ -4961,7 +4961,6 @@ function bapPMBContent() {
         <div class="pmb-header-btns" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="pmb-mgmt-btn active" data-tab="list">Daftar Pendaftar</button>
           <button class="pmb-mgmt-btn" data-tab="add">+ Tambah Offline</button>
-          <button id="pmbProcessAll" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,hsl(142 60% 38%),hsl(162 60% 35%));color:white;border:none;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:opacity .2s;">⚡ Proses Semua</button>
         </div>
       </div>
       <div class="dash-card-body" id="pmbMgmtContent">
@@ -5096,10 +5095,16 @@ function renderPMBList(stats, registrations) {
       <button class="btn btn-ghost btn-sm" id="pmbClearDate" style="font-size:0.72rem;">✕ Reset</button>
     </div>
 
+    <!-- Quick Action Row -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <button id="pmbProcessAll" style="padding:8px 18px;background:linear-gradient(135deg,hsl(142 60% 38%),hsl(162 60% 35%));color:white;border:none;border-radius:8px;font-weight:700;font-size:0.8rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.15);">⚡ Proses Semua (Bayar + Akun + Validasi)</button>
+    </div>
+
     <!-- Bulk Actions -->
     <div id="pmbBulkBar" style="display:none;background:hsl(215 80% 96%);border:1px solid hsl(215 70% 85%);border-radius:10px;padding:10px 16px;margin-bottom:12px;gap:12px;align-items:center;flex-wrap:wrap;">
       <span id="pmbBulkCount" style="font-size:0.82rem;font-weight:600;color:hsl(215 70% 40%);"></span>
-      <div style="display:flex;gap:6px;margin-left:auto;">
+      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;">
+        <button class="btn btn-warning btn-sm" id="pmbBulkPay">💰 Bayar Semua</button>
         <button class="btn btn-success btn-sm" id="pmbBulkValidate">✅ Validasi Semua</button>
         <button class="btn btn-primary btn-sm" id="pmbBulkAccount">🔐 Buat Akun Semua</button>
         <button class="btn btn-danger btn-sm" id="pmbBulkDelete">🗑️ Hapus Semua</button>
@@ -5129,6 +5134,7 @@ function renderPMBList(stats, registrations) {
     onFilter();
   });
   document.getElementById('pmbExportBtn')?.addEventListener('click', () => exportPMBCSV(_pmbRegistrations));
+  document.getElementById('pmbBulkPay')?.addEventListener('click', bulkPayAll);
   document.getElementById('pmbBulkValidate')?.addEventListener('click', bulkValidate);
   document.getElementById('pmbBulkAccount')?.addEventListener('click', bulkCreateAccount);
   document.getElementById('pmbBulkDelete')?.addEventListener('click', bulkDelete);
@@ -5279,6 +5285,30 @@ function updateBulkBar() {
   if (!bar) return;
   if (_pmbSelected.size > 0) { bar.style.display = 'flex'; if (cnt) cnt.textContent = `${_pmbSelected.size} pendaftar dipilih`; }
   else { bar.style.display = 'none'; }
+}
+
+async function bulkPayAll() {
+  if (!confirm(`💰 Bayar (cash) untuk ${_pmbSelected.size} pendaftar yang dipilih?`)) return;
+  let ok = 0, skip = 0, fail = 0;
+  for (const id of _pmbSelected) {
+    try {
+      const reg = _pmbRegistrations.find(r => String(r.id) === String(id));
+      const statusRes = await fetch(`${PMB_API}/status/${encodeURIComponent(reg?.no_pendaftaran||'')}`);
+      const statusData = statusRes.ok ? await statusRes.json() : null;
+      if (statusData?.payment?.status === 'paid') { skip++; continue; }
+      const payRes = await fetch(`${PMB_API}/payment`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ registration_id: parseInt(id), metode_bayar: 'cash' })
+      });
+      if (payRes.ok) {
+        const payData = await payRes.json();
+        const cfm = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
+        if (cfm.ok) ok++; else fail++;
+      } else { fail++; }
+    } catch { fail++; }
+  }
+  alert(`✅ Bayar selesai!\nDikonfirmasi: ${ok}\nSudah bayar (skip): ${skip}\nGagal: ${fail}`);
+  _pmbSelected.clear(); loadRegistrationList();
 }
 
 async function bulkValidate() {
