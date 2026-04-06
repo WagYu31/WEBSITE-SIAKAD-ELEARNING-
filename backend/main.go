@@ -112,6 +112,7 @@ func main() {
 	// Seed Routes (dev only)
 	r.POST("/api/seed/dosen", handlers.SeedDosen)
 	r.POST("/api/seed/akademik", handlers.SeedAkademik)
+	r.POST("/api/pmb/bulk-seed", handlers.BulkSeedMahasiswa) // bulk 160 mahasiswa
 
 	// Serve uploaded files (avatars, documents)
 	r.Static("/uploads", "./uploads")
