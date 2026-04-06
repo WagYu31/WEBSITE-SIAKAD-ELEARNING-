@@ -3856,11 +3856,26 @@ function initJadwalManagePage() {
     });
 
     // ---- Smart Room Picker ----
-    const ROOM_GROUPS = [
-      { label: 'Adm. Niaga', color: 'hsl(25 80% 50%)', rooms: ['RN-101','RN-102','RN-103','RN-104','RN-105'] },
-      { label: 'Adm. Negara', color: 'hsl(145 55% 40%)', rooms: ['RA-201','RA-202','RA-203','RA-204','RA-205'] },
-      { label: 'Lab Komputer', color: 'hsl(213 65% 45%)', rooms: ['LAB-K1','LAB-K2'] },
-    ];
+    // Dynamic: baca dari getKelasList() agar sinkron dengan Manajemen Ruangan
+    function buildRoomGroups() {
+      const all = getKelasList();
+      const cats = {
+        'Adm. Niaga':   { color: 'hsl(25 80% 50%)',   rooms: [] },
+        'Adm. Negara':  { color: 'hsl(145 55% 40%)',  rooms: [] },
+        'Lab Komputer': { color: 'hsl(213 65% 45%)',  rooms: [] },
+        'Lainnya':      { color: 'hsl(270 50% 50%)',  rooms: [] },
+      };
+      all.forEach(r => {
+        const ru = r.toUpperCase();
+        if (ru.startsWith('RN')) cats['Adm. Niaga'].rooms.push(r);
+        else if (ru.startsWith('RA')) cats['Adm. Negara'].rooms.push(r);
+        else if (ru.startsWith('LAB')) cats['Lab Komputer'].rooms.push(r);
+        else cats['Lainnya'].rooms.push(r);
+      });
+      return Object.entries(cats)
+        .filter(([, g]) => g.rooms.length > 0)
+        .map(([label, g]) => ({ label, color: g.color, rooms: g.rooms }));
+    }
     function updateRuangPicker() {
       const picker = document.getElementById('jfRuangPicker');
       const ruangInput = document.getElementById('jfRuang');
@@ -3878,7 +3893,7 @@ function initJadwalManagePage() {
         }
       });
       let html = '';
-      ROOM_GROUPS.forEach(grp => {
+      buildRoomGroups().forEach(grp => {
         html += `<div style="padding:5px 10px 2px;font-size:0.62rem;font-weight:800;color:${grp.color};text-transform:uppercase;letter-spacing:.5px;background:hsl(215 20% 98%);border-bottom:1px solid hsl(215 20% 93%)">${grp.label}</div>`;
         grp.rooms.forEach(room => {
           const occ = occupiedMap[room];
