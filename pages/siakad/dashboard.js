@@ -6467,7 +6467,7 @@ async function loadMahasiswaList() {
       const accResult = accountResults[idx];
       const acc = accResult?.status === 'fulfilled' ? accResult.value : null;
       const nim = acc?.nim || r.nim || `PMB${String(r.id).padStart(4,'0')}`;
-      const angkatan = r.created_at ? new Date(r.created_at).getFullYear() : 2026;
+      const angkatan = r.angkatan || (r.tanggal_lahir ? new Date(r.tanggal_lahir).getFullYear() + 18 : (r.created_at ? new Date(r.created_at).getFullYear() : 2026));
       const pmbStatus = (r.status || 'menunggu').toLowerCase();
       const status_mhs = statusMap[pmbStatus] || pmbStatus;
       return {
@@ -6521,7 +6521,7 @@ function filterMahasiswa() {
       (m.nim  || '').toLowerCase().includes(query) ||
       (m.nik  || '').includes(query) ||
       (m.prodi || '').toLowerCase().includes(query.toLowerCase());
-    const matchProdi  = !prodi  || m.prodi_pilihan === prodi || m.prodi === prodi || m.jurusan_pilihan === prodi;
+    const matchProdi  = !prodi  || (m.prodi_pilihan||'').includes(prodi) || (m.prodi||'').includes(prodi) || (m.jurusan_pilihan||'').includes(prodi);
     const matchStatus = !status || m.status_mhs === status;
     return matchSearch && matchProdi && matchStatus;
   });
