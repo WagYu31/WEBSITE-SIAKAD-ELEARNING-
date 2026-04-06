@@ -5308,39 +5308,58 @@ async function bulkDelete() {
 async function processAllStudents() {
   const total = _pmbRegistrations.length;
   if (total === 0) { alert('Tidak ada data pendaftar.'); return; }
-  if (!confirm(`⚡ Proses Semua\n\nAkan membuat akun + validasi untuk ${total} mahasiswa yang belum diproses.\n\nLanjutkan?`)) return;
+  if (!confirm(`⚡ Proses Semua (${total} mahasiswa)\n\nAkan otomatis:\n① Bayar (cash) jika belum\n② Buat Akun\n③ Validasi\n\nLanjutkan?`)) return;
 
   const btn = document.getElementById('pmbProcessAll');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
 
-  let accOk = 0, accSkip = 0, valOk = 0, valSkip = 0, fail = 0;
+  let payOk=0, paySkip=0, accOk=0, accSkip=0, valOk=0, fail=0;
 
   for (let i = 0; i < _pmbRegistrations.length; i++) {
     const reg = _pmbRegistrations[i];
     if (btn) btn.textContent = `⏳ ${i+1}/${total}`;
 
-    // Step 1: Buat akun (skip jika sudah ada)
+    // Step ①: Cek/Konfirmasi Pembayaran (cash)
+    try {
+      const statusRes = await fetch(`${PMB_API}/status/${encodeURIComponent(reg.no_pendaftaran||'')}`);
+      const statusData = statusRes.ok ? await statusRes.json() : null;
+      const alreadyPaid = statusData?.payment?.status === 'paid';
+      if (alreadyPaid) {
+        paySkip++;
+      } else {
+        const payRes = await fetch(`${PMB_API}/payment`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ registration_id: reg.id, metode_bayar: 'cash' })
+        });
+        if (payRes.ok) {
+          const payData = await payRes.json();
+          const cfmRes = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
+          if (cfmRes.ok) payOk++; else paySkip++;
+        } else { paySkip++; }
+      }
+    } catch { paySkip++; }
+
+    // Step ②: Buat Akun
     try {
       const accRes = await fetch(`${PMB_API}/account/create`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ registration_id: reg.id })
       });
       if (accRes.ok) accOk++; else accSkip++;
     } catch { accSkip++; }
 
-    // Step 2: Validasi akun
+    // Step ③: Validasi
     try {
       const accInfo = await fetch(`${PMB_API}/account/${reg.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
       if (accInfo?.id) {
         const valRes = await fetch(`${PMB_API}/account/${accInfo.id}/validate`, { method: 'PUT' });
-        if (valRes.ok) valOk++; else valSkip++;
-      } else { valSkip++; }
+        if (valRes.ok) valOk++; else fail++;
+      } else { fail++; }
     } catch { fail++; }
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '⚡ Proses Semua'; }
-  alert(`✅ Selesai!\n\nAkun dibuat: ${accOk} (skip/ada: ${accSkip})\nDivalidasi: ${valOk} (skip: ${valSkip})\nGagal: ${fail}`);
+  alert(`✅ Selesai!\n\n① Bayar dikonfirmasi: ${payOk} (sudah bayar: ${paySkip})\n② Akun dibuat: ${accOk} (skip: ${accSkip})\n③ Divalidasi: ${valOk}\n❌ Gagal: ${fail}`);
   loadRegistrationList();
 }
 
