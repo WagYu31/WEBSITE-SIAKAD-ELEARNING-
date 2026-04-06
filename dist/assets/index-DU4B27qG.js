@@ -1218,39 +1218,37 @@
         </div>
       </div>
     </div>
-  </div>`}function Le(e){let t={Senin:{bg:`hsl(213 72% 50%)`,lt:`hsl(213 70% 97%)`,tx:`hsl(213 72% 30%)`,bd:`hsl(213 55% 82%)`,dot:`#3b82f6`},Selasa:{bg:`hsl(155 58% 40%)`,lt:`hsl(155 55% 97%)`,tx:`hsl(155 58% 26%)`,bd:`hsl(155 45% 78%)`,dot:`#22c55e`},Rabu:{bg:`hsl(33 85% 50%)`,lt:`hsl(33 80% 97%)`,tx:`hsl(33 80% 28%)`,bd:`hsl(33 65% 75%)`,dot:`#f97316`},Kamis:{bg:`hsl(272 58% 50%)`,lt:`hsl(272 55% 97%)`,tx:`hsl(272 58% 32%)`,bd:`hsl(272 45% 78%)`,dot:`#a855f7`},Jumat:{bg:`hsl(343 62% 50%)`,lt:`hsl(343 58% 97%)`,tx:`hsl(343 62% 32%)`,bd:`hsl(343 50% 78%)`,dot:`#ec4899`},Sabtu:{bg:`hsl(183 55% 40%)`,lt:`hsl(183 52% 97%)`,tx:`hsl(183 55% 26%)`,bd:`hsl(183 42% 76%)`,dot:`#06b6d4`}},n=[`Senin`,`Selasa`,`Rabu`,`Kamis`,`Jumat`,`Sabtu`],r=window._dosenJadwalCache||Fe(e);window._dosenJadwalCache=r;let i=r.map((e,t)=>({hari:e.hari,jam:e.jam,kode:e.kode,nama:e.nama,kelas:e.kelas,ruang:e.ruang,jmlMhs:e.mahasiswa.length,idx:t})).sort((e,t)=>{let r=n.indexOf(e.hari)-n.indexOf(t.hari);return r===0?(e.jam||``).split(`-`)[0].trim().localeCompare((t.jam||``).split(`-`)[0].trim()):r}),a={};n.forEach(e=>a[e]=[]),i.forEach(e=>{a[e.hari]&&a[e.hari].push(e)});let o=n.filter(e=>a[e].length>0),s=o.map(e=>{let n=t[e]||t.Senin,r=a[e].map((e,t)=>`
-      <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
-        <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${t+1}</td>
-        <td style="padding:9px 14px;">
-          <span style="display:inline-flex;align-items:center;white-space:nowrap;padding:4px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;background:${n.lt};color:${n.tx};border:1px solid ${n.bd};">\u23f0 ${e.jam}</span>
-        </td>
-        <td style="padding:9px 14px;"><code style="font-size:0.78rem;font-weight:800;color:hsl(215 40% 30%);background:hsl(215 25% 96%);padding:2px 6px;border-radius:4px;">${e.kode}</code></td>
-        <td style="padding:9px 14px;font-size:0.82rem;font-weight:500;color:hsl(215 25% 20%);">${e.nama}</td>
-        <td style="padding:9px 14px;text-align:center;">
-          <span style="width:26px;height:26px;line-height:26px;border-radius:50%;background:hsl(215 25% 93%);font-size:0.68rem;font-weight:800;color:hsl(215 35% 40%);display:inline-block;">${e.kelas}</span>
-        </td>
-        <td style="padding:9px 14px;">
-          <span style="font-size:0.72rem;font-weight:600;color:${e.ruang===`—`||!e.ruang?`hsl(215 15% 65%)`:`hsl(215 25% 30%)`};">${e.ruang||`—`}</span>
-        </td>
-        <td style="padding:9px 14px;text-align:center;">
-          <span style="font-size:0.72rem;font-weight:700;color:hsl(213 65% 45%);display:inline-flex;align-items:center;gap:3px;">\ud83d\udc65 ${e.jmlMhs}</span>
-        </td>
-        <td style="padding:9px 14px;text-align:right;white-space:nowrap;">
-          <button class="jadwal-absensi-btn" data-kelas-idx="${e.idx}" style="font-size:0.65rem;padding:5px 11px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 6px hsla(150,55%,44%,.3);margin-right:4px;">\ud83d\udccb Absensi</button>
-          <button class="jadwal-nilai-btn" data-kelas-idx="${e.idx}" style="font-size:0.65rem;padding:5px 11px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 6px hsla(213,72%,50%,.3);">\u270f\ufe0f Nilai</button>
-        </td>
-      </tr>
-    `).join(``);return`
+  </div>`}function Le(e){let t={Senin:{bg:`hsl(213 72% 50%)`,lt:`hsl(213 70% 97%)`,tx:`hsl(213 72% 30%)`,bd:`hsl(213 55% 82%)`,dot:`#3b82f6`},Selasa:{bg:`hsl(155 58% 40%)`,lt:`hsl(155 55% 97%)`,tx:`hsl(155 58% 26%)`,bd:`hsl(155 45% 78%)`,dot:`#22c55e`},Rabu:{bg:`hsl(33 85% 50%)`,lt:`hsl(33 80% 97%)`,tx:`hsl(33 80% 28%)`,bd:`hsl(33 65% 75%)`,dot:`#f97316`},Kamis:{bg:`hsl(272 58% 50%)`,lt:`hsl(272 55% 97%)`,tx:`hsl(272 58% 32%)`,bd:`hsl(272 45% 78%)`,dot:`#a855f7`},Jumat:{bg:`hsl(343 62% 50%)`,lt:`hsl(343 58% 97%)`,tx:`hsl(343 62% 32%)`,bd:`hsl(343 50% 78%)`,dot:`#ec4899`},Sabtu:{bg:`hsl(183 55% 40%)`,lt:`hsl(183 52% 97%)`,tx:`hsl(183 55% 26%)`,bd:`hsl(183 42% 76%)`,dot:`#06b6d4`}},n=[`Senin`,`Selasa`,`Rabu`,`Kamis`,`Jumat`,`Sabtu`],r=window._dosenJadwalCache||Fe(e);window._dosenJadwalCache=r;let i=r.map((e,t)=>({hari:e.hari,jam:e.jam,kode:e.kode,nama:e.nama,kelas:e.kelas,ruang:e.ruang,prodi:e.prodi,jmlMhs:e.mahasiswa.length,idx:t})).sort((e,t)=>{let r=n.indexOf(e.hari)-n.indexOf(t.hari);return r===0?(e.jam||``).split(`-`)[0].trim().localeCompare((t.jam||``).split(`-`)[0].trim()):r}),a=new Map;i.forEach(e=>{let t=`${e.kode}|${e.hari}|${e.jam}`;if(a.has(t)){let n=a.get(t);e.ruang&&e.ruang!==`—`&&!n.ruangArr.includes(e.ruang)&&(n.ruangArr.push(e.ruang),n.ruang=n.ruangArr.join(` / `)),n.jmlMhs+=e.jmlMhs,n.idxList.push({idx:e.idx,prodi:e.prodi||``})}else a.set(t,{...e,ruangArr:[e.ruang||`—`],idxList:[{idx:e.idx,prodi:e.prodi||``}]})});let o=[...a.values()],s={};n.forEach(e=>s[e]=[]),o.forEach(e=>{s[e.hari]&&s[e.hari].push(e)});let c=n.filter(e=>s[e].length>0),l=c.map(e=>{let n=t[e]||t.Senin,r=s[e].map((e,t)=>{let r=e.idxList&&e.idxList.length>1,i=e.idxList||[{idx:e.idx,prodi:``}],a=e=>e===`niaga`?`Niaga`:e===`negara`?`Negara`:``,o=i.map(({idx:e,prodi:t})=>`<button class="jadwal-absensi-btn" data-kelas-idx="${e}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(150,55%,44%,.3);margin:2px;">📋${r?` `+a(t):` Absensi`}</button>`).join(``),s=i.map(({idx:e,prodi:t})=>`<button class="jadwal-nilai-btn" data-kelas-idx="${e}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️${r?` `+a(t):` Nilai`}</button>`).join(``);return`
+        <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
+          <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${t+1}</td>
+          <td style="padding:9px 14px;">
+            <span style="display:inline-flex;align-items:center;white-space:nowrap;padding:4px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;background:${n.lt};color:${n.tx};border:1px solid ${n.bd};">\u23f0 ${e.jam}</span>
+          </td>
+          <td style="padding:9px 14px;"><code style="font-size:0.78rem;font-weight:800;color:hsl(215 40% 30%);background:hsl(215 25% 96%);padding:2px 6px;border-radius:4px;">${e.kode}</code></td>
+          <td style="padding:9px 14px;font-size:0.82rem;font-weight:500;color:hsl(215 25% 20%);">${e.nama}</td>
+          <td style="padding:9px 14px;text-align:center;">
+            <span style="width:26px;height:26px;line-height:26px;border-radius:50%;background:hsl(215 25% 93%);font-size:0.68rem;font-weight:800;color:hsl(215 35% 40%);display:inline-block;">${e.kelas}</span>
+          </td>
+          <td style="padding:9px 14px;">
+            <span style="font-size:0.72rem;font-weight:600;color:hsl(215 25% 30%);">${(e.ruangArr||[e.ruang||`—`]).join(` / `)}</span>
+          </td>
+          <td style="padding:9px 14px;text-align:center;">
+            <span style="font-size:0.72rem;font-weight:700;color:hsl(213 65% 45%);display:inline-flex;align-items:center;gap:3px;">\ud83d\udc65 ${e.jmlMhs}</span>
+          </td>
+          <td style="padding:9px 14px;text-align:right;">
+            <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;">${o}${s}</div>
+          </td>
+        </tr>`}).join(``);return`
       <tr>
         <td colspan="8" style="padding:0;border:none;">
           <div style="padding:7px 16px;background:${n.lt};border-left:4px solid ${n.bg};display:flex;align-items:center;gap:10px;">
             <span style="width:7px;height:7px;border-radius:50%;background:${n.bg};display:inline-block;"></span>
             <span style="font-weight:800;font-size:0.72rem;color:${n.tx};letter-spacing:0.8px;">${e.toUpperCase()}</span>
-            <span style="font-size:0.66rem;color:${n.tx};opacity:.6;">${a[e].length} kelas</span>
+            <span style="font-size:0.66rem;color:${n.tx};opacity:.6;">${s[e].length} kelas</span>
           </div>
         </td>
       </tr>
-      ${r}`}).join(``),c=o.map(e=>{let n=t[e],r=a[e];return`
+      ${r}`}).join(``),u=c.map(e=>{let n=t[e],r=s[e];return`
       <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 14px hsla(215,30%,40%,.08);border:1px solid hsl(215 20% 92%);">
         <div style="background:${n.bg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -1258,30 +1256,33 @@
           </div>
           <span style="background:rgba(255,255,255,0.22);color:white;font-size:0.66rem;font-weight:700;padding:3px 9px;border-radius:10px;">${r.length} kelas</span>
         </div>
-        ${r.map(e=>`
+        ${r.map(e=>{let t=e.idxList&&e.idxList.length>1,n=e.idxList||[{idx:e.idx,prodi:``}],r=e=>e===`niaga`?`Niaga`:e===`negara`?`Negara`:``;return`
           <div style="padding:13px 16px;border-bottom:1px solid hsl(215 15% 95%);">
             <div style="font-weight:700;font-size:0.8rem;color:hsl(215 30% 18%);margin-bottom:5px;">${e.kode} \u2014 ${e.nama}</div>
             <div style="font-size:0.68rem;color:hsl(215 15% 52%);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px;">
               <span>\u23f0 ${e.jam}</span>
-              <span>\ud83c\udfeb ${e.ruang||`—`}</span>
+              <span>\ud83c\udfeb ${(e.ruangArr||[e.ruang||`—`]).join(` / `)}</span>
               <span>\ud83d\udc65 ${e.jmlMhs} mhs</span>
             </div>
-            <div style="display:flex;gap:6px;">
-              <button class="jadwal-absensi-btn" data-kelas-idx="${e.idx}" style="flex:1;font-size:0.64rem;padding:6px 0;border-radius:8px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">\ud83d\udccb Absensi</button>
-              <button class="jadwal-nilai-btn" data-kelas-idx="${e.idx}" style="flex:1;font-size:0.64rem;padding:6px 0;border-radius:8px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">\u270f\ufe0f Nilai</button>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;gap:5px;">
+                ${n.map(({idx:e,prodi:n})=>`<button class="jadwal-absensi-btn" data-kelas-idx="${e}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">\ud83d\udccb ${t?r(n):`Absensi`}</button>`).join(``)}
+              </div>
+              <div style="display:flex;gap:5px;">
+                ${n.map(({idx:e,prodi:n})=>`<button class="jadwal-nilai-btn" data-kelas-idx="${e}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">\u270f\ufe0f ${t?r(n):`Nilai`}</button>`).join(``)}
+              </div>
             </div>
-          </div>
-        `).join(``)}
+          </div>`}).join(``)}
       </div>`}).join(``);return`${L(e)}
     <!-- Jadwal Table -->
     <div class="dash-card" style="overflow:hidden;margin-bottom:20px;">
       <div style="padding:16px 22px;border-bottom:1px solid hsl(215 20% 93%);display:flex;align-items:center;justify-content:space-between;background:hsl(215 25% 99%);">
         <div>
           <div style="font-size:0.95rem;font-weight:800;color:hsl(215 35% 22%);">\ud83d\udcc5 Jadwal Mengajar \u2014 Semester Genap ${new Date().getFullYear()}</div>
-          <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:3px;">${i.length} kelas terjadwal \u00b7 ${o.length} hari aktif</div>
+          <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:3px;">${o.length} mata kuliah terjadwal \u00b7 ${c.length} hari aktif</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;">
-          ${o.map(e=>`<span style="width:9px;height:9px;border-radius:50%;background:${t[e].bg};display:inline-block;" title="${e}"></span>`).join(``)}
+          ${c.map(e=>`<span style="width:9px;height:9px;border-radius:50%;background:${t[e].bg};display:inline-block;" title="${e}"></span>`).join(``)}
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -1298,14 +1299,14 @@
               <th style="text-align:right;font-size:0.68rem;padding:10px 12px;">Aksi</th>
             </tr>
           </thead>
-          <tbody>${s}</tbody>
+          <tbody>${l}</tbody>
         </table>
       </div>
     </div>
 
     <!-- Weekly Grid -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:20px;">
-      ${c}
+      ${u}
     </div>
 
     <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>

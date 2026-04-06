@@ -1508,45 +1508,78 @@ function jadwalDosenContent(user) {
 
   const allJadwal = dj.map((k,idx) => ({
     hari:k.hari, jam:k.jam, kode:k.kode, nama:k.nama, kelas:k.kelas, ruang:k.ruang,
-    jmlMhs:k.mahasiswa.length, idx
+    prodi:k.prodi, jmlMhs:k.mahasiswa.length, idx
   })).sort((a,b) => {
     const d = DAYS.indexOf(a.hari) - DAYS.indexOf(b.hari);
     if (d !== 0) return d;
     return ((a.jam||'').split('-')[0].trim()).localeCompare((b.jam||'').split('-')[0].trim());
   });
 
-  // Group by day
+  // Merge: gabungkan baris dengan kode+hari+jam sama (misal niaga & negara)
+  const mergedMap = new Map();
+  allJadwal.forEach(j => {
+    const key = `${j.kode}|${j.hari}|${j.jam}`;
+    if (mergedMap.has(key)) {
+      const ex = mergedMap.get(key);
+      if (j.ruang && j.ruang !== '\u2014' && !ex.ruangArr.includes(j.ruang)) {
+        ex.ruangArr.push(j.ruang);
+        ex.ruang = ex.ruangArr.join(' / ');
+      }
+      ex.jmlMhs += j.jmlMhs;
+      ex.idxList.push({ idx: j.idx, prodi: j.prodi || '' });
+    } else {
+      mergedMap.set(key, {
+        ...j,
+        ruangArr: [j.ruang || '\u2014'],
+        idxList: [{ idx: j.idx, prodi: j.prodi || '' }]
+      });
+    }
+  });
+  const displayJadwal = [...mergedMap.values()];
+
+  // Group by day (gunakan displayJadwal yang sudah di-merge)
   const grouped = {};
   DAYS.forEach(d => grouped[d] = []);
-  allJadwal.forEach(j => { if (grouped[j.hari]) grouped[j.hari].push(j); });
+  displayJadwal.forEach(j => { if (grouped[j.hari]) grouped[j.hari].push(j); });
   const activeDays = DAYS.filter(d => grouped[d].length > 0);
+
 
   // --- TABLE: day group rows ---
   const tableHTML = activeDays.map(day => {
     const dc = DAY_CFG[day] || DAY_CFG.Senin;
-    const rows = grouped[day].map((j,i) => `
-      <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
-        <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${i+1}</td>
-        <td style="padding:9px 14px;">
-          <span style="display:inline-flex;align-items:center;white-space:nowrap;padding:4px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;background:${dc.lt};color:${dc.tx};border:1px solid ${dc.bd};">\u23f0 ${j.jam}</span>
-        </td>
-        <td style="padding:9px 14px;"><code style="font-size:0.78rem;font-weight:800;color:hsl(215 40% 30%);background:hsl(215 25% 96%);padding:2px 6px;border-radius:4px;">${j.kode}</code></td>
-        <td style="padding:9px 14px;font-size:0.82rem;font-weight:500;color:hsl(215 25% 20%);">${j.nama}</td>
-        <td style="padding:9px 14px;text-align:center;">
-          <span style="width:26px;height:26px;line-height:26px;border-radius:50%;background:hsl(215 25% 93%);font-size:0.68rem;font-weight:800;color:hsl(215 35% 40%);display:inline-block;">${j.kelas}</span>
-        </td>
-        <td style="padding:9px 14px;">
-          <span style="font-size:0.72rem;font-weight:600;color:${j.ruang==='\u2014'||!j.ruang?'hsl(215 15% 65%)':'hsl(215 25% 30%)'};">${j.ruang||'\u2014'}</span>
-        </td>
-        <td style="padding:9px 14px;text-align:center;">
-          <span style="font-size:0.72rem;font-weight:700;color:hsl(213 65% 45%);display:inline-flex;align-items:center;gap:3px;">\ud83d\udc65 ${j.jmlMhs}</span>
-        </td>
-        <td style="padding:9px 14px;text-align:right;white-space:nowrap;">
-          <button class="jadwal-absensi-btn" data-kelas-idx="${j.idx}" style="font-size:0.65rem;padding:5px 11px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 6px hsla(150,55%,44%,.3);margin-right:4px;">\ud83d\udccb Absensi</button>
-          <button class="jadwal-nilai-btn" data-kelas-idx="${j.idx}" style="font-size:0.65rem;padding:5px 11px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 6px hsla(213,72%,50%,.3);">\u270f\ufe0f Nilai</button>
-        </td>
-      </tr>
-    `).join('');
+    const rows = grouped[day].map((j,i) => {
+      const isMulti = j.idxList && j.idxList.length > 1;
+      const idxList = j.idxList || [{ idx: j.idx, prodi: '' }];
+      const prodiLabel = p => p === 'niaga' ? 'Niaga' : p === 'negara' ? 'Negara' : '';
+      const absensiBtn = idxList.map(({idx, prodi}) =>
+        `<button class="jadwal-absensi-btn" data-kelas-idx="${idx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(150,55%,44%,.3);margin:2px;">📋${isMulti?' '+prodiLabel(prodi):' Absensi'}</button>`
+      ).join('');
+      const nilaiBtn = idxList.map(({idx, prodi}) =>
+        `<button class="jadwal-nilai-btn" data-kelas-idx="${idx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️${isMulti?' '+prodiLabel(prodi):' Nilai'}</button>`
+      ).join('');
+      return `
+        <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
+          <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${i+1}</td>
+          <td style="padding:9px 14px;">
+            <span style="display:inline-flex;align-items:center;white-space:nowrap;padding:4px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;background:${dc.lt};color:${dc.tx};border:1px solid ${dc.bd};">\u23f0 ${j.jam}</span>
+          </td>
+          <td style="padding:9px 14px;"><code style="font-size:0.78rem;font-weight:800;color:hsl(215 40% 30%);background:hsl(215 25% 96%);padding:2px 6px;border-radius:4px;">${j.kode}</code></td>
+          <td style="padding:9px 14px;font-size:0.82rem;font-weight:500;color:hsl(215 25% 20%);">${j.nama}</td>
+          <td style="padding:9px 14px;text-align:center;">
+            <span style="width:26px;height:26px;line-height:26px;border-radius:50%;background:hsl(215 25% 93%);font-size:0.68rem;font-weight:800;color:hsl(215 35% 40%);display:inline-block;">${j.kelas}</span>
+          </td>
+          <td style="padding:9px 14px;">
+            <span style="font-size:0.72rem;font-weight:600;color:hsl(215 25% 30%);">${(j.ruangArr||[j.ruang||'\u2014']).join(' / ')}</span>
+          </td>
+          <td style="padding:9px 14px;text-align:center;">
+            <span style="font-size:0.72rem;font-weight:700;color:hsl(213 65% 45%);display:inline-flex;align-items:center;gap:3px;">\ud83d\udc65 ${j.jmlMhs}</span>
+          </td>
+          <td style="padding:9px 14px;text-align:right;">
+            <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;">${absensiBtn}${nilaiBtn}</div>
+          </td>
+        </tr>`
+    }).join('');
+
     return `
       <tr>
         <td colspan="8" style="padding:0;border:none;">
@@ -1572,20 +1605,28 @@ function jadwalDosenContent(user) {
           </div>
           <span style="background:rgba(255,255,255,0.22);color:white;font-size:0.66rem;font-weight:700;padding:3px 9px;border-radius:10px;">${items.length} kelas</span>
         </div>
-        ${items.map(j => `
+        ${items.map(j => {
+          const isMulti = j.idxList && j.idxList.length > 1;
+          const idxList = j.idxList || [{ idx: j.idx, prodi: '' }];
+          const pLabel = p => p === 'niaga' ? 'Niaga' : p === 'negara' ? 'Negara' : '';
+          return `
           <div style="padding:13px 16px;border-bottom:1px solid hsl(215 15% 95%);">
             <div style="font-weight:700;font-size:0.8rem;color:hsl(215 30% 18%);margin-bottom:5px;">${j.kode} \u2014 ${j.nama}</div>
             <div style="font-size:0.68rem;color:hsl(215 15% 52%);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px;">
               <span>\u23f0 ${j.jam}</span>
-              <span>\ud83c\udfeb ${j.ruang||'\u2014'}</span>
+              <span>\ud83c\udfeb ${(j.ruangArr||[j.ruang||'\u2014']).join(' / ')}</span>
               <span>\ud83d\udc65 ${j.jmlMhs} mhs</span>
             </div>
-            <div style="display:flex;gap:6px;">
-              <button class="jadwal-absensi-btn" data-kelas-idx="${j.idx}" style="flex:1;font-size:0.64rem;padding:6px 0;border-radius:8px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">\ud83d\udccb Absensi</button>
-              <button class="jadwal-nilai-btn" data-kelas-idx="${j.idx}" style="flex:1;font-size:0.64rem;padding:6px 0;border-radius:8px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">\u270f\ufe0f Nilai</button>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;gap:5px;">
+                ${idxList.map(({idx,prodi}) => `<button class="jadwal-absensi-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">\ud83d\udccb ${isMulti ? pLabel(prodi) : 'Absensi'}</button>`).join('')}
+              </div>
+              <div style="display:flex;gap:5px;">
+                ${idxList.map(({idx,prodi}) => `<button class="jadwal-nilai-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">\u270f\ufe0f ${isMulti ? pLabel(prodi) : 'Nilai'}</button>`).join('')}
+              </div>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>`;
   }).join('');
 
@@ -1595,7 +1636,7 @@ function jadwalDosenContent(user) {
       <div style="padding:16px 22px;border-bottom:1px solid hsl(215 20% 93%);display:flex;align-items:center;justify-content:space-between;background:hsl(215 25% 99%);">
         <div>
           <div style="font-size:0.95rem;font-weight:800;color:hsl(215 35% 22%);">\ud83d\udcc5 Jadwal Mengajar \u2014 Semester Genap ${new Date().getFullYear()}</div>
-          <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:3px;">${allJadwal.length} kelas terjadwal \u00b7 ${activeDays.length} hari aktif</div>
+          <div style="font-size:0.72rem;color:hsl(215 15% 55%);margin-top:3px;">${displayJadwal.length} mata kuliah terjadwal \u00b7 ${activeDays.length} hari aktif</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;">
           ${activeDays.map(d => `<span style="width:9px;height:9px;border-radius:50%;background:${DAY_CFG[d].bg};display:inline-block;" title="${d}"></span>`).join('')}
