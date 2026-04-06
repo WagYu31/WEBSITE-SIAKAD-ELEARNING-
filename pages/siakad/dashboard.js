@@ -77,6 +77,30 @@ function initJadwalDummy() {
       });
     });
   });
+  // Re-apply any saved Kelas Gabungan settings from localStorage
+  applyGabunganSettings();
+}
+// ---- Helper: apply persistent gabungan settings from localStorage ----
+function applyGabunganSettings() {
+  try {
+    const settings = JSON.parse(localStorage.getItem('siakad_gabunganSettings') || '[]');
+    if (!settings.length) return;
+    settings.forEach(gs => {
+      const en = JADWAL_DUMMY.find(e => e.kodeMK === gs.kodeMK && e.prodi === 'niaga' && e.hari === gs.hari && e.jamMulai === gs.jamMulai);
+      const eg = JADWAL_DUMMY.find(e => e.kodeMK === gs.kodeMK && e.prodi === 'negara' && e.hari === gs.hari && e.jamMulai === gs.jamMulai);
+      if (en) { en.gabunganId = gs.gabunganId; if (gs.ruangNiaga) en.ruang = gs.ruangNiaga; }
+      if (eg) { eg.gabunganId = gs.gabunganId; if (gs.ruangNegara) eg.ruang = gs.ruangNegara; }
+    });
+  } catch(e) {}
+}
+function saveGabunganSetting(kodeMK, hari, jamMulai, ruangNiaga, ruangNegara, gabunganId) {
+  try {
+    const settings = JSON.parse(localStorage.getItem('siakad_gabunganSettings') || '[]');
+    const idx = settings.findIndex(s => s.kodeMK === kodeMK && s.hari === hari && s.jamMulai === jamMulai);
+    const entry = { kodeMK, hari, jamMulai, ruangNiaga, ruangNegara, gabunganId };
+    if (idx >= 0) settings[idx] = entry; else settings.push(entry);
+    localStorage.setItem('siakad_gabunganSettings', JSON.stringify(settings));
+  } catch(e) {}
 }
 // Initialize immediately so JADWAL_DUMMY is ready for all roles
 initJadwalDummy();
@@ -3784,6 +3808,8 @@ function initJadwalManagePage() {
       });
       setTimeout(() => {
         if (isGabungan) {
+          // Simpan ke localStorage agar persist setelah re-render
+          saveGabunganSetting(kodeMK, hari, mulai, tipeKelas === 'Online' ? '\u2014' : ruang, tipeKelas === 'Online' ? '\u2014' : ruang2, gabunganId);
           // UPSERT: cari entry niaga & negara yang sudah ada untuk MK+hari+jam ini
           const exN = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'niaga' && e.hari === hari && e.jamMulai === mulai);
           const exG = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'negara' && e.hari === hari && e.jamMulai === mulai);
