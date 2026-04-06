@@ -166,11 +166,26 @@ function getDosenFromKurikulum(kodeMK) {
   return '-';
 }
 // Sync JADWAL_DUMMY dosen with current KURIKULUM_DATA — call after any Kurikulum save
+// Helper: get full MK object from KURIKULUM_DATA by kodeMK
+function getMKFromKurikulum(kodeMK) {
+  for (const prodi of ['niaga','negara']) {
+    const d = KURIKULUM_DATA[prodi];
+    if (!d) continue;
+    for (const sem of d.semester) {
+      const mk = (sem.mk || []).find(m => m.kode === kodeMK);
+      if (mk) return mk;
+    }
+  }
+  return null;
+}
 function syncJadwalDummyDosen() {
   if (!window.JADWAL_DUMMY) return;
   JADWAL_DUMMY.forEach(j => {
-    const live = getDosenFromKurikulum(j.kodeMK);
-    if (live && live !== '-') j.dosen = live;
+    const mk = getMKFromKurikulum(j.kodeMK);
+    if (!mk) return;
+    if (mk.dosen && mk.dosen !== '-') j.dosen = mk.dosen;
+    if (mk.nama) j.namaMK = mk.nama;
+    if (mk.sks) j.sks = mk.sks;
   });
 }
 
