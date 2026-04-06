@@ -3047,8 +3047,8 @@ function renderJadwalForm(editData) {
               }).join('')}
             </div>
           </div>
-          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas${selProdi==='gabungan'?' <span style="font-size:0.62rem;color:hsl(40 70% 45%);">Adm. Niaga</span>':''}</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="${selProdi==='gabungan'?'RN-101':"RA-201"}" style="${inputStyle}"></div>
-          <div id="jfRuang2Wrap" style="display:${selProdi==='gabungan'?'block':'none'};"><label style="${labelStyle}">Ruang Kelas <span style="font-size:0.62rem;color:hsl(145 55% 40%);">Adm. Negara</span></label><input id="jfRuang2" type="text" value="${editData?.ruang2||''}" placeholder="RA-201" style="${inputStyle}"></div>
+          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="contoh: RN-101" style="${inputStyle}"></div>
+          <div id="jfRuang2Wrap" style="display:none;"><input type="hidden" id="jfRuang2" value=""></div>
           <input type="hidden" id="jfTipeValue" value="${editData?.tipeKelas||'Offline'}">
           <input type="hidden" id="jfEditId" value="${editData?.id||''}">
         </div>
@@ -3818,17 +3818,29 @@ function initJadwalManagePage() {
       });
       setTimeout(() => {
         if (isGabungan) {
-          // Simpan ke localStorage agar persist setelah re-render
-          saveGabunganSetting(kodeMK, hari, mulai, tipeKelas === 'Online' ? '\u2014' : ruang, tipeKelas === 'Online' ? '\u2014' : ruang2, gabunganId);
-          // UPSERT: cari entry niaga & negara yang sudah ada untuk MK+hari+jam ini
-          const exN = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'niaga' && e.hari === hari && e.jamMulai === mulai);
-          const exG = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'negara' && e.hari === hari && e.jamMulai === mulai);
-          if (exN) {
-            exN.gabunganId = gabunganId; exN.ruang = tipeKelas === 'Online' ? '\u2014' : ruang; exN.tipeKelas = tipeKelas;
-          } else { JADWAL_DUMMY.push(makeEntry('niaga', ruang, 1)); }
-          if (exG) {
-            exG.gabunganId = gabunganId; exG.ruang = tipeKelas === 'Online' ? '\u2014' : ruang2; exG.tipeKelas = tipeKelas;
-          } else { JADWAL_DUMMY.push(makeEntry('negara', ruang2, 2)); }
+          const editId = (document.getElementById('jfEditId')?.value || '').trim();
+          const singleRoom = tipeKelas === 'Online' ? '\u2014' : ruang;
+          saveGabunganSetting(kodeMK, hari, mulai, singleRoom, singleRoom, gabunganId);
+          if (editId) {
+            // EDIT MODE gabungan: update by editId lalu sync pasangan via gabunganId lama
+            const idxN = JADWAL_DUMMY.findIndex(e => String(e.id) === String(editId));
+            if (idxN >= 0) {
+              const oldGabId = JADWAL_DUMMY[idxN].gabunganId;
+              const oldProdi = JADWAL_DUMMY[idxN].prodi;
+              const otherProdi = oldProdi === 'niaga' ? 'negara' : 'niaga';
+              Object.assign(JADWAL_DUMMY[idxN], { kodeMK, namaMK, dosen, hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks, semester: semNo });
+              if (oldGabId) {
+                const idxG = JADWAL_DUMMY.findIndex(e => e.gabunganId === oldGabId && e.prodi === otherProdi);
+                if (idxG >= 0) Object.assign(JADWAL_DUMMY[idxG], { hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks });
+              }
+            }
+          } else {
+            // ADD MODE gabungan: upsert by kodeMK+hari+jam
+            const exN = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'niaga' && e.hari === hari && e.jamMulai === mulai);
+            const exG = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'negara' && e.hari === hari && e.jamMulai === mulai);
+            if (exN) { exN.gabunganId = gabunganId; exN.ruang = singleRoom; exN.tipeKelas = tipeKelas; } else { JADWAL_DUMMY.push(makeEntry('niaga', singleRoom, 1)); }
+            if (exG) { exG.gabunganId = gabunganId; exG.ruang = singleRoom; exG.tipeKelas = tipeKelas; } else { JADWAL_DUMMY.push(makeEntry('negara', singleRoom, 2)); }
+          }
         } else {
           const editId = (document.getElementById('jfEditId')?.value || '').trim();
           if (editId) {
