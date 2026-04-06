@@ -131,7 +131,26 @@ function removeJadwalEdit(entryId) {
     localStorage.setItem('siakad_jadwalEdits', JSON.stringify(filtered));
   } catch(e) {}
 }
+// ---- Persist KURIKULUM_DATA changes across refresh ----
+function saveKurikulumToStorage(prodi) {
+  try {
+    const data = KURIKULUM_DATA[prodi];
+    if (data) localStorage.setItem(`siakad_kurikulum_${prodi}`, JSON.stringify(data));
+  } catch(e) {}
+}
+function loadKurikulumFromStorage() {
+  try {
+    ['niaga', 'negara'].forEach(prodi => {
+      const saved = JSON.parse(localStorage.getItem(`siakad_kurikulum_${prodi}`) || 'null');
+      if (saved && saved.semester && KURIKULUM_DATA[prodi]) {
+        KURIKULUM_DATA[prodi].semester = saved.semester;
+        if (saved.totalSKS !== undefined) KURIKULUM_DATA[prodi].totalSKS = saved.totalSKS;
+      }
+    });
+  } catch(e) {}
+}
 // Initialize immediately so JADWAL_DUMMY is ready for all roles
+loadKurikulumFromStorage(); // load saved kurikulum edits first
 initJadwalDummy();
 
 // Helper: resolve dosen live from KURIKULUM_DATA — Jadwal always reflects Kurikulum changes
@@ -7594,6 +7613,8 @@ function initKurikulumPage() {
 
     recalcSKS(prodi);
     closeModal();
+    // Persist kurikulum changes ke localStorage
+    saveKurikulumToStorage(prodi);
     // Sync Manajemen Jadwal — propagate dosen changes from Kurikulum immediately
     syncJadwalDummyDosen();
     alert(isAdd ? '\u2705 Mata kuliah berhasil ditambahkan!' : '\u2705 Mata kuliah berhasil diperbarui! Manajemen Jadwal sudah disinkronkan.');
@@ -7676,6 +7697,7 @@ function initKurikulumPage() {
         if (!confirm(`\ud83d\uddd1\ufe0f Hapus mata kuliah "${mk.nama}" (${mk.kode})?\n\nAksi ini tidak dapat dibatalkan.`)) return;
         sem.mk.splice(mkIdx, 1);
         recalcSKS(prodi);
+        saveKurikulumToStorage(prodi); // persist
         alert('\u2705 Mata kuliah berhasil dihapus!');
         renderAndBind(prodi);
       });
