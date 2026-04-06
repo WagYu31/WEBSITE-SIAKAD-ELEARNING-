@@ -3453,9 +3453,22 @@ function initJadwalManagePage() {
   // ---- Delete buttons ----
   document.querySelectorAll('.jadwal-del-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (confirm('\u2757 Hapus jadwal ini? Data tidak dapat dikembalikan.')) {
-        btn.closest('tr').style.opacity = '0.3';
-        setTimeout(() => btn.closest('tr').remove(), 300);
+      const id = btn.dataset.id;
+      const jEntry = JADWAL_DUMMY.find(e => String(e.id) === String(id));
+      const label = jEntry ? `${jEntry.kodeMK} — ${jEntry.namaMK} (${jEntry.prodi})` : 'jadwal ini';
+      if (confirm(`❗ Hapus ${label}? Data tidak dapat dikembalikan.`)) {
+        // Hapus dari JADWAL_DUMMY
+        const idx = JADWAL_DUMMY.findIndex(e => String(e.id) === String(id));
+        if (idx >= 0) JADWAL_DUMMY.splice(idx, 1);
+        syncJadwalDummyDosen();
+        window._dosenJadwalCache = null;
+        // Re-render halaman agar count dan tabel akurat
+        const mainEl = document.getElementById('dashMain');
+        if (mainEl) {
+          applyGabunganSettings();
+          mainEl.innerHTML = jadwalManageContent() + (typeof isoFooter !== 'undefined' ? isoFooter : '');
+          initJadwalManagePage();
+        }
       }
     });
   });
@@ -8024,6 +8037,7 @@ export function renderDashboard(container) {
         initSettingPMB();
       } else if (mainContent && page === 'jadwal-manage' && user.role === 'bap') {
         await loadSavedJadwalPertemuan();
+        applyGabunganSettings(); // re-apply setiap kali halaman di-render
         mainContent.innerHTML = jadwalManageContent() + isoFooter;
         initJadwalManagePage();
       } else if (mainContent && page === 'data' && user.role === 'mahasiswa') {
