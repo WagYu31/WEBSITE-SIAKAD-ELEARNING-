@@ -1248,7 +1248,7 @@
           </div>
         </td>
       </tr>
-      ${r}`}).join(``),u=c.map(e=>{let n=t[e],r=s[e];return`
+      ${r}`}).join(``);return c.map(e=>{let n=t[e],r=s[e];return`
       <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 14px hsla(215,30%,40%,.08);border:1px solid hsl(215 20% 92%);">
         <div style="background:${n.bg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -1273,7 +1273,7 @@
               </div>
             </div>
           </div>`}).join(``)}
-      </div>`}).join(``);return`${Ue(e)}
+      </div>`}).join(``),`${Ue(e)}
     <!-- Jadwal Table -->
     <div class="dash-card" style="overflow:hidden;margin-bottom:20px;">
       <div style="padding:16px 22px;border-bottom:1px solid hsl(215 20% 93%);display:flex;align-items:center;justify-content:space-between;background:hsl(215 25% 99%);">
@@ -1302,11 +1302,6 @@
           <tbody>${l}</tbody>
         </table>
       </div>
-    </div>
-
-    <!-- Weekly Grid -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:20px;">
-      ${u}
     </div>
 
     <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>

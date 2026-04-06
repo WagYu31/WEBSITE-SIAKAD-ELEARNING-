@@ -1755,11 +1755,6 @@ function jadwalDosenContent(user) {
       </div>
     </div>
 
-    <!-- Weekly Grid -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:20px;">
-      ${weeklyCards}
-    </div>
-
     <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>
     <div id="jadwalNilaiDetail" style="display:none;margin-top:20px;"></div>
     <div id="jadwalPertemuanDetail" style="display:none;margin-top:20px;"></div>`;
