@@ -54,8 +54,10 @@ function loginMahasiswa($db, $nim, $password) {
         return;
     }
 
-    // Verify password
-    if (!password_verify($password, $acc['password_hash'])) {
+    // Verify password — support bcrypt (new registrations) and sha256 (bulk seeded)
+    $valid = password_verify($password, $acc['password_hash'])
+          || hash('sha256', $password) === $acc['password_hash'];
+    if (!$valid) {
         jsonResponse(['error' => 'Password salah'], 401);
         return;
     }

@@ -4958,9 +4958,10 @@ function bapPMBContent() {
     <div class="dash-card" style="margin-bottom:20px;">
       <div class="dash-card-head">
         <h3>${I.userPlus} Manajemen PMB</h3>
-        <div class="pmb-header-btns">
+        <div class="pmb-header-btns" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="pmb-mgmt-btn active" data-tab="list">Daftar Pendaftar</button>
           <button class="pmb-mgmt-btn" data-tab="add">+ Tambah Offline</button>
+          <button id="pmbProcessAll" style="margin-left:auto;padding:7px 16px;background:linear-gradient(135deg,hsl(142 60% 38%),hsl(162 60% 35%));color:white;border:none;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:opacity .2s;">⚡ Proses Semua</button>
         </div>
       </div>
       <div class="dash-card-body" id="pmbMgmtContent">
@@ -5132,6 +5133,7 @@ function renderPMBList(stats, registrations) {
   document.getElementById('pmbBulkAccount')?.addEventListener('click', bulkCreateAccount);
   document.getElementById('pmbBulkDelete')?.addEventListener('click', bulkDelete);
   document.getElementById('pmbBulkCancel')?.addEventListener('click', () => { _pmbSelected.clear(); updateBulkBar(); applyPMBFilters(); });
+  document.getElementById('pmbProcessAll')?.addEventListener('click', processAllStudents);
 
   applyPMBFilters();
 }
@@ -5301,6 +5303,45 @@ async function bulkDelete() {
   for (const id of _pmbSelected) { try { const r = await fetch(`${PMB_API}/registration/${id}`, { method: 'DELETE' }); if (r.ok) ok++; else fail++; } catch { fail++; } }
   alert(`✅ Terhapus: ${ok}\n❌ Gagal: ${fail}`);
   _pmbSelected.clear(); loadRegistrationList();
+}
+
+async function processAllStudents() {
+  const total = _pmbRegistrations.length;
+  if (total === 0) { alert('Tidak ada data pendaftar.'); return; }
+  if (!confirm(`⚡ Proses Semua\n\nAkan membuat akun + validasi untuk ${total} mahasiswa yang belum diproses.\n\nLanjutkan?`)) return;
+
+  const btn = document.getElementById('pmbProcessAll');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+  let accOk = 0, accSkip = 0, valOk = 0, valSkip = 0, fail = 0;
+
+  for (let i = 0; i < _pmbRegistrations.length; i++) {
+    const reg = _pmbRegistrations[i];
+    if (btn) btn.textContent = `⏳ ${i+1}/${total}`;
+
+    // Step 1: Buat akun (skip jika sudah ada)
+    try {
+      const accRes = await fetch(`${PMB_API}/account/create`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ registration_id: reg.id })
+      });
+      if (accRes.ok) accOk++; else accSkip++;
+    } catch { accSkip++; }
+
+    // Step 2: Validasi akun
+    try {
+      const accInfo = await fetch(`${PMB_API}/account/${reg.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (accInfo?.id) {
+        const valRes = await fetch(`${PMB_API}/account/${accInfo.id}/validate`, { method: 'PUT' });
+        if (valRes.ok) valOk++; else valSkip++;
+      } else { valSkip++; }
+    } catch { fail++; }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Proses Semua'; }
+  alert(`✅ Selesai!\n\nAkun dibuat: ${accOk} (skip/ada: ${accSkip})\nDivalidasi: ${valOk} (skip: ${valSkip})\nGagal: ${fail}`);
+  loadRegistrationList();
 }
 
 function bindPMBActions() {
