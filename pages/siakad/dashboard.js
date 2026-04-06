@@ -77,6 +77,8 @@ function initJadwalDummy() {
       });
     });
   });
+  // Re-apply edits first (hari/jam/ruang changes) so gabungan finder uses updated values
+  applyJadwalEdits();
   // Re-apply any saved Kelas Gabungan settings from localStorage
   applyGabunganSettings();
 }
@@ -100,6 +102,33 @@ function saveGabunganSetting(kodeMK, hari, jamMulai, ruangNiaga, ruangNegara, ga
     const entry = { kodeMK, hari, jamMulai, ruangNiaga, ruangNegara, gabunganId };
     if (idx >= 0) settings[idx] = entry; else settings.push(entry);
     localStorage.setItem('siakad_gabunganSettings', JSON.stringify(settings));
+  } catch(e) {}
+}
+// ---- Persist individual jadwal edits across refresh ----
+function saveJadwalEdit(entryId, changes) {
+  try {
+    const edits = JSON.parse(localStorage.getItem('siakad_jadwalEdits') || '[]');
+    const idx = edits.findIndex(e => String(e.id) === String(entryId));
+    const item = { id: String(entryId), ...changes };
+    if (idx >= 0) edits[idx] = item; else edits.push(item);
+    localStorage.setItem('siakad_jadwalEdits', JSON.stringify(edits));
+  } catch(e) {}
+}
+function applyJadwalEdits() {
+  try {
+    const edits = JSON.parse(localStorage.getItem('siakad_jadwalEdits') || '[]');
+    if (!edits.length) return;
+    edits.forEach(edit => {
+      const entry = JADWAL_DUMMY.find(e => String(e.id) === String(edit.id));
+      if (entry) Object.assign(entry, edit);
+    });
+  } catch(e) {}
+}
+function removeJadwalEdit(entryId) {
+  try {
+    const edits = JSON.parse(localStorage.getItem('siakad_jadwalEdits') || '[]');
+    const filtered = edits.filter(e => String(e.id) !== String(entryId));
+    localStorage.setItem('siakad_jadwalEdits', JSON.stringify(filtered));
   } catch(e) {}
 }
 // Initialize immediately so JADWAL_DUMMY is ready for all roles
@@ -3899,10 +3928,16 @@ function initJadwalManagePage() {
               const oldGabId = JADWAL_DUMMY[idxN].gabunganId;
               const oldProdi = JADWAL_DUMMY[idxN].prodi;
               const otherProdi = oldProdi === 'niaga' ? 'negara' : 'niaga';
-              Object.assign(JADWAL_DUMMY[idxN], { kodeMK, namaMK, dosen, hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks, semester: semNo });
+              const changes = { kodeMK, namaMK, dosen, hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks, semester: semNo };
+              Object.assign(JADWAL_DUMMY[idxN], changes);
+              saveJadwalEdit(JADWAL_DUMMY[idxN].id, changes);
               if (oldGabId) {
                 const idxG = JADWAL_DUMMY.findIndex(e => e.gabunganId === oldGabId && e.prodi === otherProdi);
-                if (idxG >= 0) Object.assign(JADWAL_DUMMY[idxG], { hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks });
+                if (idxG >= 0) {
+                  const changesG = { hari, jamMulai: mulai, jamSelesai: selesai, ruang: singleRoom, tipeKelas, sks };
+                  Object.assign(JADWAL_DUMMY[idxG], changesG);
+                  saveJadwalEdit(JADWAL_DUMMY[idxG].id, changesG);
+                }
               }
             }
           } else {
@@ -3915,13 +3950,15 @@ function initJadwalManagePage() {
         } else {
           const editId = (document.getElementById('jfEditId')?.value || '').trim();
           if (editId) {
-            // MODE EDIT: update existing entry
+            // MODE EDIT: update existing entry & persist
             const idx = JADWAL_DUMMY.findIndex(e => String(e.id) === String(editId));
             if (idx >= 0) {
-              Object.assign(JADWAL_DUMMY[idx], {
+              const changes = {
                 kodeMK, namaMK, dosen, hari, jamMulai: mulai, jamSelesai: selesai,
                 ruang: tipeKelas === 'Online' ? '\u2014' : ruang, tipeKelas, sks, semester: semNo,
-              });
+              };
+              Object.assign(JADWAL_DUMMY[idx], changes);
+              saveJadwalEdit(editId, changes); // persist ke localStorage
             }
           } else {
             // MODE TAMBAH: push entry baru
