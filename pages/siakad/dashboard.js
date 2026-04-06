@@ -2791,7 +2791,14 @@ function jadwalManageContent() {
               const pLabel = isGabungan ? '\ud83d\udd17 Gabungan' : (j.prodi === 'niaga' ? 'Niaga' : 'Negara');
               const pColor = isGabungan ? 'hsl(40 75% 32%)' : (prodiColors[j.prodi] || 'hsl(215 15% 50%)');
               const pBg = isGabungan ? 'hsl(40 80% 94%)' : (prodiBg[j.prodi] || 'hsl(215 20% 95%)');
-              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${liveDosen}" style="${isGabungan?'border-left:3px solid hsl(40 70% 60%);':''}">\n                <td>${i+1}.</td>\n                <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
+              const pertemuanDates = generatePertemuanDates(j.hari, 14);
+              const modes = j.modePertemuan || Array(14).fill('offline');
+              const onlineCount = modes.filter(x => x === 'online').length;
+              const offlineCount = 14 - onlineCount;
+              const liveDosen = getDosenFromKurikulum(j.kodeMK) || j.dosen;
+              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${liveDosen}" style="${isGabungan?'border-left:3px solid hsl(40 70% 60%);':''}">
+                <td>${i+1}.</td>
+                <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
                 <td style="text-align:center;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:hsl(215 20% 92%);font-size:0.65rem;font-weight:800;color:hsl(215 30% 45%);">${j.semester}</span></td>
                 <td><strong>${j.kodeMK}</strong></td>
                 <td style="white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${j.namaMK}</td>
