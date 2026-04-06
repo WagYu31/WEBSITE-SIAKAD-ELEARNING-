@@ -2991,7 +2991,7 @@ function renderJadwalForm(editData) {
     return `<option value="${d.nama}"${sel}>${d.nama}</option>`;
   }).join('');
 
-  const selProdi = editData?.prodi || 'niaga';
+  const selProdi = editData?.gabunganId ? 'gabungan' : (editData?.prodi || 'niaga');
 
   return `
     <div class="dash-card" style="overflow:hidden;border:2px solid hsl(210 55% 50%);">
@@ -3049,6 +3049,7 @@ function renderJadwalForm(editData) {
           <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas${selProdi==='gabungan'?' <span style="font-size:0.62rem;color:hsl(40 70% 45%);">Adm. Niaga</span>':''}</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="${selProdi==='gabungan'?'RN-101':"RA-201"}" style="${inputStyle}"></div>
           <div id="jfRuang2Wrap" style="display:${selProdi==='gabungan'?'block':'none'};"><label style="${labelStyle}">Ruang Kelas <span style="font-size:0.62rem;color:hsl(145 55% 40%);">Adm. Negara</span></label><input id="jfRuang2" type="text" value="${editData?.ruang2||''}" placeholder="RA-201" style="${inputStyle}"></div>
           <input type="hidden" id="jfTipeValue" value="${editData?.tipeKelas||'Offline'}">
+          <input type="hidden" id="jfEditId" value="${editData?.id||''}">
         </div>
         <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
           <button id="jfCancel" style="padding:8px 20px;border-radius:6px;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;font-size:0.8rem;cursor:pointer;">Batal</button>
@@ -3428,23 +3429,18 @@ function initJadwalManagePage() {
   // ---- Edit buttons ----
   document.querySelectorAll('.jadwal-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
-      const cells = row.querySelectorAll('td');
-      const jamParts = cells[6].textContent.trim().split('-');
-      const tipeText = cells[8].textContent.trim().replace(/\ud83c\udfeb|\ud83c\udf10|\ud83d\udd04/g,'').trim();
+      const id = btn.dataset.id;
+      const entry = JADWAL_DUMMY.find(e => String(e.id) === String(id));
+      if (!entry) return;
+      // Untuk gabungan: cari ruang prodi pasangan
+      let ruang2 = '';
+      if (entry.gabunganId) {
+        const otherProdi = entry.prodi === 'niaga' ? 'negara' : 'niaga';
+        const paired = JADWAL_DUMMY.find(e => e.kodeMK === entry.kodeMK && e.prodi === otherProdi && e.hari === entry.hari && e.jamMulai === entry.jamMulai && e.gabunganId === entry.gabunganId);
+        if (paired) ruang2 = paired.ruang;
+      }
       formArea.style.display = 'block';
-      formArea.innerHTML = renderJadwalForm({
-        prodi: row.dataset.prodi || 'niaga',
-        kodeMK: cells[2].textContent.trim(),
-        namaMK: cells[3].textContent.trim(),
-        dosen: cells[4].textContent.trim(),
-        hari: cells[5].textContent.trim(),
-        jamMulai: jamParts[0],
-        jamSelesai: jamParts[1] || '',
-        ruang: cells[7].textContent.trim().replace('\u2014 (Online)',''),
-        tipeKelas: tipeText,
-        sks: parseInt(cells[9].textContent) || 3
-      });
+      formArea.innerHTML = renderJadwalForm({ ...entry, ruang2 });
       formArea.scrollIntoView({ behavior:'smooth', block:'start' });
       initFormHandlers();
     });
@@ -3833,7 +3829,20 @@ function initJadwalManagePage() {
             exG.gabunganId = gabunganId; exG.ruang = tipeKelas === 'Online' ? '\u2014' : ruang2; exG.tipeKelas = tipeKelas;
           } else { JADWAL_DUMMY.push(makeEntry('negara', ruang2, 2)); }
         } else {
-          JADWAL_DUMMY.push(makeEntry(prodi, ruang, 1));
+          const editId = (document.getElementById('jfEditId')?.value || '').trim();
+          if (editId) {
+            // MODE EDIT: update existing entry
+            const idx = JADWAL_DUMMY.findIndex(e => String(e.id) === String(editId));
+            if (idx >= 0) {
+              Object.assign(JADWAL_DUMMY[idx], {
+                kodeMK, namaMK, dosen, hari, jamMulai: mulai, jamSelesai: selesai,
+                ruang: tipeKelas === 'Online' ? '\u2014' : ruang, tipeKelas, sks, semester: semNo,
+              });
+            }
+          } else {
+            // MODE TAMBAH: push entry baru
+            JADWAL_DUMMY.push(makeEntry(prodi, ruang, 1));
+          }
         }
         syncJadwalDummyDosen();
         window._dosenJadwalCache = null;
@@ -3847,7 +3856,8 @@ function initJadwalManagePage() {
             initJadwalManagePage();
           }
           const toast = document.createElement('div');
-          toast.textContent = isGabungan ? '\u2705 Jadwal Kelas Gabungan berhasil diperbarui!' : '\u2705 Jadwal berhasil ditambahkan!';
+          const editIdFinal = (document.getElementById('jfEditId')?.value || '').trim();
+          toast.textContent = isGabungan ? '\u2705 Kelas Gabungan diperbarui!' : editIdFinal ? '\u2705 Jadwal berhasil diperbarui!' : '\u2705 Jadwal berhasil ditambahkan!';
           toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(150 55% 42%);color:white;padding:11px 20px;border-radius:10px;font-size:0.8rem;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.2);';
           document.body.appendChild(toast);
           setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 2500);
