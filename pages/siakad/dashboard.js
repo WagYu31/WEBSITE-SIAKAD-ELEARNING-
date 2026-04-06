@@ -1575,12 +1575,14 @@ function jadwalDosenContent(user) {
       const isMulti = j.idxList && j.idxList.length > 1;
       const idxList = j.idxList || [{ idx: j.idx, prodi: '' }];
       const prodiLabel = p => p === 'niaga' ? 'Niaga' : p === 'negara' ? 'Negara' : '';
-      const absensiBtn = idxList.map(({idx, prodi}) =>
-        `<button class="jadwal-absensi-btn" data-kelas-idx="${idx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(150,55%,44%,.3);margin:2px;">📋${isMulti?' '+prodiLabel(prodi):' Absensi'}</button>`
-      ).join('');
-      const nilaiBtn = idxList.map(({idx, prodi}) =>
-        `<button class="jadwal-nilai-btn" data-kelas-idx="${idx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️${isMulti?' '+prodiLabel(prodi):' Nilai'}</button>`
-      ).join('');
+      const firstIdx = idxList[0].idx;
+      // Untuk gabungan: 1 tombol saja (kelas digabung = 1 aksi)
+      const absensiBtn = isMulti
+        ? `<button class="jadwal-absensi-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(150,55%,44%,.3);margin:2px;">📋 Absensi</button>`
+        : `<button class="jadwal-absensi-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(150 55% 44%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(150,55%,44%,.3);margin:2px;">📋 Absensi</button>`;
+      const nilaiBtn = isMulti
+        ? `<button class="jadwal-nilai-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️ Nilai</button>`
+        : `<button class="jadwal-nilai-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️ Nilai</button>`;
       return `
         <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
           <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${i+1}</td>
@@ -1643,10 +1645,14 @@ function jadwalDosenContent(user) {
             </div>
             <div style="display:flex;flex-direction:column;gap:5px;">
               <div style="display:flex;gap:5px;">
-                ${idxList.map(({idx,prodi}) => `<button class="jadwal-absensi-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">\ud83d\udccb ${isMulti ? pLabel(prodi) : 'Absensi'}</button>`).join('')}
+                ${isMulti
+                  ? `<button class="jadwal-absensi-btn" data-kelas-idx="${idxList[0].idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">📋 Absensi</button>`
+                  : idxList.map(({idx}) => `<button class="jadwal-absensi-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(150 55% 96%);color:hsl(150 55% 30%);border:1px solid hsl(150 42% 80%);font-weight:700;">📋 Absensi</button>`).join('')}
               </div>
               <div style="display:flex;gap:5px;">
-                ${idxList.map(({idx,prodi}) => `<button class="jadwal-nilai-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">\u270f\ufe0f ${isMulti ? pLabel(prodi) : 'Nilai'}</button>`).join('')}
+                ${isMulti
+                  ? `<button class="jadwal-nilai-btn" data-kelas-idx="${idxList[0].idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">✏️ Nilai</button>`
+                  : idxList.map(({idx}) => `<button class="jadwal-nilai-btn" data-kelas-idx="${idx}" style="flex:1;font-size:0.63rem;padding:5px 0;border-radius:7px;cursor:pointer;background:hsl(213 65% 96%);color:hsl(213 65% 32%);border:1px solid hsl(213 50% 80%);font-weight:700;">✏️ Nilai</button>`).join('')}
               </div>
             </div>
           </div>`;
