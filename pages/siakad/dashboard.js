@@ -2787,17 +2787,11 @@ function jadwalManageContent() {
               const tColor = tipeColors[j.tipeKelas] || 'hsl(215 15% 50%)';
               const tBg = tipeBg[j.tipeKelas] || 'hsl(215 20% 95%)';
               const tIcon = j.tipeKelas === 'Online' ? '\ud83c\udf10' : j.tipeKelas === 'Hybrid' ? '\ud83d\udd04' : '\ud83c\udfeb';
-              const pColor = prodiColors[j.prodi] || 'hsl(215 15% 50%)';
-              const pBg = prodiBg[j.prodi] || 'hsl(215 20% 95%)';
-              const pLabel = j.prodi === 'niaga' ? 'Niaga' : 'Negara';
-              const pertemuanDates = generatePertemuanDates(j.hari, 14);
-              const modes = j.modePertemuan || Array(14).fill('offline');
-              const onlineCount = modes.filter(x => x === 'online').length;
-              const offlineCount = 14 - onlineCount;
-              const liveDosen = getDosenFromKurikulum(j.kodeMK) || j.dosen;
-              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${liveDosen}">
-                <td>${i+1}.</td>
-                <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
+              const isGabungan = !!j.gabunganId;
+              const pLabel = isGabungan ? '\ud83d\udd17 Gabungan' : (j.prodi === 'niaga' ? 'Niaga' : 'Negara');
+              const pColor = isGabungan ? 'hsl(40 75% 32%)' : (prodiColors[j.prodi] || 'hsl(215 15% 50%)');
+              const pBg = isGabungan ? 'hsl(40 80% 94%)' : (prodiBg[j.prodi] || 'hsl(215 20% 95%)');
+              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${liveDosen}" style="${isGabungan?'border-left:3px solid hsl(40 70% 60%);':''}">\n                <td>${i+1}.</td>\n                <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
                 <td style="text-align:center;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:hsl(215 20% 92%);font-size:0.65rem;font-weight:800;color:hsl(215 30% 45%);">${j.semester}</span></td>
                 <td><strong>${j.kodeMK}</strong></td>
                 <td style="white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${j.namaMK}</td>
@@ -2978,11 +2972,15 @@ function renderJadwalForm(editData) {
         <!-- Row 1: Prodi + MK -->
         <div style="display:grid;grid-template-columns:200px 1fr;gap:14px;margin-bottom:14px;">
           <div>
-            <label style="${labelStyle}">\ud83c\udf93 Program Studi</label>
+            <label style="${labelStyle}">\ud83c\udf93 Program Studi / Kelas</label>
             <select id="jfProdi" style="${inputStyle}font-weight:600;">
               <option value="niaga"${selProdi==='niaga'?' selected':''}>\ud83c\udfea Adm. Niaga</option>
               <option value="negara"${selProdi==='negara'?' selected':''}>\ud83c\udfe6 Adm. Negara</option>
+              <option value="gabungan"${selProdi==='gabungan'?' selected':''}>\ud83d\udd17 Kelas Gabungan (Niaga + Negara)</option>
             </select>
+            <div id="jfGabunganInfo" style="display:${selProdi==='gabungan'?'flex':'none'};margin-top:5px;padding:7px 11px;background:hsl(40 80% 95%);border-radius:6px;border-left:3px solid hsl(40 75% 55%);font-size:0.65rem;color:hsl(40 70% 30%);gap:5px;align-items:flex-start;">
+              \ud83d\udd17 Satu MK dijadwalkan bersamaan untuk Adm. Niaga &amp; Adm. Negara oleh dosen yang sama. Atur ruang masing-masing prodi di bawah.
+            </div>
           </div>
           <div>
             <label style="${labelStyle}">\ud83d\udcda Mata Kuliah <span style="font-size:0.62rem;color:hsl(150 50% 45%);">(otomatis dari kurikulum)</span></label>
@@ -3017,7 +3015,9 @@ function renderJadwalForm(editData) {
               }).join('')}
             </div>
           </div>
-          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="RA-201" style="${inputStyle}"></div>
+          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas${selProdi==='gabungan'?' <span style="font-size:0.62rem;color:hsl(40 70% 45%);">Adm. Niaga</span>':''}</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="${selProdi==='gabungan'?'RN-101':"RA-201"}" style="${inputStyle}"></div>
+          <div id="jfRuang2Wrap" style="display:${selProdi==='gabungan'?'block':'none'};"><label style="${labelStyle}">Ruang Kelas <span style="font-size:0.62rem;color:hsl(145 55% 40%);">Adm. Negara</span></label><input id="jfRuang2" type="text" value="${editData?.ruang2||''}" placeholder="RA-201" style="${inputStyle}"></div>
+          <input type="hidden" id="jfTipeValue" value="${editData?.tipeKelas||'Offline'}">
         </div>
         <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
           <button id="jfCancel" style="padding:8px 20px;border-radius:6px;background:hsl(215 20% 92%);color:hsl(215 20% 35%);border:1px solid hsl(215 20% 82%);font-weight:600;font-size:0.8rem;cursor:pointer;">Batal</button>
@@ -3676,12 +3676,13 @@ function initJadwalManagePage() {
   }
 
   function initFormHandlers() {
-    // ---- Prodi change → refresh MK dropdown ----
+    // ---- Prodi change → refresh MK dropdown + show/hide gabungan UI ----
     const prodiSelect = document.getElementById('jfProdi');
     const mkSelect = document.getElementById('jfMK');
     prodiSelect?.addEventListener('change', () => {
       const prodi = prodiSelect.value;
-      const d = KURIKULUM_DATA[prodi];
+      const isGabungan = prodi === 'gabungan';
+      const d = KURIKULUM_DATA[isGabungan ? 'niaga' : prodi];
       let opts = '<option value="">-- Pilih Mata Kuliah --</option>';
       if (d) {
         d.semester.forEach(sem => {
@@ -3695,6 +3696,19 @@ function initJadwalManagePage() {
       mkSelect.innerHTML = opts;
       document.getElementById('jfKode').value = '';
       document.getElementById('jfSks').value = '';
+      document.getElementById('jfDosen').value = '';
+      // Show/hide gabungan UI
+      const infoEl = document.getElementById('jfGabunganInfo');
+      const ruang2El = document.getElementById('jfRuang2Wrap');
+      if (infoEl) infoEl.style.display = isGabungan ? 'flex' : 'none';
+      if (ruang2El) ruang2El.style.display = isGabungan ? 'block' : 'none';
+      // Update ruang placeholder
+      const ruangEl = document.getElementById('jfRuang');
+      if (ruangEl) {
+        ruangEl.placeholder = isGabungan ? 'RN-101 (Niaga)' : 'RA-201';
+        const ruangLabel = ruangEl.previousElementSibling;
+        if (ruangLabel) ruangLabel.innerHTML = `Ruang Kelas${isGabungan?' <span style="font-size:0.62rem;color:hsl(40 70% 45%);">Adm. Niaga</span>':''}`;
+      }
     });
 
     // ---- MK change → auto-fill kode, dosen (from Kurikulum), sks ----
@@ -3723,16 +3737,63 @@ function initJadwalManagePage() {
         const ruangWrap = document.getElementById('jfRuangWrap');
         if (tipe === 'Online') { ruangWrap.style.opacity = '0.4'; document.getElementById('jfRuang').value = ''; document.getElementById('jfRuang').placeholder = 'Tidak diperlukan'; }
         else { ruangWrap.style.opacity = '1'; document.getElementById('jfRuang').placeholder = 'R.201'; }
+        // Track selected tipe in hidden input
+        const tv = document.getElementById('jfTipeValue'); if (tv) tv.value = tipe;
       });
     });
 
     // Cancel
     document.getElementById('jfCancel')?.addEventListener('click', () => { formArea.style.display = 'none'; formArea.innerHTML = ''; });
-    // Save (demo)
+    // Save — real implementation with Kelas Gabungan support
     document.getElementById('jfSave')?.addEventListener('click', () => {
       const btn = document.getElementById('jfSave');
+      const kodeMK = (document.getElementById('jfKode').value || '').trim();
+      if (!kodeMK) { alert('\u26a0\ufe0f Pilih Mata Kuliah terlebih dahulu'); return; }
+      const hari = document.getElementById('jfHari').value;
+      const mulai = document.getElementById('jfMulai').value;
+      const selesai = document.getElementById('jfSelesai').value;
+      const prodi = document.getElementById('jfProdi').value;
+      const ruang = (document.getElementById('jfRuang').value || '').trim() || '\u2014';
+      const ruang2 = (document.getElementById('jfRuang2')?.value || '').trim() || '\u2014';
+      const tipeKelas = document.getElementById('jfTipeValue')?.value || 'Offline';
+      const sks = parseInt(document.getElementById('jfSks').value) || 3;
+      const dosen = document.getElementById('jfDosen').value || '-';
+      const mkSel = document.getElementById('jfMK');
+      const mkOpt = mkSel?.options[mkSel.selectedIndex];
+      const namaMK = mkOpt?.dataset?.nama || kodeMK;
+      const semGrp = mkOpt?.closest?.('optgroup')?.label || 'Semester 1';
+      const semNo = parseInt(semGrp.replace('Semester ', '')) || 1;
+      const isGabungan = prodi === 'gabungan';
+      const gabunganId = isGabungan ? `gb_${Date.now()}` : undefined;
       btn.textContent = '\u23f3 Menyimpan...';
-      setTimeout(() => { btn.textContent = '\u2705 Tersimpan!'; setTimeout(() => { formArea.style.display = 'none'; formArea.innerHTML = ''; }, 1000); }, 800);
+      btn.disabled = true;
+      const makeEntry = (p, r, n) => ({
+        id: Date.now() + n,
+        prodi: p, semester: semNo, kodeMK, namaMK, dosen, hari,
+        jamMulai: mulai, jamSelesai: selesai,
+        ruang: tipeKelas === 'Online' ? '\u2014' : r,
+        tipeKelas, kelas: 'A', sks, gabunganId,
+        modePertemuan: Array(14).fill(tipeKelas === 'Online' ? 'online' : 'offline'),
+      });
+      setTimeout(() => {
+        if (isGabungan) {
+          JADWAL_DUMMY.push(makeEntry('niaga', ruang, 1));
+          JADWAL_DUMMY.push(makeEntry('negara', ruang2, 2));
+        } else {
+          JADWAL_DUMMY.push(makeEntry(prodi, ruang, 1));
+        }
+        syncJadwalDummyDosen();
+        window._dosenJadwalCache = null;
+        btn.textContent = '\u2705 Tersimpan!';
+        setTimeout(() => {
+          formArea.style.display = 'none'; formArea.innerHTML = '';
+          const toast = document.createElement('div');
+          toast.textContent = isGabungan ? '\u2705 Jadwal Kelas Gabungan berhasil ditambahkan!' : '\u2705 Jadwal berhasil ditambahkan!';
+          toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(150 55% 42%);color:white;padding:11px 20px;border-radius:10px;font-size:0.8rem;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.2);';
+          document.body.appendChild(toast);
+          setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 2500);
+        }, 700);
+      }, 500);
     });
   }
 
