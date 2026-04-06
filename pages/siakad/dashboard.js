@@ -81,6 +81,27 @@ function initJadwalDummy() {
 // Initialize immediately so JADWAL_DUMMY is ready for all roles
 initJadwalDummy();
 
+// Helper: resolve dosen live from KURIKULUM_DATA — Jadwal always reflects Kurikulum changes
+function getDosenFromKurikulum(kodeMK) {
+  for (const prodi of ['niaga','negara']) {
+    const d = KURIKULUM_DATA[prodi];
+    if (!d) continue;
+    for (const sem of d.semester) {
+      const mk = (sem.mk || []).find(m => m.kode === kodeMK);
+      if (mk) return mk.dosen || '-';
+    }
+  }
+  return '-';
+}
+// Sync JADWAL_DUMMY dosen with current KURIKULUM_DATA — call after any Kurikulum save
+function syncJadwalDummyDosen() {
+  if (!window.JADWAL_DUMMY) return;
+  JADWAL_DUMMY.forEach(j => {
+    const live = getDosenFromKurikulum(j.kodeMK);
+    if (live && live !== '-') j.dosen = live;
+  });
+}
+
 // Load persisted jadwal pertemuan from backend and merge into JADWAL_DUMMY
 async function loadSavedJadwalPertemuan() {
   try {
@@ -2635,13 +2656,14 @@ function jadwalManageContent() {
               const modes = j.modePertemuan || Array(14).fill('offline');
               const onlineCount = modes.filter(x => x === 'online').length;
               const offlineCount = 14 - onlineCount;
-              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${j.dosen}">
+              const liveDosen = getDosenFromKurikulum(j.kodeMK) || j.dosen;
+              return `<tr data-id="${j.id}" data-prodi="${j.prodi}" data-smt="${j.semester}" data-hari="${j.hari}" data-tipe="${j.tipeKelas}" data-dosen="${liveDosen}">
                 <td>${i+1}.</td>
                 <td><span style="padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;background:${pBg};color:${pColor};">${pLabel}</span></td>
                 <td style="text-align:center;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;background:hsl(215 20% 92%);font-size:0.65rem;font-weight:800;color:hsl(215 30% 45%);">${j.semester}</span></td>
                 <td><strong>${j.kodeMK}</strong></td>
                 <td style="white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${j.namaMK}</td>
-                <td style="white-space:nowrap;font-size:0.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${j.dosen}</td>
+                <td style="white-space:nowrap;font-size:0.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${liveDosen}</td>
                 <td><strong>${j.hari}</strong></td>
                 <td class="sch-time" style="white-space:nowrap;">${j.jamMulai}-${j.jamSelesai}</td>
                 <td style="font-weight:600;font-size:0.72rem;">${j.tipeKelas === 'Online' ? '<span style="color:hsl(215 15% 60%);font-style:italic;">\u2014 (Online)</span>' : j.ruang}</td>
@@ -2835,11 +2857,10 @@ function renderJadwalForm(editData) {
         <!-- Row 2: Details auto-filled -->
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:14px;">
           <div><label style="${labelStyle}">Kode MK</label><input id="jfKode" type="text" value="${editData?.kodeMK||''}" readonly style="${inputStyle}background:hsl(215 20% 97%);color:hsl(215 15% 55%);"></div>
-          <div><label style="${labelStyle}">Dosen Pengampu <span style="font-size:0.62rem;color:hsl(200 50% 50%);">(bisa diganti)</span></label>
-            <select id="jfDosen" style="${inputStyle}">
-              <option value="">-- Pilih Dosen --</option>
-              ${dosenOpts}
-            </select>
+          <div>
+            <label style="${labelStyle}">Dosen Pengampu <span style="font-size:0.62rem;color:hsl(150 50% 45%);">\u2b05 otomatis dari Kurikulum</span></label>
+            <input id="jfDosen" type="text" value="${editData ? (getDosenFromKurikulum(editData.kodeMK) || editData.dosen || '') : ''}" readonly style="${inputStyle}background:hsl(215 20% 97%);color:hsl(200 50% 40%);font-weight:600;cursor:default;">
+            <div style="font-size:0.62rem;color:hsl(215 15% 55%);margin-top:3px;">\ud83d\udca1 Ubah penugasan dosen melalui menu Kurikulum Program Studi</div>
           </div>
           <div><label style="${labelStyle}">SKS</label><input id="jfSks" type="number" value="${editData?.sks||''}" readonly style="${inputStyle}background:hsl(215 20% 97%);width:80px;font-weight:700;"></div>
         </div>
@@ -3538,26 +3559,16 @@ function initJadwalManagePage() {
       document.getElementById('jfSks').value = '';
     });
 
-    // ---- MK change → auto-fill kode, dosen, sks ----
+    // ---- MK change → auto-fill kode, dosen (from Kurikulum), sks ----
     mkSelect?.addEventListener('change', () => {
       const opt = mkSelect.options[mkSelect.selectedIndex];
       if (opt && opt.value) {
         document.getElementById('jfKode').value = opt.value;
-        const dosenVal = opt.dataset.dosen || '';
         document.getElementById('jfSks').value = opt.dataset.sks || '';
-        // Try to match dosen from dropdown
-        const dosenSelect = document.getElementById('jfDosen');
-        if (dosenSelect) {
-          let matched = false;
-          for (let i = 0; i < dosenSelect.options.length; i++) {
-            if (dosenVal.includes(dosenSelect.options[i].value)) {
-              dosenSelect.selectedIndex = i;
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) dosenSelect.selectedIndex = 0;
-        }
+        // Always read dosen live from KURIKULUM_DATA (source of truth)
+        const liveDosen = getDosenFromKurikulum(opt.value) || opt.dataset.dosen || '';
+        const dosenInput = document.getElementById('jfDosen');
+        if (dosenInput) dosenInput.value = liveDosen;
       }
     });
 
@@ -7193,7 +7204,9 @@ function initKurikulumPage() {
 
     recalcSKS(prodi);
     closeModal();
-    alert(isAdd ? '\u2705 Mata kuliah berhasil ditambahkan!' : '\u2705 Mata kuliah berhasil diperbarui!');
+    // Sync Manajemen Jadwal — propagate dosen changes from Kurikulum immediately
+    syncJadwalDummyDosen();
+    alert(isAdd ? '\u2705 Mata kuliah berhasil ditambahkan!' : '\u2705 Mata kuliah berhasil diperbarui! Manajemen Jadwal sudah disinkronkan.');
     renderAndBind(prodi);
   });
 
