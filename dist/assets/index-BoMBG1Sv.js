@@ -1205,7 +1205,7 @@
         </div>
       </div>
     </div>
-  </div>`}function Le(e){let t=[`Senin`,`Selasa`,`Rabu`,`Kamis`,`Jumat`],n=window._dosenJadwalCache||Fe(e);window._dosenJadwalCache=n;let r=n.map((e,t)=>({hari:e.hari,jam:e.jam,kode:e.kode,nama:e.nama,kelas:e.kelas,ruang:e.ruang,jmlMhs:e.mahasiswa.length,idx:t}));return`${L(e)}
+  </div>`}function Le(e){let t=[`Senin`,`Selasa`,`Rabu`,`Kamis`,`Jumat`,`Sabtu`],n=window._dosenJadwalCache||Fe(e);window._dosenJadwalCache=n;let r=n.map((e,t)=>({hari:e.hari,jam:e.jam,kode:e.kode,nama:e.nama,kelas:e.kelas,ruang:e.ruang,jmlMhs:e.mahasiswa.length,idx:t})).sort((e,n)=>{let r=t.indexOf(e.hari)-t.indexOf(n.hari);if(r!==0)return r;let i=(e.jam||``).split(`-`)[0].trim(),a=(n.jam||``).split(`-`)[0].trim();return i.localeCompare(a)});return`${L(e)}
     <div class="dash-card">
       <div class="dash-card-head"><h3>📅 Jadwal Mengajar — Semester Genap ${new Date().getFullYear()}</h3></div>
       <div class="dash-card-body" style="padding:0;">

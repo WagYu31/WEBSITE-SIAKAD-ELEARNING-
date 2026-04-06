@@ -1473,13 +1473,22 @@ function dosenInfoHeader(user) {
 }
 
 function jadwalDosenContent(user) {
-  const days = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+  const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const dj = window._dosenJadwalCache || getDosenJadwal(user);
   window._dosenJadwalCache = dj;
   const allJadwal = dj.map((k,idx) => ({
     hari: k.hari, jam: k.jam, kode: k.kode, nama: k.nama, kelas: k.kelas, ruang: k.ruang,
     jmlMhs: k.mahasiswa.length, idx
-  }));
+  }))
+  // Urutkan berdasarkan hari (Senin→Sabtu) lalu jam mulai
+  .sort((a, b) => {
+    const dayOrder = days.indexOf(a.hari) - days.indexOf(b.hari);
+    if (dayOrder !== 0) return dayOrder;
+    // Sort by jam mulai e.g. "07:30-09:10" → compare "07:30" vs "09:20"
+    const jamA = (a.jam || '').split('-')[0].trim();
+    const jamB = (b.jam || '').split('-')[0].trim();
+    return jamA.localeCompare(jamB);
+  });
   return `${dosenInfoHeader(user)}
     <div class="dash-card">
       <div class="dash-card-head"><h3>📅 Jadwal Mengajar — Semester Genap ${new Date().getFullYear()}</h3></div>
