@@ -2971,7 +2971,8 @@ function renderJadwalForm(editData) {
 
   // Build MK options grouped by semester
   function mkOptionsForProdi(prodiKey) {
-    const d = KURIKULUM_DATA[prodiKey];
+    const effectiveKey = prodiKey === 'gabungan' ? 'niaga' : prodiKey;
+    const d = KURIKULUM_DATA[effectiveKey];
     if (!d) return '';
     let opts = '';
     d.semester.forEach(sem => {
