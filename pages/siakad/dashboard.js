@@ -3053,7 +3053,10 @@ function renderJadwalForm(editData) {
               }).join('')}
             </div>
           </div>
-          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas</label><input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="contoh: RN-101" style="${inputStyle}"></div>
+          <div id="jfRuangWrap"><label style="${labelStyle}">Ruang Kelas</label>
+            <input id="jfRuang" type="text" value="${editData?.ruang||''}" placeholder="contoh: RN-101" style="${inputStyle}" autocomplete="off">
+            <div id="jfRuangPicker" style="display:none;max-height:210px;overflow-y:auto;border:1px solid hsl(215 20% 82%);border-radius:8px;margin-top:4px;background:white;box-shadow:0 4px 16px rgba(0,0,0,0.10);position:relative;z-index:99;"></div>
+          </div>
           <div id="jfRuang2Wrap" style="display:none;"><input type="hidden" id="jfRuang2" value=""></div>
           <input type="hidden" id="jfTipeValue" value="${editData?.tipeKelas||'Offline'}">
           <input type="hidden" id="jfEditId" value="${editData?.id||''}">
@@ -3787,6 +3790,68 @@ function initJadwalManagePage() {
         // Track selected tipe in hidden input
         const tv = document.getElementById('jfTipeValue'); if (tv) tv.value = tipe;
       });
+    });
+
+    // ---- Smart Room Picker ----
+    const ROOM_GROUPS = [
+      { label: 'Adm. Niaga', color: 'hsl(25 80% 50%)', rooms: ['RN-101','RN-102','RN-103','RN-104','RN-105'] },
+      { label: 'Adm. Negara', color: 'hsl(145 55% 40%)', rooms: ['RA-201','RA-202','RA-203','RA-204','RA-205'] },
+      { label: 'Lab Komputer', color: 'hsl(213 65% 45%)', rooms: ['LAB-K1','LAB-K2'] },
+    ];
+    function updateRuangPicker() {
+      const picker = document.getElementById('jfRuangPicker');
+      const ruangInput = document.getElementById('jfRuang');
+      if (!picker) return;
+      const hari = document.getElementById('jfHari')?.value;
+      const mulai = document.getElementById('jfMulai')?.value;
+      if (!hari || !mulai) { picker.style.display = 'none'; return; }
+      const editId = (document.getElementById('jfEditId')?.value || '').trim();
+      // Ruangan yang sudah terpakai di slot ini (kecuali entry yang sedang diedit)
+      const occupiedMap = {};
+      JADWAL_DUMMY.forEach(e => {
+        if (String(e.id) === editId) return;
+        if (e.hari === hari && e.jamMulai === mulai && e.ruang && e.ruang !== '\u2014') {
+          occupiedMap[e.ruang] = e;
+        }
+      });
+      let html = '';
+      ROOM_GROUPS.forEach(grp => {
+        html += `<div style="padding:5px 10px 2px;font-size:0.62rem;font-weight:800;color:${grp.color};text-transform:uppercase;letter-spacing:.5px;background:hsl(215 20% 98%);border-bottom:1px solid hsl(215 20% 93%)">${grp.label}</div>`;
+        grp.rooms.forEach(room => {
+          const occ = occupiedMap[room];
+          const avail = !occ;
+          html += `<div class="rpick-item" data-room="${room}" data-avail="${avail}" style="display:flex;justify-content:space-between;align-items:center;padding:7px 14px;cursor:${avail?'pointer':'default'};background:${avail?'hsl(150 40% 98%)':'hsl(0 40% 98%)'};border-bottom:1px solid hsl(215 20% 95%);">`;
+          html += `<span style="font-size:0.78rem;font-weight:700;color:${avail?'hsl(150 50% 28%)':'hsl(0 45% 42%)'};">${room}</span>`;
+          html += `<span style="font-size:0.65rem;font-weight:600;color:${avail?'hsl(150 55% 42%)':'hsl(0 50% 55%)'};">${avail ? '\ud83d\udfe2 Tersedia' : '\ud83d\udd34 ' + (occ.kodeMK||'Terpakai')}</span>`;
+          html += `</div>`;
+        });
+      });
+      picker.innerHTML = html;
+      picker.style.display = 'block';
+      picker.querySelectorAll('.rpick-item').forEach(item => {
+        if (item.dataset.avail === 'true') {
+          item.addEventListener('mouseenter', () => item.style.background = 'hsl(150 50% 93%)');
+          item.addEventListener('mouseleave', () => item.style.background = 'hsl(150 40% 98%)');
+          item.addEventListener('click', () => {
+            if (ruangInput) ruangInput.value = item.dataset.room;
+            picker.style.display = 'none';
+          });
+        }
+      });
+    }
+    // Show picker on ruang input focus
+    document.getElementById('jfRuang')?.addEventListener('focus', updateRuangPicker);
+    // Refresh picker when hari or jam changes
+    document.getElementById('jfHari')?.addEventListener('change', updateRuangPicker);
+    document.getElementById('jfMulai')?.addEventListener('change', updateRuangPicker);
+    // Hide picker on click outside
+    document.addEventListener('click', function closePicker(e) {
+      const picker = document.getElementById('jfRuangPicker');
+      const ruangInput = document.getElementById('jfRuang');
+      if (picker && ruangInput && !picker.contains(e.target) && e.target !== ruangInput) {
+        picker.style.display = 'none';
+        document.removeEventListener('click', closePicker);
+      }
     });
 
     // Cancel
