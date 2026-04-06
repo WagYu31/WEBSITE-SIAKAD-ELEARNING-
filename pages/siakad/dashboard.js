@@ -3784,8 +3784,15 @@ function initJadwalManagePage() {
       });
       setTimeout(() => {
         if (isGabungan) {
-          JADWAL_DUMMY.push(makeEntry('niaga', ruang, 1));
-          JADWAL_DUMMY.push(makeEntry('negara', ruang2, 2));
+          // UPSERT: cari entry niaga & negara yang sudah ada untuk MK+hari+jam ini
+          const exN = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'niaga' && e.hari === hari && e.jamMulai === mulai);
+          const exG = JADWAL_DUMMY.find(e => e.kodeMK === kodeMK && e.prodi === 'negara' && e.hari === hari && e.jamMulai === mulai);
+          if (exN) {
+            exN.gabunganId = gabunganId; exN.ruang = tipeKelas === 'Online' ? '\u2014' : ruang; exN.tipeKelas = tipeKelas;
+          } else { JADWAL_DUMMY.push(makeEntry('niaga', ruang, 1)); }
+          if (exG) {
+            exG.gabunganId = gabunganId; exG.ruang = tipeKelas === 'Online' ? '\u2014' : ruang2; exG.tipeKelas = tipeKelas;
+          } else { JADWAL_DUMMY.push(makeEntry('negara', ruang2, 2)); }
         } else {
           JADWAL_DUMMY.push(makeEntry(prodi, ruang, 1));
         }
@@ -3794,14 +3801,21 @@ function initJadwalManagePage() {
         btn.textContent = '\u2705 Tersimpan!';
         setTimeout(() => {
           formArea.style.display = 'none'; formArea.innerHTML = '';
+          // Refresh table — re-render page content menggunakan container yang benar
+          const mainEl = document.getElementById('dashMain');
+          if (mainEl) {
+            mainEl.innerHTML = jadwalManageContent() + (typeof isoFooter !== 'undefined' ? isoFooter : '');
+            initJadwalManagePage();
+          }
           const toast = document.createElement('div');
-          toast.textContent = isGabungan ? '\u2705 Jadwal Kelas Gabungan berhasil ditambahkan!' : '\u2705 Jadwal berhasil ditambahkan!';
+          toast.textContent = isGabungan ? '\u2705 Jadwal Kelas Gabungan berhasil diperbarui!' : '\u2705 Jadwal berhasil ditambahkan!';
           toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:hsl(150 55% 42%);color:white;padding:11px 20px;border-radius:10px;font-size:0.8rem;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.2);';
           document.body.appendChild(toast);
           setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 2500);
         }, 700);
       }, 500);
     });
+
   }
 
   // ---- Kelas panel toggle ----
