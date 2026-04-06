@@ -1646,6 +1646,7 @@ function jadwalDosenContent(user) {
       const nilaiBtn = isMulti
         ? `<button class="jadwal-nilai-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️ Nilai</button>`
         : `<button class="jadwal-nilai-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(213 72% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(213,72%,50%,.3);margin:2px;">✏️ Nilai</button>`;
+      const pertemuanBtn = `<button class="jadwal-pertemuan-btn" data-kelas-idx="${firstIdx}" style="font-size:0.62rem;padding:4px 9px;border-radius:20px;cursor:pointer;background:hsl(38 75% 50%);color:white;border:none;font-weight:700;box-shadow:0 2px 5px hsla(38,75%,50%,.3);margin:2px;">📅 Pertemuan</button>`;
       return `
         <tr style="border-bottom:1px solid hsl(215 20% 94%);transition:background .15s;" onmouseenter="this.style.background='hsl(215 20% 98%)'" onmouseleave="this.style.background=''">
           <td style="padding:9px 14px;text-align:center;font-size:0.7rem;color:hsl(215 15% 60%);font-weight:600;">${i+1}</td>
@@ -1664,7 +1665,7 @@ function jadwalDosenContent(user) {
             <span style="font-size:0.72rem;font-weight:700;color:hsl(213 65% 45%);display:inline-flex;align-items:center;gap:3px;">\ud83d\udc65 ${j.jmlMhs}</span>
           </td>
           <td style="padding:9px 14px;text-align:right;">
-            <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;">${absensiBtn}${nilaiBtn}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;">${absensiBtn}${nilaiBtn}${pertemuanBtn}</div>
           </td>
         </tr>`
     }).join('');
@@ -1760,7 +1761,48 @@ function jadwalDosenContent(user) {
     </div>
 
     <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>
-    <div id="jadwalNilaiDetail" style="display:none;margin-top:20px;"></div>`;
+    <div id="jadwalNilaiDetail" style="display:none;margin-top:20px;"></div>
+    <div id="jadwalPertemuanDetail" style="display:none;margin-top:20px;"></div>`;
+}
+
+function renderPertemuanDetail(kelasIdx) {
+  const kelas = (window._dosenJadwalCache || [])[kelasIdx];
+  if (!kelas) return '';
+  const totalPertemuan = 14;
+  const dates = generatePertemuanDates(kelas.hari, totalPertemuan);
+  const today = new Date();
+  const modes = kelas.modePertemuan || Array(14).fill('offline');
+  const modeIcon = m => m === 'online' ? '\ud83d\udda5\ufe0f' : m === 'hybrid' ? '\ud83d\udd04' : '\ud83c\udfe2';
+  const modeColor = m => m === 'online' ? 'hsl(213 65% 50%)' : m === 'hybrid' ? 'hsl(275 55% 55%)' : 'hsl(150 55% 45%)';
+  const cards = modes.map((mode, i) => {
+    const date = dates[i];
+    const isPast = date && date < today;
+    const dateStr = date ? formatTanggalShort(date) : '-';
+    return `
+      <div style="border-radius:12px;padding:14px 10px;background:${isPast ? 'hsl(150 40% 97%)' : 'hsl(215 20% 98%)'};border:1.5px solid ${isPast ? 'hsl(150 40% 82%)' : 'hsl(215 20% 88%)'};text-align:center;transition:box-shadow .2s;" onmouseenter="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.09)'" onmouseleave="this.style.boxShadow='none'">
+        <div style="font-size:1.3rem;">${modeIcon(mode)}</div>
+        <div style="font-size:0.6rem;font-weight:800;color:hsl(215 25% 55%);margin:5px 0 2px;letter-spacing:.5px;">PERTEMUAN ${i+1}</div>
+        <div style="font-size:0.68rem;font-weight:700;color:hsl(215 25% 30%);">${dateStr}</div>
+        <div style="display:inline-block;font-size:0.58rem;padding:2px 8px;border-radius:10px;background:${modeColor(mode)};color:white;margin-top:5px;font-weight:700;">${mode.toUpperCase()}</div>
+        <div style="font-size:0.63rem;color:${isPast ? 'hsl(150 55% 38%)' : 'hsl(215 20% 55%)'};margin-top:5px;font-weight:600;">${isPast ? '\u2705 Selesai' : '\ud83d\udd1c Upcoming'}</div>
+      </div>`;
+  }).join('');
+
+  const selesai = modes.filter((_, i) => dates[i] && dates[i] < today).length;
+  return `
+    <div class="dash-card" style="overflow:hidden;margin-bottom:16px;">
+      <div style="background:linear-gradient(135deg,hsl(38 75% 48%),hsl(28 80% 55%));padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${kelas.kode} \u00b7 Kelas ${kelas.kelas}</div>
+          <div style="font-size:1rem;font-weight:700;color:white;">\ud83d\udcc5 Detail 14 Pertemuan \u2014 ${kelas.nama}</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.75);margin-top:2px;">${selesai} dari ${totalPertemuan} pertemuan selesai \u00b7 Hari: ${kelas.hari}</div>
+        </div>
+        <button id="closePertemuanDetail" style="background:rgba(255,255,255,0.25);border:none;color:white;font-size:0.78rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;">\u2715 Tutup</button>
+      </div>
+      <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;">
+        ${cards}
+      </div>
+    </div>`;
 }
 
 function renderInputNilaiDetail(kelasIdx) {
@@ -1855,10 +1897,12 @@ function renderInputNilaiDetail(kelasIdx) {
 function initJadwalDosenPage() {
   const absensiDiv = document.getElementById('jadwalAbsensiDetail');
   const nilaiDiv = document.getElementById('jadwalNilaiDetail');
+  const pertemuanDiv = document.getElementById('jadwalPertemuanDetail');
 
   function hideAllDetails() {
     if (absensiDiv) { absensiDiv.style.display = 'none'; absensiDiv.innerHTML = ''; }
     if (nilaiDiv) { nilaiDiv.style.display = 'none'; nilaiDiv.innerHTML = ''; }
+    if (pertemuanDiv) { pertemuanDiv.style.display = 'none'; pertemuanDiv.innerHTML = ''; }
   }
 
   // Absensi buttons
@@ -1995,6 +2039,21 @@ function initJadwalDosenPage() {
             setTimeout(() => { btn.textContent = '💾 Simpan Nilai'; btn.style.background = 'hsl(150 55% 45%)'; btn.disabled = false; }, 2000);
           }
         });
+      }
+    });
+  });
+
+  // 📅 Pertemuan buttons
+  document.querySelectorAll('.jadwal-pertemuan-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideAllDetails();
+      const idx = parseInt(btn.dataset.kelasIdx);
+      if (pertemuanDiv) {
+        pertemuanDiv.style.display = 'block';
+        pertemuanDiv.innerHTML = renderPertemuanDetail(idx);
+        pertemuanDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('closePertemuanDetail')?.addEventListener('click', () => hideAllDetails());
       }
     });
   });
