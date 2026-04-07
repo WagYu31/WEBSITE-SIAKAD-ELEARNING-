@@ -5336,57 +5336,50 @@ async function bulkDelete() {
 }
 
 async function processAllStudents() {
-  const total = _pmbRegistrations.length;
-  if (total === 0) { alert('Tidak ada data pendaftar.'); return; }
-  if (!confirm(`⚡ Proses Semua (${total} mahasiswa)\n\nAkan otomatis:\n① Bayar (cash) jika belum\n② Buat Akun\n③ Validasi\n\nLanjutkan?`)) return;
+  // Hanya proses yang belum selesai (status bukan 'proses')
+  const toProcess = _pmbRegistrations.filter(r => (r.status||'').toLowerCase() !== 'proses');
+  const total = toProcess.length;
+  const alreadyDone = _pmbRegistrations.length - total;
+
+  if (total === 0) { alert(`✅ Semua ${_pmbRegistrations.length} mahasiswa sudah diproses!`); return; }
+  if (!confirm(`⚡ Proses Semua\n\n${total} belum diproses${alreadyDone>0?` (${alreadyDone} sudah selesai, dilewati)`:''}\n\nAkan otomatis:\n① Bayar (cash)\n② Buat Akun\n③ Validasi\n\nLanjutkan?`)) return;
 
   const btn = document.getElementById('pmbProcessAll');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+  let payOk=0, paySkip=0, accOk=0, accSkip=0, valOk=0, valSkip=0, fail=0;
 
-  let payOk=0, paySkip=0, accOk=0, accSkip=0, valOk=0, fail=0;
-
-  for (let i = 0; i < _pmbRegistrations.length; i++) {
-    const reg = _pmbRegistrations[i];
+  for (let i = 0; i < toProcess.length; i++) {
+    const reg = toProcess[i];
     if (btn) btn.textContent = `⏳ ${i+1}/${total}`;
 
     // Step ①: Cek/Konfirmasi Pembayaran (cash)
     try {
       const statusRes = await fetch(`${PMB_API}/status/${encodeURIComponent(reg.no_pendaftaran||'')}`);
       const statusData = statusRes.ok ? await statusRes.json() : null;
-      const alreadyPaid = statusData?.payment?.status === 'paid';
-      if (alreadyPaid) {
-        paySkip++;
-      } else {
-        const payRes = await fetch(`${PMB_API}/payment`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ registration_id: reg.id, metode_bayar: 'cash' })
-        });
-        if (payRes.ok) {
-          const payData = await payRes.json();
-          const cfmRes = await fetch(`${PMB_API}/payment/${payData.id}/confirm`, { method: 'PUT' });
-          if (cfmRes.ok) payOk++; else paySkip++;
-        } else { paySkip++; }
+      if (statusData?.payment?.status === 'paid') { paySkip++; }
+      else {
+        const payRes = await fetch(`${PMB_API}/payment`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({registration_id:reg.id,metode_bayar:'cash'}) });
+        if (payRes.ok) { const pd=await payRes.json(); const cfm=await fetch(`${PMB_API}/payment/${pd.id}/confirm`,{method:'PUT'}); if(cfm.ok)payOk++;else paySkip++; }
+        else paySkip++;
       }
     } catch { paySkip++; }
 
     // Step ②: Buat Akun
     try {
-      const accRes = await fetch(`${PMB_API}/account/create`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ registration_id: reg.id })
-      });
+      const accRes = await fetch(`${PMB_API}/account/create`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({registration_id:reg.id}) });
       if (accRes.ok) accOk++; else accSkip++;
     } catch { accSkip++; }
 
-    // Step ③: Validasi (pakai reg.id langsung — sama seperti bulkValidate)
+    // Step ③: Validasi
     try {
-      const valRes = await fetch(`${PMB_API}/account/${reg.id}/validate`, { method: 'PUT' });
-      if (valRes.ok) valOk++; else fail++;
+      const valRes = await fetch(`${PMB_API}/account/${reg.id}/validate`, { method:'PUT' });
+      if (valRes.ok) valOk++;
+      else { const b=await valRes.json().catch(()=>({})); if((b?.error||'').toLowerCase().includes('already'))valSkip++;else fail++; }
     } catch { fail++; }
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = '⚡ Proses Semua'; }
-  alert(`✅ Selesai!\n\n① Bayar dikonfirmasi: ${payOk} (sudah bayar: ${paySkip})\n② Akun dibuat: ${accOk} (skip: ${accSkip})\n③ Divalidasi: ${valOk}\n❌ Gagal: ${fail}`);
+  if (btn) { btn.disabled=false; btn.textContent='⚡ Proses Semua'; }
+  alert(`✅ Selesai!\n\n① Bayar: ${payOk} baru (${paySkip} skip)\n② Akun: ${accOk} baru (${accSkip} skip)\n③ Validasi: ${valOk}${valSkip>0?` (${valSkip} sudah valid)`:''}\n❌ Gagal: ${fail}${alreadyDone>0?`\n\n(${alreadyDone} dilewati sudah selesai)`:''}`);
   loadRegistrationList();
 }
 
