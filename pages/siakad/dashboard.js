@@ -5378,13 +5378,10 @@ async function processAllStudents() {
       if (accRes.ok) accOk++; else accSkip++;
     } catch { accSkip++; }
 
-    // Step ③: Validasi
+    // Step ③: Validasi (pakai reg.id langsung — sama seperti bulkValidate)
     try {
-      const accInfo = await fetch(`${PMB_API}/account/${reg.id}`).then(r => r.ok ? r.json() : null).catch(() => null);
-      if (accInfo?.id) {
-        const valRes = await fetch(`${PMB_API}/account/${accInfo.id}/validate`, { method: 'PUT' });
-        if (valRes.ok) valOk++; else fail++;
-      } else { fail++; }
+      const valRes = await fetch(`${PMB_API}/account/${reg.id}/validate`, { method: 'PUT' });
+      if (valRes.ok) valOk++; else fail++;
     } catch { fail++; }
   }
 
