@@ -166,12 +166,13 @@ func ValidateAccountByEmail(c *gin.Context) {
 }
 
 // ValidateAccountByBAP validates an account by BAP staff
+// The :id param is the REGISTRATION ID (not account pk)
 func ValidateAccountByBAP(c *gin.Context) {
-	accountID := c.Param("id")
+	registrationID := c.Param("id")
 
 	var account models.Account
-	if err := config.DB.First(&account, accountID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Akun tidak ditemukan"})
+	if err := config.DB.Where("registration_id = ?", registrationID).First(&account).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Akun tidak ditemukan untuk pendaftaran ini"})
 		return
 	}
 
@@ -191,7 +192,7 @@ func ValidateAccountByBAP(c *gin.Context) {
 		Updates(map[string]interface{}{"status": "diterima", "updated_at": now})
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "✅ Akun berhasil divalidasi oleh BAP",
+		"message": "Akun berhasil divalidasi oleh BAP",
 		"nim":     account.NIM,
 	})
 }
