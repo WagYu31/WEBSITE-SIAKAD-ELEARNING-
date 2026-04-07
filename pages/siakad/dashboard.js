@@ -5726,7 +5726,7 @@ async function handleMgmtAction(action, data) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ registration_id: parseInt(data.id) }),
         });
-        result = await res.json();
+        result = await res.json().catch(() => ({}));
         if (res.ok) {
           const pwd = result.password;
           if (pwd) {
@@ -5748,7 +5748,7 @@ async function handleMgmtAction(action, data) {
         }
         // Always call validate endpoint (it also ensures registration status is updated)
         const valRes = await fetch(`${PMB_API}/account/${data.id}/validate`, { method: 'PUT' });
-        result = await valRes.json();
+        result = await valRes.json().catch(() => ({}));
         if (valRes.ok) {
           alert('✅ ' + result.message);
           loadRegistrationList();
