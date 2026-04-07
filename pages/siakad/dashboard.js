@@ -6540,10 +6540,12 @@ async function loadMahasiswaList() {
       return;
     }
 
-    // Fetch account info (NIM) for ALL registrations in parallel
-    const accountResults = await Promise.allSettled(
-      registrations.map(r => fetch(`${MHS_API}/account/${r.id}`).then(res => res.ok ? res.json() : null).catch(() => null))
-    );
+    // Fetch ALL accounts in ONE request keyed by registration_id
+    let accountMap = {};
+    try {
+      const bulkRes = await fetch(`${MHS_API}/accounts`);
+      if (bulkRes.ok) accountMap = await bulkRes.json();
+    } catch { /* fallback: accountMap stays empty */ }
 
     // Map PMB status → student status
     const statusMap = {
@@ -6553,9 +6555,8 @@ async function loadMahasiswaList() {
       'ditolak':  'ditolak',
     };
 
-    _mahasiswaList = registrations.map((r, idx) => {
-      const accResult = accountResults[idx];
-      const acc = accResult?.status === 'fulfilled' ? accResult.value : null;
+    _mahasiswaList = registrations.map((r) => {
+      const acc = accountMap[r.id] || null;
       const nim = acc?.nim || r.nim || `PMB${String(r.id).padStart(4,'0')}`;
       const angkatan = r.angkatan || (r.tanggal_lahir ? new Date(r.tanggal_lahir).getFullYear() + 18 : (r.created_at ? new Date(r.created_at).getFullYear() : 2026));
       const pmbStatus = (r.status || 'menunggu').toLowerCase();
