@@ -235,6 +235,10 @@ if (preg_match('#^/pmb/account/(\d+)$#', $path, $m) && $method === 'GET') {
     require_once __DIR__ . '/account.php';
     getAccountByRegistration((int)$m[1]);
 }
+if ($path === '/pmb/accounts' && $method === 'GET') {
+    require_once __DIR__ . '/account.php';
+    getAllAccounts();
+}
 if (preg_match('#^/pmb/validate/(.+)$#', $path, $m) && $method === 'GET') {
     require_once __DIR__ . '/account.php';
     validateAccountByEmail($m[1]);

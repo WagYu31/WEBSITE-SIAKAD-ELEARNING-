@@ -117,6 +117,20 @@ function bapCreateAccount() {
     ], 201);
 }
 
+// GET /api/pmb/accounts  — bulk: returns all accounts keyed by registration_id
+function getAllAccounts() {
+    $db = getDB();
+    $rows = $db->query('SELECT id, registration_id, nim, email, plain_password, is_validated, validated_by, validated_at, created_at FROM pmb_accounts')->fetchAll();
+    $map = [];
+    foreach ($rows as $a) {
+        $a['id']              = (int)$a['id'];
+        $a['registration_id'] = (int)$a['registration_id'];
+        $a['is_validated']    = (bool)$a['is_validated'];
+        $map[$a['registration_id']] = $a;
+    }
+    jsonResponse($map);
+}
+
 // GET /api/pmb/account/:registration_id
 function getAccountByRegistration($regId) {
     $db = getDB();
