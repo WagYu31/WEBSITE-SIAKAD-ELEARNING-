@@ -5021,16 +5021,6 @@ async function loadRegistrationList() {
     const stats = await statsRes.json();
     _pmbRegistrations = regData.data || [];
 
-    // Update prodi dropdown dinamis dari data
-    const prodiSel = document.getElementById('pmbFilterProdi');
-    if (prodiSel) {
-      const savedProdi = prodiSel.value;
-      const prodiSet = [...new Set(_pmbRegistrations.map(r => r.prodi_pilihan).filter(Boolean))].sort();
-      prodiSel.innerHTML = '<option value="">Semua Prodi</option>' +
-        prodiSet.map(p => `<option value="${p}">${p}</option>`).join('');
-      if (prodiSet.includes(savedProdi)) prodiSel.value = savedProdi;
-    }
-
     renderPMBList(stats, _pmbRegistrations);
   } catch (err) {
     content.innerHTML = `<div style="text-align:center;padding:24px;">
@@ -5128,6 +5118,16 @@ function renderPMBList(stats, registrations) {
       <p style="font-size:var(--text-xs);color:var(--text-muted);" id="pmbResultCount"></p>
       <div id="pmbPagination" style="display:flex;gap:4px;align-items:center;"></div>
     </div>`;
+
+  // Populate prodi dropdown dari data aktual
+  const prodiSel = document.getElementById('pmbFilterProdi');
+  if (prodiSel && _pmbRegistrations.length > 0) {
+    const savedVal = prodiSel.value;
+    const prodiSet = [...new Set(_pmbRegistrations.map(r => r.prodi_pilihan).filter(Boolean))].sort();
+    prodiSel.innerHTML = '<option value="">Semua Prodi</option>' +
+      prodiSet.map(p => `<option value="${p}">${p}</option>`).join('');
+    if (prodiSet.includes(savedVal)) prodiSel.value = savedVal;
+  }
 
   // Bind controls
   const onFilter = () => { _pmbPage = 1; applyPMBFilters(); };
@@ -5344,8 +5344,8 @@ async function bulkDelete() {
 }
 
 async function processAllStudents() {
-  // Hanya proses yang belum selesai (status bukan 'proses')
-  const toProcess = _pmbRegistrations.filter(r => (r.status||'').toLowerCase() !== 'proses');
+  // Hanya proses yang belum selesai (status 'diterima' = sudah divalidasi, skip)
+  const toProcess = _pmbRegistrations.filter(r => (r.status||'').toLowerCase() !== 'diterima');
   const total = toProcess.length;
   const alreadyDone = _pmbRegistrations.length - total;
 
