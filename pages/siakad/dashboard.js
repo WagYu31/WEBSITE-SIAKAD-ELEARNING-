@@ -5119,11 +5119,12 @@ function renderPMBList(stats, registrations) {
       <div id="pmbPagination" style="display:flex;gap:4px;align-items:center;"></div>
     </div>`;
 
-  // Populate prodi dropdown dari data aktual
+  // Populate prodi dropdown dari data aktual (normalisasi: hapus prefix 'S1')
   const prodiSel = document.getElementById('pmbFilterProdi');
   if (prodiSel && _pmbRegistrations.length > 0) {
     const savedVal = prodiSel.value;
-    const prodiSet = [...new Set(_pmbRegistrations.map(r => r.prodi_pilihan).filter(Boolean))].sort();
+    const normProdi = (p) => (p||'').replace(/^S\d+\s+/i,'').trim();
+    const prodiSet = [...new Set(_pmbRegistrations.map(r => normProdi(r.prodi_pilihan)).filter(Boolean))].sort();
     prodiSel.innerHTML = '<option value="">Semua Prodi</option>' +
       prodiSet.map(p => `<option value="${p}">${p}</option>`).join('');
     if (prodiSet.includes(savedVal)) prodiSel.value = savedVal;
@@ -5162,7 +5163,8 @@ function applyPMBFilters() {
   let filtered = _pmbRegistrations.filter(r => {
     const matchQ = !q || (r.nama||'').toLowerCase().includes(q) || (r.nik||'').includes(q) || (r.no_pendaftaran||'').toLowerCase().includes(q);
     const matchS = !status || (r.status || '').toLowerCase() === status.toLowerCase();
-    const matchP = !prodi || r.prodi_pilihan === prodi;
+    const normProdi = (p) => (p||'').replace(/^S\d+\s+/i,'').trim();
+    const matchP = !prodi || normProdi(r.prodi_pilihan).toLowerCase() === prodi.toLowerCase();
     let matchD = true;
     if (dateFrom || dateTo) {
       const d = r.created_at ? r.created_at.slice(0, 10) : '';
