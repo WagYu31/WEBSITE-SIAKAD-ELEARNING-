@@ -2702,7 +2702,7 @@
     </div>`}async function Pt(){document.querySelectorAll(`.pmb-mgmt-btn`).forEach(e=>{e.addEventListener(`click`,()=>{document.querySelectorAll(`.pmb-mgmt-btn`).forEach(e=>e.classList.remove(`active`)),e.classList.add(`active`),e.dataset.tab===`list`?B():e.dataset.tab===`add`&&Xt()})}),document.getElementById(`closeDetailModal`)?.addEventListener(`click`,()=>{document.getElementById(`pmbDetailModal`).style.display=`none`}),document.getElementById(`pmbDetailModal`)?.addEventListener(`click`,e=>{e.target.id===`pmbDetailModal`&&(e.target.style.display=`none`)}),B()}var z=[];async function B(){let e=document.getElementById(`pmbMgmtContent`);if(e){e.innerHTML=`<div style="text-align:center;padding:24px;">
     <div class="anim-spin" style="width:24px;height:24px;border:2.5px solid var(--gray-200);border-top-color:var(--primary-500);border-radius:50%;margin:0 auto 8px;"></div>
     <p style="color:var(--text-muted);font-size:var(--text-sm);">Memuat data pendaftar...</p>
-  </div>`;try{let[e,t]=await Promise.all([fetch(`${R}/registrations`),fetch(`${R}/stats`)]),n=await e.json(),r=await t.json();z=n.data||[],It(r,z)}catch{e.innerHTML=`<div style="text-align:center;padding:24px;">
+  </div>`;try{let[e,t]=await Promise.all([fetch(`${R}/registrations`),fetch(`${R}/stats`)]),n=await e.json(),r=await t.json();z=n.data||[];let i=document.getElementById(`pmbFilterProdi`);if(i){let e=i.value,t=[...new Set(z.map(e=>e.prodi_pilihan).filter(Boolean))].sort();i.innerHTML=`<option value="">Semua Prodi</option>`+t.map(e=>`<option value="${e}">${e}</option>`).join(``),t.includes(e)&&(i.value=e)}It(r,z)}catch{e.innerHTML=`<div style="text-align:center;padding:24px;">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger-500)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <p style="color:var(--danger-600);font-weight:var(--font-semibold);margin-bottom:4px;">Gagal memuat data</p>
       <p style="color:var(--text-muted);font-size:var(--text-sm);">Pastikan backend server berjalan di port 8080</p>
@@ -2745,8 +2745,6 @@
       </select>
       <select id="pmbFilterProdi" class="form-select" style="width:auto;min-width:160px;">
         <option value="">Semua Prodi</option>
-        <option value="Administrasi Negara">Adm. Negara</option>
-        <option value="Administrasi Niaga">Adm. Niaga</option>
       </select>
       <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">${I.fileText} Export</button>
     </div>

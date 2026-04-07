@@ -5021,6 +5021,16 @@ async function loadRegistrationList() {
     const stats = await statsRes.json();
     _pmbRegistrations = regData.data || [];
 
+    // Update prodi dropdown dinamis dari data
+    const prodiSel = document.getElementById('pmbFilterProdi');
+    if (prodiSel) {
+      const savedProdi = prodiSel.value;
+      const prodiSet = [...new Set(_pmbRegistrations.map(r => r.prodi_pilihan).filter(Boolean))].sort();
+      prodiSel.innerHTML = '<option value="">Semua Prodi</option>' +
+        prodiSet.map(p => `<option value="${p}">${p}</option>`).join('');
+      if (prodiSet.includes(savedProdi)) prodiSel.value = savedProdi;
+    }
+
     renderPMBList(stats, _pmbRegistrations);
   } catch (err) {
     content.innerHTML = `<div style="text-align:center;padding:24px;">
@@ -5080,8 +5090,6 @@ function renderPMBList(stats, registrations) {
       </select>
       <select id="pmbFilterProdi" class="form-select" style="width:auto;min-width:160px;">
         <option value="">Semua Prodi</option>
-        <option value="Administrasi Negara">Adm. Negara</option>
-        <option value="Administrasi Niaga">Adm. Niaga</option>
       </select>
       <button class="btn btn-secondary btn-sm" id="pmbExportBtn" title="Export CSV">${I.fileText} Export</button>
     </div>
