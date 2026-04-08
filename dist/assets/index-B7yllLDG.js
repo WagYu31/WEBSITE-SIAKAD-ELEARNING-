@@ -1329,7 +1329,45 @@
       <div style="display:inline-block;font-size:0.58rem;padding:2px 8px;border-radius:10px;background:${s(t)};color:white;margin-top:5px;font-weight:700;">${t.toUpperCase()}</div>
       ${S}
       ${C}
-    </div>`}).join(``),p=document.getElementById(`pertemuanCardsGrid`);p&&(p.innerHTML=f);let m=document.getElementById(`pertemuanSubtitle`);m&&(m.textContent=`${u} dari 14 selesai${d?` · 🟢 `+d+` berlangsung`:``} · Hari: ${n.hari}`),t.querySelectorAll(`.btn-buka-kelas`).forEach(e=>{e.addEventListener(`click`,async n=>{n.stopPropagation(),e.disabled=!0,e.textContent=`⏳ Membuka...`;let r=parseInt(e.dataset.jpId);try{r&&await fetch(`/api/jadwal-pertemuan/${r}/buka`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({dibuka_oleh:window._currentUser?.nip||window._currentUser?.nama||`Dosen`})})}catch{}let i=`${e.dataset.kode}-${e.dataset.kelas}-${e.dataset.n}`;window._pertemuanStatusCache||(window._pertemuanStatusCache={}),window._pertemuanStatusCache[i]=`berlangsung`,await qe(parseInt(e.dataset.kelasIdx),t)})}),t.querySelectorAll(`.btn-tutup-kelas`).forEach(e=>{e.addEventListener(`click`,async n=>{n.stopPropagation(),e.disabled=!0,e.textContent=`⏳ Menutup...`;let r=parseInt(e.dataset.jpId);try{r&&await fetch(`/api/jadwal-pertemuan/${r}/tutup`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({ditutup_oleh:window._currentUser?.nip||`Dosen`})})}catch{}let i=`${e.dataset.kode}-${e.dataset.kelas}-${e.dataset.n}`;window._pertemuanStatusCache||(window._pertemuanStatusCache={}),window._pertemuanStatusCache[i]=`selesai`,await qe(parseInt(e.dataset.kelasIdx),t)})})}function Je(e){function t(e){return e>=85?`A`:e>=80?`A-`:e>=75?`B+`:e>=70?`B`:e>=65?`B-`:e>=60?`C+`:e>=55?`C`:e>=45?`D`:`E`}let n=(window._dosenJadwalCache||[])[e],r=n.bobot||{uts:20,uas:30,tugas:20,quiz:15,absensi:15},i=`UTS×${r.uts}% + UAS×${r.uas}% + Tugas×${r.tugas}% + Quiz×${r.quiz}% + Absensi×${r.absensi}%`;return`
+    </div>`}).join(``),p=document.getElementById(`pertemuanCardsGrid`);p&&(p.innerHTML=f);let m=document.getElementById(`pertemuanSubtitle`);m&&(m.textContent=`${u} dari 14 selesai${d?` · 🟢 `+d+` berlangsung`:``} · Hari: ${n.hari}`),t.querySelectorAll(`.btn-buka-kelas`).forEach(e=>{e.addEventListener(`click`,r=>{r.stopPropagation();let i=parseInt(e.dataset.jpId),a=parseInt(e.dataset.n),o=e.dataset.kode,s=e.dataset.kelas,c=parseInt(e.dataset.kelasIdx),l=(n.modePertemuan||[])[a-1]||`offline`,u=`modalBukaKelas`;document.getElementById(u)?.remove();let d=document.createElement(`div`);d.id=u,d.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);`,d.innerHTML=`
+        <div style="background:white;border-radius:18px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;animation:fadeIn .18s ease;">
+          <div style="background:linear-gradient(135deg,hsl(150 55% 42%),hsl(160 55% 52%));padding:18px 22px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.5rem;">🔓</span>
+            <div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${o} · Kelas ${s} · Pertemuan ${a}</div>
+              <div style="font-size:1rem;font-weight:700;color:white;">Buka Sesi Kelas</div>
+            </div>
+          </div>
+          <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:5px;">📚 Topik / Materi Hari Ini <span style="color:hsl(0 60% 55%);">*</span></label>
+              <input id="inputTopikPertemuan" type="text" placeholder="Contoh: Bab 3 — Administrasi Publik" maxlength="150"
+                style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid hsl(215 20% 85%);border-radius:8px;font-size:0.82rem;outline:none;transition:border .2s;"
+                onfocus="this.style.borderColor='hsl(150 55% 50%)'" onblur="this.style.borderColor='hsl(215 20% 85%)'">
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:5px;">🖥️ Mode Pertemuan</label>
+              <div style="display:flex;gap:8px;">
+                ${[`offline`,`online`,`hybrid`].map(e=>`
+                  <label style="flex:1;display:flex;align-items:center;gap:5px;padding:7px 10px;border:1.5px solid ${e===l?`hsl(150 55% 50%)`:`hsl(215 20% 85%)`};border-radius:8px;cursor:pointer;background:${e===l?`hsl(150 55% 96%)`:`white`};font-size:0.72rem;font-weight:600;transition:all .15s;" id="lbl-mode-${e}">
+                    <input type="radio" name="modePertemuan" value="${e}" ${e===l?`checked`:``} style="accent-color:hsl(150 55% 45%);" onchange="document.querySelectorAll('[id^=lbl-mode-]').forEach(l=>{l.style.borderColor='hsl(215 20% 85%)';l.style.background='white'});this.closest('label').style.borderColor='hsl(150 55% 50%)';this.closest('label').style.background='hsl(150 55% 96%)'">
+                    ${e===`offline`?`🏢 Offline`:e===`online`?`🖥️ Online`:`🔄 Hybrid`}
+                  </label>`).join(``)}
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:5px;">📝 Catatan (opsional)</label>
+              <textarea id="inputCatatanPertemuan" rows="2" placeholder="Catatan tambahan untuk mahasiswa…" maxlength="300"
+                style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid hsl(215 20% 85%);border-radius:8px;font-size:0.82rem;resize:none;outline:none;font-family:inherit;transition:border .2s;"
+                onfocus="this.style.borderColor='hsl(150 55% 50%)'" onblur="this.style.borderColor='hsl(215 20% 85%)'"></textarea>
+            </div>
+            <div id="bukaKelasError" style="display:none;padding:8px 12px;background:hsl(0 70% 96%);color:hsl(0 60% 45%);border-radius:6px;font-size:0.72rem;font-weight:600;"></div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+              <button id="btnBatalBuka" style="padding:8px 20px;border-radius:8px;border:1px solid hsl(215 20% 85%);background:hsl(215 20% 96%);color:hsl(215 20% 40%);font-size:0.78rem;font-weight:600;cursor:pointer;">Batal</button>
+              <button id="btnKonfirmasiBuka" style="padding:8px 22px;border-radius:8px;border:none;background:hsl(150 55% 42%);color:white;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">🔓 Buka Sekarang</button>
+            </div>
+          </div>
+        </div>`,document.body.appendChild(d),setTimeout(()=>document.getElementById(`inputTopikPertemuan`)?.focus(),80),d.addEventListener(`click`,e=>{e.target===d&&d.remove()}),document.getElementById(`btnBatalBuka`).addEventListener(`click`,()=>d.remove()),document.getElementById(`btnKonfirmasiBuka`).addEventListener(`click`,async()=>{let e=document.getElementById(`inputTopikPertemuan`)?.value?.trim(),n=document.getElementById(`inputCatatanPertemuan`)?.value?.trim(),r=document.querySelector(`input[name="modePertemuan"]:checked`)?.value||l,u=document.getElementById(`bukaKelasError`);if(!e){u.textContent=`⚠️ Topik / materi pertemuan wajib diisi!`,u.style.display=`block`,document.getElementById(`inputTopikPertemuan`).focus();return}u.style.display=`none`;let f=document.getElementById(`btnKonfirmasiBuka`);f.disabled=!0,f.textContent=`⏳ Membuka...`;try{i&&await fetch(`/api/jadwal-pertemuan/${i}/buka`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({topik:e,catatan:n,mode:r,dibuka_oleh:window._currentUser?.nip||window._currentUser?.nama||`Dosen`})})}catch{}let p=`${o}-${s}-${a}`;window._pertemuanStatusCache||(window._pertemuanStatusCache={}),window._pertemuanStatusCache[p]=`berlangsung`,window._pertemuanTopikCache||(window._pertemuanTopikCache={}),window._pertemuanTopikCache[p]=e,d.remove(),await qe(c,t)})})}),t.querySelectorAll(`.btn-tutup-kelas`).forEach(e=>{e.addEventListener(`click`,async n=>{n.stopPropagation(),e.disabled=!0,e.textContent=`⏳ Menutup...`;let r=parseInt(e.dataset.jpId);try{r&&await fetch(`/api/jadwal-pertemuan/${r}/tutup`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({ditutup_oleh:window._currentUser?.nip||`Dosen`})})}catch{}let i=`${e.dataset.kode}-${e.dataset.kelas}-${e.dataset.n}`;window._pertemuanStatusCache||(window._pertemuanStatusCache={}),window._pertemuanStatusCache[i]=`selesai`,await qe(parseInt(e.dataset.kelasIdx),t)})})}function Je(e){function t(e){return e>=85?`A`:e>=80?`A-`:e>=75?`B+`:e>=70?`B`:e>=65?`B-`:e>=60?`C+`:e>=55?`C`:e>=45?`D`:`E`}let n=(window._dosenJadwalCache||[])[e],r=n.bobot||{uts:20,uas:30,tugas:20,quiz:15,absensi:15},i=`UTS×${r.uts}% + UAS×${r.uas}% + Tugas×${r.tugas}% + Quiz×${r.quiz}% + Absensi×${r.absensi}%`;return`
     <div class="dash-card" style="margin-bottom:16px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div>
