@@ -1757,48 +1757,169 @@ function jadwalDosenContent(user) {
 
     <div id="jadwalAbsensiDetail" style="display:none;margin-top:20px;"></div>
     <div id="jadwalNilaiDetail" style="display:none;margin-top:20px;"></div>
-    <div id="jadwalPertemuanDetail" style="display:none;margin-top:20px;"></div>`;
-}
+    <div id="jadwalPertemuanDetail" style="display:none;margin-top:20px;"></div>`;}
 
 function renderPertemuanDetail(kelasIdx) {
   const kelas = (window._dosenJadwalCache || [])[kelasIdx];
   if (!kelas) return '';
+  // Render skeleton — real cards injected by initPertemuanCards()
+  const skeletonCards = Array.from({length:14}, (_,i) =>
+    `<div style="border-radius:12px;padding:18px 10px;background:hsl(215 20% 97%);border:1.5px solid hsl(215 20% 90%);text-align:center;">
+       <div style="font-size:0.6rem;font-weight:800;color:hsl(215 25% 65%);letter-spacing:.5px;">PERTEMUAN ${i+1}</div>
+       <div style="font-size:1.1rem;color:hsl(215 20% 75%);margin-top:8px;">⏳</div>
+     </div>`
+  ).join('');
+  return `
+    <div class="dash-card" style="overflow:hidden;margin-bottom:16px;" id="pertemuanDetailCard">
+      <div style="background:linear-gradient(135deg,hsl(38 75% 48%),hsl(28 80% 55%));padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${kelas.kode} · Kelas ${kelas.kelas}</div>
+          <div style="font-size:1rem;font-weight:700;color:white;">📅 Detail 14 Pertemuan — ${kelas.nama}</div>
+          <div id="pertemuanSubtitle" style="font-size:0.7rem;color:rgba(255,255,255,0.75);margin-top:2px;">⏳ Memuat status pertemuan...</div>
+        </div>
+        <button id="closePertemuanDetail" style="background:rgba(255,255,255,0.25);border:none;color:white;font-size:0.78rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;">✕ Tutup</button>
+      </div>
+      <div id="pertemuanCardsGrid" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;">
+        ${skeletonCards}
+      </div>
+    </div>`;
+}
+
+/**
+ * Fetch DB status then render interactive pertemuan cards.
+ * Called after renderPertemuanDetail() is in the DOM.
+ */
+async function initPertemuanCards(kelasIdx, outerDiv) {
+  const kelas = (window._dosenJadwalCache || [])[kelasIdx];
+  if (!kelas) return;
   const totalPertemuan = 14;
   const dates = generatePertemuanDates(kelas.hari, totalPertemuan);
   const today = new Date();
   const modes = kelas.modePertemuan || Array(14).fill('offline');
-  const modeIcon = m => m === 'online' ? '\ud83d\udda5\ufe0f' : m === 'hybrid' ? '\ud83d\udd04' : '\ud83c\udfe2';
+  const modeIcon = m => m === 'online' ? '🖥️' : m === 'hybrid' ? '🔄' : '🏢';
   const modeColor = m => m === 'online' ? 'hsl(213 65% 50%)' : m === 'hybrid' ? 'hsl(275 55% 55%)' : 'hsl(150 55% 45%)';
+
+  // Fetch jadwal_pertemuan from DB to get ids + status
+  let jpMap = {}; // key: pertemuan number (1-14)
+  try {
+    const mkId = kelas.mkId || 0;
+    const k = kelas.kelas || 'A';
+    if (mkId) {
+      const res = await fetch(`/api/jadwal-pertemuan/${mkId}?kelas=${k}`);
+      if (res.ok) {
+        const data = await res.json();
+        (data.data || []).forEach(jp => { jpMap[jp.pertemuan] = jp; });
+      }
+    }
+  } catch(e) {/* no-op — use cache only */}
+
+  const sc = window._pertemuanStatusCache || {};
+
+  let selesaiCount = 0, berlangsungCount = 0;
   const cards = modes.map((mode, i) => {
     const date = dates[i];
     const isPast = date && date < today;
+    const jp = jpMap[i + 1] || null;
+    const jpId = jp?.id || 0;
     const dateStr = date ? formatTanggalShort(date) : '-';
-    return `
-      <div style="border-radius:12px;padding:14px 10px;background:${isPast ? 'hsl(150 40% 97%)' : 'hsl(215 20% 98%)'};border:1.5px solid ${isPast ? 'hsl(150 40% 82%)' : 'hsl(215 20% 88%)'};text-align:center;transition:box-shadow .2s;" onmouseenter="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.09)'" onmouseleave="this.style.boxShadow='none'">
-        <div style="font-size:1.3rem;">${modeIcon(mode)}</div>
-        <div style="font-size:0.6rem;font-weight:800;color:hsl(215 25% 55%);margin:5px 0 2px;letter-spacing:.5px;">PERTEMUAN ${i+1}</div>
-        <div style="font-size:0.68rem;font-weight:700;color:hsl(215 25% 30%);">${dateStr}</div>
-        <div style="display:inline-block;font-size:0.58rem;padding:2px 8px;border-radius:10px;background:${modeColor(mode)};color:white;margin-top:5px;font-weight:700;">${mode.toUpperCase()}</div>
-        <div style="font-size:0.63rem;color:${isPast ? 'hsl(150 55% 38%)' : 'hsl(215 20% 55%)'};margin-top:5px;font-weight:600;">${isPast ? '\u2705 Selesai' : '\ud83d\udd1c Upcoming'}</div>
-      </div>`;
+
+    // Priority: local cache > DB > date-based fallback
+    const cacheKey = `${kelas.kode}-${kelas.kelas}-${i+1}`;
+    const localStatus = sc[cacheKey];
+    const dbStatus = jp?.status || 'upcoming';
+    let status = localStatus || dbStatus;
+    if (status === 'upcoming' && isPast) status = 'selesai'; // auto-close past sessions
+
+    if (status === 'selesai') selesaiCount++;
+    if (status === 'berlangsung') berlangsungCount++;
+
+    // Visual per status
+    const cfg = {
+      berlangsung: {
+        bg: 'hsl(150 60% 96%)', border: '2px solid hsl(150 55% 62%)',
+        shadow: '0 0 0 3px hsl(150 60% 82%)',
+      },
+      selesai: {
+        bg: 'hsl(150 40% 97%)', border: '1.5px solid hsl(150 40% 82%)',
+        shadow: 'none',
+      },
+      upcoming: {
+        bg: 'hsl(215 20% 98%)', border: '1.5px solid hsl(215 20% 88%)',
+        shadow: 'none',
+      },
+    }[status];
+
+    const statusBadge = status === 'berlangsung'
+      ? `<div style="margin-top:6px;display:inline-block;font-size:0.58rem;font-weight:700;color:hsl(150 55% 32%);padding:3px 10px;border-radius:10px;background:hsl(150 60% 88%);">🟢 Berlangsung</div>`
+      : status === 'selesai'
+      ? `<div style="font-size:0.63rem;color:hsl(150 55% 38%);margin-top:6px;font-weight:600;">✅ Selesai</div>`
+      : `<div style="font-size:0.63rem;color:hsl(215 20% 55%);margin-top:6px;font-weight:600;">🕜 Upcoming</div>`;
+
+    const actionBtn = status === 'upcoming'
+      ? `<button class="btn-buka-kelas" data-jp-id="${jpId}" data-kelas-idx="${kelasIdx}" data-n="${i+1}" data-kode="${kelas.kode}" data-kelas="${kelas.kelas}" style="margin-top:8px;width:100%;font-size:0.6rem;padding:5px 4px;border-radius:7px;cursor:pointer;background:hsl(150 55% 42%);color:white;border:none;font-weight:700;letter-spacing:.3px;">🔓 Buka Kelas</button>`
+      : status === 'berlangsung'
+      ? `<button class="btn-tutup-kelas" data-jp-id="${jpId}" data-kelas-idx="${kelasIdx}" data-n="${i+1}" data-kode="${kelas.kode}" data-kelas="${kelas.kelas}" style="margin-top:8px;width:100%;font-size:0.6rem;padding:5px 4px;border-radius:7px;cursor:pointer;background:hsl(0 60% 52%);color:white;border:none;font-weight:700;letter-spacing:.3px;">🔒 Tutup Kelas</button>`
+      : '';
+
+    const hoverIn = `this.style.boxShadow='0 4px 14px rgba(0,0,0,0.11)'`;
+    const hoverOut = status === 'berlangsung' ? `this.style.boxShadow='${cfg.shadow}'` : `this.style.boxShadow='none'`;
+
+    return `<div style="border-radius:12px;padding:14px 10px;background:${cfg.bg};border:${cfg.border};text-align:center;transition:all .2s;box-shadow:${cfg.shadow};" onmouseenter="${hoverIn}" onmouseleave="${hoverOut}">
+      <div style="font-size:1.3rem;">${modeIcon(mode)}</div>
+      <div style="font-size:0.6rem;font-weight:800;color:hsl(215 25% 55%);margin:5px 0 2px;letter-spacing:.5px;">PERTEMUAN ${i+1}</div>
+      <div style="font-size:0.68rem;font-weight:700;color:hsl(215 25% 30%);">${dateStr}</div>
+      <div style="display:inline-block;font-size:0.58rem;padding:2px 8px;border-radius:10px;background:${modeColor(mode)};color:white;margin-top:5px;font-weight:700;">${mode.toUpperCase()}</div>
+      ${statusBadge}
+      ${actionBtn}
+    </div>`;
   }).join('');
 
-  const selesai = modes.filter((_, i) => dates[i] && dates[i] < today).length;
-  return `
-    <div class="dash-card" style="overflow:hidden;margin-bottom:16px;">
-      <div style="background:linear-gradient(135deg,hsl(38 75% 48%),hsl(28 80% 55%));padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div>
-          <div style="font-size:0.72rem;color:rgba(255,255,255,0.75);">${kelas.kode} \u00b7 Kelas ${kelas.kelas}</div>
-          <div style="font-size:1rem;font-weight:700;color:white;">\ud83d\udcc5 Detail 14 Pertemuan \u2014 ${kelas.nama}</div>
-          <div style="font-size:0.7rem;color:rgba(255,255,255,0.75);margin-top:2px;">${selesai} dari ${totalPertemuan} pertemuan selesai \u00b7 Hari: ${kelas.hari}</div>
-        </div>
-        <button id="closePertemuanDetail" style="background:rgba(255,255,255,0.25);border:none;color:white;font-size:0.78rem;font-weight:700;padding:6px 16px;border-radius:20px;cursor:pointer;">\u2715 Tutup</button>
-      </div>
-      <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;">
-        ${cards}
-      </div>
-    </div>`;
+  const grid = document.getElementById('pertemuanCardsGrid');
+  if (grid) grid.innerHTML = cards;
+  const sub = document.getElementById('pertemuanSubtitle');
+  if (sub) sub.textContent = `${selesaiCount} dari 14 selesai${berlangsungCount ? ' · 🟢 ' + berlangsungCount + ' berlangsung' : ''} · Hari: ${kelas.hari}`;
+
+  // Wire up action buttons
+  outerDiv.querySelectorAll('.btn-buka-kelas').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      btn.disabled = true; btn.textContent = '⏳ Membuka...';
+      const jpId = parseInt(btn.dataset.jpId);
+      try {
+        if (jpId) await fetch(`/api/jadwal-pertemuan/${jpId}/buka`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ dibuka_oleh: window._currentUser?.nip || window._currentUser?.nama || 'Dosen' })
+        });
+      } catch(e) {/* optimistic */}
+      const cKey = `${btn.dataset.kode}-${btn.dataset.kelas}-${btn.dataset.n}`;
+      if (!window._pertemuanStatusCache) window._pertemuanStatusCache = {};
+      window._pertemuanStatusCache[cKey] = 'berlangsung';
+      const idx = parseInt(btn.dataset.kelasIdx);
+      await initPertemuanCards(idx, outerDiv);
+    });
+  });
+
+  outerDiv.querySelectorAll('.btn-tutup-kelas').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      btn.disabled = true; btn.textContent = '⏳ Menutup...';
+      const jpId = parseInt(btn.dataset.jpId);
+      try {
+        if (jpId) await fetch(`/api/jadwal-pertemuan/${jpId}/tutup`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ ditutup_oleh: window._currentUser?.nip || 'Dosen' })
+        });
+      } catch(e) {/* optimistic */}
+      const cKey = `${btn.dataset.kode}-${btn.dataset.kelas}-${btn.dataset.n}`;
+      if (!window._pertemuanStatusCache) window._pertemuanStatusCache = {};
+      window._pertemuanStatusCache[cKey] = 'selesai';
+      const idx = parseInt(btn.dataset.kelasIdx);
+      await initPertemuanCards(idx, outerDiv);
+    });
+  });
 }
+
+
 
 function renderInputNilaiDetail(kelasIdx) {
   function calcGrade(v) {
@@ -2038,7 +2159,7 @@ function initJadwalDosenPage() {
     });
   });
 
-  // 📅 Pertemuan buttons
+  // 📅 Pertemuan buttons — with Buka/Tutup Kelas
   document.querySelectorAll('.jadwal-pertemuan-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2049,6 +2170,8 @@ function initJadwalDosenPage() {
         pertemuanDiv.innerHTML = renderPertemuanDetail(idx);
         pertemuanDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         document.getElementById('closePertemuanDetail')?.addEventListener('click', () => hideAllDetails());
+        // Load real status from DB + wire Buka/Tutup buttons
+        initPertemuanCards(idx, pertemuanDiv);
       }
     });
   });
