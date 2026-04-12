@@ -3259,7 +3259,6 @@ function jadwalManageContent() {
                 <td style="text-align:center;">${j.sks}</td>
                 <td style="text-align:center;white-space:nowrap;">
                   <button class="jadwal-date-btn" data-id="${j.id}" title="Lihat Mini Detail Pertemuan" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(200 60% 50%),hsl(210 55% 45%));color:white;border:none;font-weight:700;margin-right:2px;">📆</button>
-                  <button class="jadwal-prt-edit-btn" data-id="${j.id}" title="Edit Detail 14 Pertemuan" style="font-size:0.6rem;padding:3px 7px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(170 60% 42%),hsl(180 55% 38%));color:white;border:none;font-weight:700;margin-right:2px;">📋 Pertemuan</button>
                   <button class="jadwal-ai-btn" data-id="${j.id}" title="AI Rekomendasi Jadwal" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(260 65% 55%),hsl(280 55% 50%));color:white;border:none;font-weight:700;margin-right:3px;">\ud83e\udd16</button>
                   <button class="jadwal-edit-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(40 80% 50%);color:white;border:none;font-weight:600;">\u270f\ufe0f Edit</button>
                   <button class="jadwal-del-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(0 55% 52%);color:white;border:none;font-weight:600;margin-left:3px;">\ud83d\uddd1\ufe0f</button>
@@ -3543,7 +3542,33 @@ function renderJadwalForm(editData) {
           <button id="jfSave" style="padding:8px 24px;border-radius:6px;background:linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 42%));color:white;border:none;font-weight:700;font-size:0.8rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);">\ud83d\udcbe ${isEdit ? 'Simpan Perubahan' : 'Tambah Jadwal'}</button>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${isEdit ? `
+    <!-- ===== INLINE EDIT 14 PERTEMUAN ===== -->
+    <div class="dash-card" style="margin-top:16px;overflow:hidden;border:2px solid hsl(170 55% 68%);" id="inlinePrtSection">
+      <div style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:16px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:700;">📋 Detail Pertemuan</div>
+            <div style="font-size:1rem;font-weight:800;color:white;margin-top:2px;">Edit 14 Pertemuan — ${editData.kodeMK} ${editData.namaMK}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🏫 Offline: <span id="inlinePrtOffCount">-</span></div>
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🌐 Online: <span id="inlinePrtOnCount">-</span></div>
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🔄 Reschedule: <span id="inlinePrtRsCount">-</span></div>
+            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">📚 Topik: <span id="inlinePrtTopicCount">-</span>/14</div>
+          </div>
+        </div>
+        <!-- Toolbar -->
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button id="inlinePrtAllOffline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">🏫 Set Semua Offline</button>
+          <button id="inlinePrtAllOnline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">🌐 Set Semua Online</button>
+          <button id="inlinePrtResetAll" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">↩️ Reset Semua</button>
+          <button id="inlinePrtSave" style="padding:5px 16px;border-radius:6px;border:none;background:white;color:hsl(170 60% 35%);font-size:0.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">💾 Simpan Pertemuan</button>
+        </div>
+      </div>
+      <div id="inlinePrtBody" style="padding:20px;background:hsl(215 25% 98%);"></div>
+    </div>` : ''}`;
 }
 
 function initJadwalManagePage() {
@@ -3943,6 +3968,7 @@ function initJadwalManagePage() {
       formArea.innerHTML = renderJadwalForm({ ...entry, ruang2 });
       formArea.scrollIntoView({ behavior:'smooth', block:'start' });
       initFormHandlers();
+      initInlinePertemuanEditor(entry);
     });
   });
 
@@ -4550,6 +4576,291 @@ function initJadwalManagePage() {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 2500);
   }
 }
+// ============================================================
+// Inline Edit 14 Pertemuan — Embedded in Edit Jadwal Form
+// ============================================================
+function initInlinePertemuanEditor(entry) {
+  const body = document.getElementById('inlinePrtBody');
+  if (!body || !entry) return;
+
+  // Ensure modePertemuan exists
+  if (!entry.modePertemuan || entry.modePertemuan.length < 14) {
+    entry.modePertemuan = Array(14).fill('offline');
+  }
+
+  const origDates = generatePertemuanDates(entry.hari, 14);
+  const modes = entry.modePertemuan ? [...entry.modePertemuan] : Array(14).fill('offline');
+
+  // Deep-clone working custom schedules
+  const workingCustom = {};
+  if (entry.customSchedule) {
+    Object.keys(entry.customSchedule).forEach(k => {
+      workingCustom[k] = { ...entry.customSchedule[k] };
+    });
+  }
+
+  function getOrigIso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function computeStats() {
+    let offCount = 0, onCount = 0, rsCount = 0, topicCount = 0;
+    for (let i = 0; i < 14; i++) {
+      const custom = workingCustom[i];
+      const mode = custom ? (custom.mode || modes[i]) : modes[i];
+      const origIso = getOrigIso(origDates[i]);
+      if (mode === 'online') onCount++; else offCount++;
+      if (custom && custom.date && custom.date !== origIso) rsCount++;
+      if (custom && custom.topic && custom.topic.trim()) topicCount++;
+    }
+    const el = (id) => document.getElementById(id);
+    if (el('inlinePrtOffCount')) el('inlinePrtOffCount').textContent = offCount;
+    if (el('inlinePrtOnCount')) el('inlinePrtOnCount').textContent = onCount;
+    if (el('inlinePrtRsCount')) el('inlinePrtRsCount').textContent = rsCount;
+    if (el('inlinePrtTopicCount')) el('inlinePrtTopicCount').textContent = topicCount;
+  }
+
+  function buildGrid() {
+    const statusColors = {
+      'Belum':       { bg:'hsl(215 20% 96%)', border:'hsl(215 20% 85%)', text:'hsl(215 15% 55%)' },
+      'Berlangsung': { bg:'hsl(200 60% 96%)', border:'hsl(200 60% 72%)', text:'hsl(200 60% 38%)' },
+      'Selesai':     { bg:'hsl(150 50% 96%)', border:'hsl(150 50% 70%)', text:'hsl(150 55% 38%)' },
+      'Libur':       { bg:'hsl(40 80% 96%)',  border:'hsl(40 75% 72%)',  text:'hsl(40 70% 38%)' },
+    };
+
+    const cards = Array.from({ length: 14 }, (_, pi) => {
+      const custom = workingCustom[pi] || {};
+      const mode = custom.mode || modes[pi] || 'offline';
+      const origDate = origDates[pi];
+      const origIso = getOrigIso(origDate);
+      const dateVal = custom.date || origIso;
+      const startVal = custom.start || entry.jamMulai;
+      const endVal   = custom.end   || entry.jamSelesai;
+      const topic    = custom.topic  || '';
+      const note     = custom.note   || '';
+      const status   = custom.status || 'Belum';
+      const isOnline = mode === 'online';
+      const isRescheduled = dateVal !== origIso;
+
+      const bgCard = isRescheduled
+        ? 'linear-gradient(145deg,hsl(40 80% 98%),hsl(40 70% 95%))'
+        : isOnline
+          ? 'linear-gradient(145deg,hsl(150 55% 97%),hsl(150 45% 94%))'
+          : 'linear-gradient(145deg,hsl(215 30% 98%),hsl(210 25% 96%))';
+
+      const borderCard = isRescheduled ? 'hsl(40 70% 70%)' : isOnline ? 'hsl(150 55% 70%)' : 'hsl(215 25% 82%)';
+      const headerGrad = isRescheduled
+        ? 'linear-gradient(135deg,hsl(40 75% 55%),hsl(35 70% 50%))'
+        : isOnline
+          ? 'linear-gradient(135deg,hsl(150 55% 45%),hsl(160 50% 40%))'
+          : 'linear-gradient(135deg,hsl(215 45% 48%),hsl(210 40% 42%))';
+
+      const statusCol = statusColors[status] || statusColors['Belum'];
+
+      return `
+      <div class="ipmt-card" data-pi="${pi}" style="background:${bgCard};border:1.5px solid ${borderCard};border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07);transition:box-shadow 0.2s;"
+        onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.13)'"
+        onmouseleave="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.07)'">
+        <div style="background:${headerGrad};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-size:0.65rem;font-weight:800;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:0.5px;">Pertemuan</span>
+            <span style="font-size:1.1rem;font-weight:900;color:white;margin-left:6px;">${pi + 1}</span>
+          </div>
+          <span style="font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.2);color:white;">${isRescheduled ? '🔄 Reschedule' : isOnline ? '🌐 Online' : '🏫 Offline'}</span>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:0.62rem;font-weight:700;color:hsl(215 20% 50%);">Status:</label>
+            <select class="ipmt-status" data-pi="${pi}" style="flex:1;min-width:90px;padding:4px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.68rem;font-weight:600;color:${statusCol.text};background:${statusCol.bg};cursor:pointer;">
+              <option value="Belum" ${status==='Belum'?'selected':''}>⬜ Belum</option>
+              <option value="Berlangsung" ${status==='Berlangsung'?'selected':''}>🔵 Berlangsung</option>
+              <option value="Selesai" ${status==='Selesai'?'selected':''}>✅ Selesai</option>
+              <option value="Libur" ${status==='Libur'?'selected':''}>📵 Libur</option>
+            </select>
+            <div style="display:flex;gap:4px;border:1px solid hsl(215 20% 82%);border-radius:6px;overflow:hidden;">
+              <button class="ipmt-mode-off" data-pi="${pi}" style="padding:4px 9px;border:none;cursor:pointer;font-size:0.62rem;font-weight:700;background:${!isOnline?'hsl(215 45% 48%)':'hsl(215 20% 93%)'};color:${!isOnline?'white':'hsl(215 15% 55%)'};transition:all 0.15s;">🏫 Off</button>
+              <button class="ipmt-mode-on"  data-pi="${pi}" style="padding:4px 9px;border:none;cursor:pointer;font-size:0.62rem;font-weight:700;background:${isOnline?'hsl(150 55% 45%)':'hsl(215 20% 93%)'};color:${isOnline?'white':'hsl(215 15% 55%)'};transition:all 0.15s;">🌐 On</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:8px;">
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">📅 Tanggal${isRescheduled?' <span style="color:hsl(40 70% 45%);">⬤ Diganti</span>':''}</label>
+              <input type="date" class="ipmt-date" data-pi="${pi}" value="${dateVal}"
+                style="width:100%;padding:4px 8px;border:1.5px solid ${isRescheduled?'hsl(40 70% 70%)':'hsl(215 20% 82%)'};border-radius:6px;font-size:0.72rem;box-sizing:border-box;font-weight:${isRescheduled?'700':'400'};color:${isRescheduled?'hsl(40 65% 35%)':'hsl(215 15% 35%)'};background:${isRescheduled?'hsl(40 80% 97%)':'white'};">
+            </div>
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">🕐 Mulai</label>
+              <input type="time" class="ipmt-start" data-pi="${pi}" value="${startVal}" style="width:100%;padding:4px 6px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.7rem;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">🕑 Selesai</label>
+              <input type="time" class="ipmt-end" data-pi="${pi}" value="${endVal}" style="width:100%;padding:4px 6px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.7rem;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="margin-bottom:6px;">
+            <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">📚 Topik / Materi <span style="font-weight:400;color:hsl(215 15% 65%);">(opsional)</span></label>
+            <input type="text" class="ipmt-topic" data-pi="${pi}" value="${topic.replace(/"/g,'&quot;')}" placeholder="cth: Pengantar Administrasi Publik..."
+              style="width:100%;padding:5px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;color:hsl(215 15% 30%);"
+              oninput="this.style.borderColor=this.value.trim()?'hsl(150 55% 60%)':'hsl(215 20% 82%)'">
+          </div>
+          <div>
+            <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">📝 Catatan <span style="font-weight:400;color:hsl(215 15% 65%);">(opsional)</span></label>
+            <input type="text" class="ipmt-note" data-pi="${pi}" value="${note.replace(/"/g,'&quot;')}" placeholder="cth: Kelas Pengganti, Libur Nasional..."
+              style="width:100%;padding:5px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;color:hsl(215 15% 30%);">
+          </div>
+          <div style="margin-top:6px;font-size:0.56rem;color:hsl(215 15% 60%);">🔄 Tgl asli: ${formatTanggalShort(origDate)}${isRescheduled?' <span style="color:hsl(40 70% 45%);font-weight:700;">→ Diganti</span>':''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">${cards}</div>`;
+    attachListeners();
+    computeStats();
+  }
+
+  function attachListeners() {
+    const statusColors = {
+      'Belum':       { bg:'hsl(215 20% 96%)', border:'hsl(215 20% 85%)', text:'hsl(215 15% 55%)' },
+      'Berlangsung': { bg:'hsl(200 60% 96%)', border:'hsl(200 60% 72%)', text:'hsl(200 60% 38%)' },
+      'Selesai':     { bg:'hsl(150 50% 96%)', border:'hsl(150 50% 70%)', text:'hsl(150 55% 38%)' },
+      'Libur':       { bg:'hsl(40 80% 96%)',  border:'hsl(40 75% 72%)',  text:'hsl(40 70% 38%)' },
+    };
+
+    body.querySelectorAll('.ipmt-mode-off').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pi = parseInt(btn.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].mode = 'offline';
+        buildGrid();
+      });
+    });
+    body.querySelectorAll('.ipmt-mode-on').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pi = parseInt(btn.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].mode = 'online';
+        buildGrid();
+      });
+    });
+    body.querySelectorAll('.ipmt-date').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].date = inp.value;
+        const origIso = getOrigIso(origDates[pi]);
+        const isRs = inp.value !== origIso;
+        inp.style.borderColor = isRs ? 'hsl(40 70% 70%)' : 'hsl(215 20% 82%)';
+        inp.style.fontWeight  = isRs ? '700' : '400';
+        inp.style.color       = isRs ? 'hsl(40 65% 35%)' : 'hsl(215 15% 35%)';
+        inp.style.background  = isRs ? 'hsl(40 80% 97%)' : 'white';
+        computeStats();
+      });
+    });
+    body.querySelectorAll('.ipmt-start').forEach(inp => {
+      inp.addEventListener('change', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].start=inp.value; });
+    });
+    body.querySelectorAll('.ipmt-end').forEach(inp => {
+      inp.addEventListener('change', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].end=inp.value; });
+    });
+    body.querySelectorAll('.ipmt-topic').forEach(inp => {
+      inp.addEventListener('input', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].topic=inp.value; computeStats(); });
+    });
+    body.querySelectorAll('.ipmt-note').forEach(inp => {
+      inp.addEventListener('change', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].note=inp.value; });
+    });
+    body.querySelectorAll('.ipmt-status').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const pi = parseInt(sel.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].status = sel.value;
+        const col = statusColors[sel.value] || statusColors['Belum'];
+        sel.style.background = col.bg;
+        sel.style.color = col.text;
+        sel.style.borderColor = col.border;
+      });
+    });
+  }
+
+  async function saveAllPertemuan() {
+    // Collect latest DOM values
+    body.querySelectorAll('.ipmt-date').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].date=inp.value; });
+    body.querySelectorAll('.ipmt-start').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].start=inp.value; });
+    body.querySelectorAll('.ipmt-end').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].end=inp.value; });
+    body.querySelectorAll('.ipmt-topic').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].topic=inp.value; });
+    body.querySelectorAll('.ipmt-note').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].note=inp.value; });
+    body.querySelectorAll('.ipmt-status').forEach(sel => { const pi=parseInt(sel.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].status=sel.value; });
+
+    // Apply to entry
+    if (!entry.customSchedule) entry.customSchedule = {};
+    Object.keys(workingCustom).forEach(k => {
+      const pi = parseInt(k);
+      entry.customSchedule[pi] = { ...workingCustom[k] };
+      if (workingCustom[k].mode) entry.modePertemuan[pi] = workingCustom[k].mode;
+    });
+
+    // Save to backend
+    let apiSuccess = false;
+    try {
+      const payloads = Array.from({ length: 14 }, (_, pi) => {
+        const c = entry.customSchedule[pi] || {};
+        const origIso = getOrigIso(origDates[pi]);
+        return {
+          kode_mk: entry.kodeMK,
+          kelas: entry.kelas || 'A',
+          pertemuan: pi + 1,
+          tanggal: c.date || origIso,
+          tanggal_asli: origIso,
+          jam_mulai: c.start || entry.jamMulai,
+          jam_selesai: c.end || entry.jamSelesai,
+          mode: c.mode || entry.modePertemuan[pi] || 'offline',
+          catatan: c.note || '',
+          topik: c.topic || '',
+          status: c.status || 'Belum',
+          updated_by: 'BAP'
+        };
+      });
+      const resp = await fetch('/api/jadwal-pertemuan/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: payloads })
+      });
+      if (resp.ok) { apiSuccess = true; console.log('✅ Inline batch pertemuan saved'); }
+    } catch (err) {
+      console.warn('⚠️ Backend not available:', err.message);
+    }
+
+    // Toast
+    const dbIcon = apiSuccess ? '🗄️ DB' : '💾 Lokal';
+    const topicCount = Object.values(workingCustom).filter(c => c.topic && c.topic.trim()).length;
+    const onCount = entry.modePertemuan.filter(m => m === 'online').length;
+    const offCount = 14 - onCount;
+    const toast = document.createElement('div');
+    toast.innerHTML = `✅ <strong>${entry.kodeMK}</strong> — 14 pertemuan disimpan ke ${dbIcon}!<br><small>🏫 ${offCount} Offline • 🌐 ${onCount} Online • 📚 Topik: ${topicCount}/14</small>`;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,hsl(170 60% 38%),hsl(185 55% 35%));color:white;padding:14px 22px;border-radius:12px;font-size:0.78rem;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,0.22);z-index:99999;line-height:1.5;max-width:320px;';
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 3500);
+  }
+
+  // Toolbar button handlers
+  document.getElementById('inlinePrtAllOffline')?.addEventListener('click', () => {
+    for (let i = 0; i < 14; i++) { if (!workingCustom[i]) workingCustom[i]={}; workingCustom[i].mode='offline'; }
+    buildGrid();
+  });
+  document.getElementById('inlinePrtAllOnline')?.addEventListener('click', () => {
+    for (let i = 0; i < 14; i++) { if (!workingCustom[i]) workingCustom[i]={}; workingCustom[i].mode='online'; }
+    buildGrid();
+  });
+  document.getElementById('inlinePrtResetAll')?.addEventListener('click', () => {
+    if (!confirm('Reset semua pertemuan ke pengaturan default?')) return;
+    for (let i = 0; i < 14; i++) delete workingCustom[i];
+    buildGrid();
+  });
+  document.getElementById('inlinePrtSave')?.addEventListener('click', saveAllPertemuan);
+
+  // Initial render
+  buildGrid();
+}
+
 // ============================================================
 // Edit 14 Pertemuan Modal — Full Management Interface
 // ============================================================
