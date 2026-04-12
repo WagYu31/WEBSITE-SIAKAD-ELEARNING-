@@ -4589,39 +4589,8 @@ function initInlinePertemuanEditor(entry) {
     entry.modePertemuan = Array(14).fill('offline');
   }
 
-  // ---- Create / reset the section container in DOM ----
-  const formArea = document.getElementById('jadwalFormArea');
-  if (!formArea) return;
-
-  // Remove old section if exists
-  const old = document.getElementById('inlinePrtSection');
-  if (old) old.remove();
-
-  // Build & append fresh section
-  const section = document.createElement('div');
-  section.id = 'inlinePrtSection';
-  section.className = 'dash-card';
-  section.style.cssText = 'margin-top:16px;overflow:hidden;border:2px solid hsl(170 55% 68%);';
-  const mkLabel = (entry.kodeMK || '') + ' \u2014 ' + (entry.namaMK || '');
-  section.innerHTML = ''
-    + '<div style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:16px 22px;">'
-    + '<div style="font-size:0.7rem;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:700;">\ud83d\udccb Detail Pertemuan</div>'
-    + '<div style="font-size:1rem;font-weight:800;color:white;margin-top:2px;">Edit 14 Pertemuan \u2014 ' + mkLabel + '</div>'
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
-    + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83c\udfeb Offline: <span id="inlinePrtOffCount">-</span></div>'
-    + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83c\udf10 Online: <span id="inlinePrtOnCount">-</span></div>'
-    + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83d\udd04 Reschedule: <span id="inlinePrtRsCount">-</span></div>'
-    + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83d\udcda Topik: <span id="inlinePrtTopicCount">-</span>/14</div>'
-    + '</div>'
-    + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">'
-    + '<button id="inlinePrtAllOffline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\ud83c\udfeb Set Semua Offline</button>'
-    + '<button id="inlinePrtAllOnline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\ud83c\udf10 Set Semua Online</button>'
-    + '<button id="inlinePrtResetAll" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\u21a9\ufe0f Reset Semua</button>'
-    + '<button id="inlinePrtSave" style="padding:5px 16px;border-radius:6px;border:none;background:white;color:hsl(170 60% 35%);font-size:0.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">\ud83d\udcbe Simpan Pertemuan</button>'
-    + '</div></div>'
-    + '<div id="inlinePrtBody" style="padding:20px;background:hsl(215 25% 98%);"></div>';
-  formArea.appendChild(section);
-
+  // #inlinePrtBody is already in DOM injected by renderJadwalForm's pertemuanSection.
+  // We just need to fill it — no create/append needed.
   const body = document.getElementById('inlinePrtBody');
   if (!body) return;
 
@@ -4896,6 +4865,10 @@ function initInlinePertemuanEditor(entry) {
 
   // Initial render
   buildGrid();
+
+  // Scroll section into view after grid is built
+  const prtSection = document.getElementById('inlinePrtSection');
+  if (prtSection) setTimeout(() => prtSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 }
 
 // ============================================================
