@@ -3675,6 +3675,7 @@ function initJadwalManagePage() {
     const currentStart = cardEl.dataset.start || entry.jamMulai;
     const currentEnd = cardEl.dataset.end || entry.jamSelesai;
     const currentNote = cardEl.dataset.note || '';
+    const currentRuang = cardEl.dataset.ruang || entry.ruang || '';
     const isRescheduled = currentDate !== origDate;
 
     // Position popup near the card
@@ -3719,6 +3720,13 @@ function initJadwalManagePage() {
         </div>
       </div>
 
+      <div id="prtRuangRow" style="margin-bottom:10px;${currentMode === 'online' ? 'display:none;' : ''}">
+        <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">🏫 Ruangan <span style="font-weight:400;color:hsl(215 15% 60%);">(offline)</span></label>
+        <input type="text" id="prtEditRuang" value="${currentRuang}" placeholder="cth: RN-101"
+          style="width:100%;padding:6px 8px;border:1.5px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;"
+          oninput="this.style.borderColor=this.value&&this.value!=='${entry.ruang}'?'hsl(200 60% 65%)':'hsl(215 20% 82%)'">
+      </div>
+
       <div style="margin-bottom:12px;">
         <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">📄 Catatan <span style="font-weight:400;color:hsl(215 15% 60%);">(opsional, misal: Kelas Pengganti)</span></label>
         <input type="text" id="prtEditNote" value="${currentNote}" placeholder="Cth: Kelas Pengganti - Dosen Izin" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;">
@@ -3741,6 +3749,9 @@ function initJadwalManagePage() {
       offBtn.style.background = selectedMode === 'offline' ? 'hsl(210 50% 94%)' : 'white';
       onBtn.style.borderColor = selectedMode === 'online' ? 'hsl(150 55% 45%)' : 'hsl(215 20% 85%)';
       onBtn.style.background = selectedMode === 'online' ? 'hsl(150 50% 94%)' : 'white';
+      // Show/hide ruang field based on mode
+      const ruangRow = document.getElementById('prtRuangRow');
+      if (ruangRow) ruangRow.style.display = selectedMode === 'offline' ? '' : 'none';
     }
 
     offBtn.onclick = (e) => { e.stopPropagation(); selectedMode = 'offline'; updateModeButtons(); };
@@ -3768,13 +3779,14 @@ function initJadwalManagePage() {
       const newStart = document.getElementById('prtEditStart').value;
       const newEnd = document.getElementById('prtEditEnd').value;
       const newNote = document.getElementById('prtEditNote').value.trim();
+      const newRuang = selectedMode === 'offline' ? (document.getElementById('prtEditRuang')?.value.trim() || entry.ruang || '') : '';
 
       // Update JADWAL_DUMMY
       entry.modePertemuan[pi] = selectedMode;
 
       // Store custom schedule in entry
       if (!entry.customSchedule) entry.customSchedule = {};
-      entry.customSchedule[pi] = { date: newDate, start: newStart, end: newEnd, note: newNote, mode: selectedMode };
+      entry.customSchedule[pi] = { date: newDate, start: newStart, end: newEnd, note: newNote, mode: selectedMode, ruang: newRuang };
 
       // Update card visually
       const isOnline = selectedMode === 'online';
@@ -3784,6 +3796,7 @@ function initJadwalManagePage() {
       cardEl.dataset.start = newStart;
       cardEl.dataset.end = newEnd;
       cardEl.dataset.note = newNote;
+      cardEl.dataset.ruang = newRuang;
 
       // Background
       const cardBg = isChanged
