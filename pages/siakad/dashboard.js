@@ -4706,6 +4706,7 @@ function initInlinePertemuanEditor(entry) {
       const topic    = custom.topic  || '';
       const note     = custom.note   || '';
       const status   = custom.status || 'Belum';
+      const ruang    = custom.ruang  || entry.ruang || '';
       const isOnline = mode === 'online';
       const isRescheduled = dateVal !== origIso;
 
@@ -4764,6 +4765,12 @@ function initInlinePertemuanEditor(entry) {
               <input type="time" class="ipmt-end" data-pi="${pi}" value="${endVal}" style="width:100%;padding:4px 6px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.7rem;box-sizing:border-box;">
             </div>
           </div>
+          ${!isOnline ? `<div style="margin-bottom:8px;">
+            <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">🏫 Ruangan <span style="font-weight:400;color:hsl(215 15% 65%);">(offline)</span></label>
+            <input type="text" class="ipmt-ruang" data-pi="${pi}" value="${ruang.replace(/"/g,'&quot;')}" placeholder="cth: RN-101"
+              style="width:100%;padding:5px 8px;border:1.5px solid ${ruang && ruang !== entry.ruang ? 'hsl(200 60% 65%)' : 'hsl(215 20% 82%)'};border-radius:6px;font-size:0.72rem;box-sizing:border-box;color:hsl(215 15% 30%);font-weight:${ruang && ruang !== entry.ruang ? '700' : '400'};"
+              oninput="this.style.borderColor=this.value.trim()&&this.value!=='${entry.ruang}'?'hsl(200 60% 65%)':'hsl(215 20% 82%)';this.style.fontWeight=this.value.trim()&&this.value!=='${entry.ruang}'?'700':'400'">
+          </div>` : ''}
           <div style="margin-bottom:6px;">
             <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">📚 Topik / Materi <span style="font-weight:400;color:hsl(215 15% 65%);">(opsional)</span></label>
             <input type="text" class="ipmt-topic" data-pi="${pi}" value="${topic.replace(/"/g,'&quot;')}" placeholder="cth: Pengantar Administrasi Publik..."
@@ -4835,6 +4842,9 @@ function initInlinePertemuanEditor(entry) {
     body.querySelectorAll('.ipmt-note').forEach(inp => {
       inp.addEventListener('change', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].note=inp.value; });
     });
+    body.querySelectorAll('.ipmt-ruang').forEach(inp => {
+      inp.addEventListener('input', () => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].ruang=inp.value; });
+    });
     body.querySelectorAll('.ipmt-status').forEach(sel => {
       sel.addEventListener('change', () => {
         const pi = parseInt(sel.dataset.pi);
@@ -4855,6 +4865,7 @@ function initInlinePertemuanEditor(entry) {
     body.querySelectorAll('.ipmt-end').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].end=inp.value; });
     body.querySelectorAll('.ipmt-topic').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].topic=inp.value; });
     body.querySelectorAll('.ipmt-note').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].note=inp.value; });
+    body.querySelectorAll('.ipmt-ruang').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].ruang=inp.value; });
     body.querySelectorAll('.ipmt-status').forEach(sel => { const pi=parseInt(sel.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].status=sel.value; });
 
     // Apply to entry
@@ -4880,6 +4891,7 @@ function initInlinePertemuanEditor(entry) {
           jam_mulai: c.start || entry.jamMulai,
           jam_selesai: c.end || entry.jamSelesai,
           mode: c.mode || entry.modePertemuan[pi] || 'offline',
+          ruang: (c.mode || entry.modePertemuan[pi] || 'offline') === 'offline' ? (c.ruang || entry.ruang || '') : '',
           catatan: c.note || '',
           topik: c.topic || '',
           status: c.status || 'Belum',
