@@ -3970,6 +3970,39 @@ function initJadwalManagePage() {
       formArea.innerHTML = renderJadwalForm({ ...entry, ruang2 });
       formArea.scrollIntoView({ behavior:'smooth', block:'start' });
       initFormHandlers();
+
+      // === GUARANTEED P1-P14 SECTION INJECTION ===
+      // Inject directly via formArea closure (same reference used above),
+      // bypassing any getElementById ambiguity in initInlinePertemuanEditor.
+      const existingPrt = formArea.querySelector('#inlinePrtSection');
+      if (existingPrt) existingPrt.remove();
+      if (!formArea.querySelector('#inlinePrtBody')) {
+        const mkLabel = (entry.kodeMK || '') + ' \u2014 ' + (entry.namaMK || '');
+        const prtShell = document.createElement('div');
+        prtShell.id = 'inlinePrtSection';
+        prtShell.className = 'dash-card';
+        prtShell.style.marginTop = '16px';
+        prtShell.innerHTML =
+          '<div style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:16px 22px;">'
+          + '<div style="font-size:0.7rem;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:700;">\uD83D\uDCCB Detail Pertemuan</div>'
+          + '<div style="font-size:1rem;font-weight:800;color:white;margin-top:2px;">Edit 14 Pertemuan \u2014 ' + mkLabel + '</div>'
+          + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'
+          + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\uD83C\uDFEB Offline: <span id="inlinePrtOffCount">-</span></div>'
+          + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\uD83C\uDF10 Online: <span id="inlinePrtOnCount">-</span></div>'
+          + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\uD83D\uDD04 Reschedule: <span id="inlinePrtRsCount">-</span></div>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">'
+          + '<button id="inlinePrtAllOffline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\uD83C\uDFEB Set Semua Offline</button>'
+          + '<button id="inlinePrtAllOnline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\uD83C\uDF10 Set Semua Online</button>'
+          + '<button id="inlinePrtResetAll" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\u21A9 Reset</button>'
+          + '<button id="inlinePrtSave" style="padding:5px 16px;border-radius:6px;border:none;background:white;color:hsl(170 60% 35%);font-size:0.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">\uD83D\uDCBE Simpan Pertemuan</button>'
+          + '</div>'
+          + '</div>'
+          + '<div id="inlinePrtBody" style="padding:20px;background:hsl(215 25% 98%);"></div>';
+        formArea.appendChild(prtShell);
+      }
+      // === END INJECTION ===
+
       initInlinePertemuanEditor(entry);
     });
   });
