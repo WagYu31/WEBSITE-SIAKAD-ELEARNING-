@@ -3720,12 +3720,6 @@ function initJadwalManagePage() {
         </div>
       </div>
 
-      <div id="prtRuangRow" style="margin-bottom:10px;">
-        <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">🏫 Ruangan <span style="font-weight:400;color:hsl(215 15% 60%);">(offline)</span></label>
-        <input type="text" id="prtEditRuang" value="${currentRuang}" placeholder="cth: RN-101"
-          style="width:100%;padding:6px 8px;border:1.5px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">
-      </div>
-
       <div style="margin-bottom:12px;">
         <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">📄 Catatan <span style="font-weight:400;color:hsl(215 15% 60%);">(opsional, misal: Kelas Pengganti)</span></label>
         <input type="text" id="prtEditNote" value="${currentNote}" placeholder="Cth: Kelas Pengganti - Dosen Izin" style="width:100%;padding:6px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;">
@@ -3742,6 +3736,19 @@ function initJadwalManagePage() {
     let selectedMode = currentMode;
     const offBtn = document.getElementById('prtModeOffline');
     const onBtn = document.getElementById('prtModeOnline');
+
+    // Inject Ruangan field via DOM (not template literal, avoids Rolldown minifier bug)
+    const _catatanDiv = prtPopup.querySelector('#prtEditNote') && prtPopup.querySelector('#prtEditNote').parentElement;
+    if (_catatanDiv) {
+      const _rDiv = document.createElement('div');
+      _rDiv.id = 'prtRuangRow';
+      _rDiv.style.marginBottom = '10px';
+      _rDiv.innerHTML = '<label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">\uD83C\uDFEB Ruangan <span style="font-weight:400;color:hsl(215 15% 60%);"> (offline)</span></label>'
+        + '<input type="text" id="prtEditRuang" placeholder="cth: RN-101" style="width:100%;padding:6px 8px;border:1.5px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">';
+      prtPopup.insertBefore(_rDiv, _catatanDiv);
+      const _rInput = document.getElementById('prtEditRuang');
+      if (_rInput) _rInput.value = currentRuang;
+    }
 
     function updateModeButtons() {
       offBtn.style.borderColor = selectedMode === 'offline' ? 'hsl(210 55% 50%)' : 'hsl(215 20% 85%)';
