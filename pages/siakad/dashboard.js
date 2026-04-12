@@ -3720,11 +3720,10 @@ function initJadwalManagePage() {
         </div>
       </div>
 
-      <div id="prtRuangRow" style="margin-bottom:10px;${currentMode === 'online' ? 'display:none;' : ''}">
+      <div id="prtRuangRow" style="margin-bottom:10px;">
         <label style="font-size:0.68rem;font-weight:700;color:hsl(215 20% 40%);display:block;margin-bottom:3px;">🏫 Ruangan <span style="font-weight:400;color:hsl(215 15% 60%);">(offline)</span></label>
         <input type="text" id="prtEditRuang" value="${currentRuang}" placeholder="cth: RN-101"
-          style="width:100%;padding:6px 8px;border:1.5px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;"
-          oninput="this.style.borderColor=this.value&&this.value!=='${entry.ruang}'?'hsl(200 60% 65%)':'hsl(215 20% 82%)'">
+          style="width:100%;padding:6px 8px;border:1.5px solid hsl(215 20% 82%);border-radius:6px;font-size:0.75rem;box-sizing:border-box;">
       </div>
 
       <div style="margin-bottom:12px;">
@@ -3756,6 +3755,8 @@ function initJadwalManagePage() {
 
     offBtn.onclick = (e) => { e.stopPropagation(); selectedMode = 'offline'; updateModeButtons(); };
     onBtn.onclick = (e) => { e.stopPropagation(); selectedMode = 'online'; updateModeButtons(); };
+    // Set initial visibility based on currentMode
+    updateModeButtons();
 
     // Close
     document.getElementById('prtPopupClose').onclick = (e) => { e.stopPropagation(); prtPopup.style.display = 'none'; };
