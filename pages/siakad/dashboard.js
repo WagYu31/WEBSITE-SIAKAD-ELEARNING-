@@ -3258,7 +3258,8 @@ function jadwalManageContent() {
 
                 <td style="text-align:center;">${j.sks}</td>
                 <td style="text-align:center;white-space:nowrap;">
-                  <button class="jadwal-date-btn" data-id="${j.id}" title="Lihat Detail Pertemuan" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(200 60% 50%),hsl(210 55% 45%));color:white;border:none;font-weight:700;margin-right:2px;">📆</button>
+                  <button class="jadwal-date-btn" data-id="${j.id}" title="Lihat Mini Detail Pertemuan" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(200 60% 50%),hsl(210 55% 45%));color:white;border:none;font-weight:700;margin-right:2px;">📆</button>
+                  <button class="jadwal-prt-edit-btn" data-id="${j.id}" title="Edit Detail 14 Pertemuan" style="font-size:0.6rem;padding:3px 7px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(170 60% 42%),hsl(180 55% 38%));color:white;border:none;font-weight:700;margin-right:2px;">📋 Pertemuan</button>
                   <button class="jadwal-ai-btn" data-id="${j.id}" title="AI Rekomendasi Jadwal" style="font-size:0.6rem;padding:3px 6px;border-radius:4px;cursor:pointer;background:linear-gradient(135deg,hsl(260 65% 55%),hsl(280 55% 50%));color:white;border:none;font-weight:700;margin-right:3px;">\ud83e\udd16</button>
                   <button class="jadwal-edit-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(40 80% 50%);color:white;border:none;font-weight:600;">\u270f\ufe0f Edit</button>
                   <button class="jadwal-del-btn" data-id="${j.id}" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;background:hsl(0 55% 52%);color:white;border:none;font-weight:600;margin-left:3px;">\ud83d\uddd1\ufe0f</button>
@@ -3298,7 +3299,7 @@ function jadwalManageContent() {
                         const label = isRescheduled ? 'Pengganti' : isOnline ? 'Online' : 'Offline';
                         const labelColor = isRescheduled ? 'hsl(40 65% 35%)' : isOnline ? 'hsl(150 55% 35%)' : 'hsl(210 45% 40%)';
                         const dateColor = isRescheduled ? 'hsl(40 60% 30%)' : 'hsl(210 40% 38%)';
-                        return `<div class="prt-mode-card" data-jid="${j.id}" data-pi="${pi}" data-mode="${mode}" data-orig-date="${origIsoDate}" data-date="${displayIsoDate}" data-start="${cardStart}" data-end="${cardEnd}" data-note="${cardNote.replace(/"/g,'&quot;')}" style="background:${bg};border:1px solid ${borderColor};border-radius:8px;padding:5px 3px;text-align:center;cursor:pointer;transition:all 0.2s ease;user-select:none;position:relative;" title="${formatTanggalFull(displayDate)} — ${label} • ${cardStart}-${cardEnd}${cardNote ? ' • 📝 ' + cardNote : ''} (Klik untuk edit)" onclick="window.__openPertemuanEdit && window.__openPertemuanEdit(this,${j.id},${pi})">
+                        return `<div class="prt-mode-card" data-jid="${j.id}" data-pi="${pi}" data-mode="${mode}" data-orig-date="${origIsoDate}" data-date="${displayIsoDate}" data-start="${cardStart}" data-end="${cardEnd}" data-note="${cardNote.replace(/"/g,'&quot;')}" style="background:${bg};border:1px solid ${borderColor};border-radius:8px;padding:5px 3px;text-align:center;cursor:pointer;transition:all 0.2s ease;user-select:none;position:relative;" title="${formatTanggalFull(displayDate)} — ${label} • ${cardStart}-${cardEnd}${cardNote ? ' • 📝 ' + cardNote : ''} (Klik untuk edit)" onclick="window.__openPertemuanEdit && window.__openPertemuanEdit(this,${+j.id},${pi})">
                           <div style="font-size:0.5rem;font-weight:800;color:hsl(210 30% 45%);">P${pi+1}</div>
                           <div class="prt-date-label" style="font-size:0.58rem;font-weight:700;color:${dateColor};margin:1px 0;">${formatTanggalShort(displayDate)}</div>
                           <div class="prt-time-label" style="font-size:0.48rem;color:hsl(215 20% 50%);margin-bottom:1px;">${cardStart}-${cardEnd}</div>
@@ -3357,6 +3358,64 @@ function jadwalManageContent() {
           </div>
         </div>
         <div id="aiModalBody" style="padding:20px 24px;"></div>
+      </div>
+    </div>
+
+    <!-- Edit 14 Pertemuan Modal -->
+    <div id="editPertemuanModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(10,15,30,0.75);backdrop-filter:blur(6px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 0;">
+      <div style="background:white;border-radius:20px;width:97%;max-width:1100px;margin:0 auto;box-shadow:0 24px 80px rgba(0,0,0,0.35);overflow:hidden;">
+        <!-- Modal Header -->
+        <div id="editPrtModalHeader" style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:22px 28px;position:sticky;top:0;z-index:10;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;font-weight:700;">📋 Edit Detail Pertemuan</div>
+              <div id="editPrtModalTitle" style="font-size:1.2rem;font-weight:800;color:white;margin-top:4px;">— Pilih Jadwal —</div>
+              <div id="editPrtModalSub" style="font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:4px;"></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <div id="editPrtProgress" style="background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px;text-align:center;min-width:130px;">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.5px;">Progress</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                  <div style="flex:1;height:6px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden;">
+                    <div id="editPrtProgressBar" style="height:100%;background:white;border-radius:3px;width:0%;transition:width 0.3s ease;"></div>
+                  </div>
+                  <span id="editPrtProgressText" style="font-size:0.72rem;color:white;font-weight:700;">0/14</span>
+                </div>
+              </div>
+              <button id="editPrtModalClose" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;"
+                onmouseenter="this.style.background='rgba(255,255,255,0.3)'" onmouseleave="this.style.background='rgba(255,255,255,0.15)'">✕</button>
+            </div>
+          </div>
+          <!-- Stats Row -->
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+            <div id="editPrtStatOffline" style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;font-size:0.7rem;color:white;font-weight:700;">🏫 Offline: <span id="editPrtOffCount">0</span></div>
+            <div id="editPrtStatOnline" style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;font-size:0.7rem;color:white;font-weight:700;">🌐 Online: <span id="editPrtOnCount">0</span></div>
+            <div id="editPrtStatReschedule" style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;font-size:0.7rem;color:white;font-weight:700;">🔄 Reschedule: <span id="editPrtRsCount">0</span></div>
+            <div id="editPrtStatHasTopic" style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;font-size:0.7rem;color:white;font-weight:700;">📚 Ada Topik: <span id="editPrtTopicCount">0</span></div>
+          </div>
+        </div>
+        <!-- Toolbar -->
+        <div style="background:hsl(215 25% 97%);border-bottom:1px solid hsl(215 20% 88%);padding:12px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="editPrtAllOffline" style="padding:6px 14px;border-radius:8px;border:1.5px solid hsl(210 50% 70%);background:hsl(210 50% 96%);color:hsl(210 55% 40%);font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;"
+              onmouseenter="this.style.background='hsl(210 50% 88%)'" onmouseleave="this.style.background='hsl(210 50% 96%)'">🏫 Set Semua Offline</button>
+            <button id="editPrtAllOnline" style="padding:6px 14px;border-radius:8px;border:1.5px solid hsl(150 50% 60%);background:hsl(150 50% 96%);color:hsl(150 55% 38%);font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;"
+              onmouseenter="this.style.background='hsl(150 50% 88%)'" onmouseleave="this.style.background='hsl(150 50% 96%)'">🌐 Set Semua Online</button>
+            <button id="editPrtResetAll" style="padding:6px 14px;border-radius:8px;border:1.5px solid hsl(215 20% 78%);background:white;color:hsl(215 15% 45%);font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.2s;"
+              onmouseenter="this.style.background='hsl(215 20% 93%)'" onmouseleave="this.style.background='white'">↩️ Reset Semua</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="editPrtCancel" style="padding:8px 20px;border-radius:8px;border:1.5px solid hsl(215 20% 82%);background:white;color:hsl(215 15% 40%);font-size:0.78rem;font-weight:700;cursor:pointer;">Batal</button>
+            <button id="editPrtSaveAll" style="padding:8px 24px;border-radius:8px;border:none;background:linear-gradient(135deg,hsl(170 60% 42%),hsl(185 55% 38%));color:white;font-size:0.78rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(0,150,100,0.3);">💾 Simpan Semua Pertemuan</button>
+          </div>
+        </div>
+        <!-- Body: 14 Pertemuan Cards -->
+        <div id="editPrtBody" style="padding:24px;background:hsl(215 25% 98%);"></div>
+        <!-- Footer -->
+        <div style="background:hsl(215 25% 97%);border-top:1px solid hsl(215 20% 88%);padding:14px 24px;display:flex;justify-content:flex-end;gap:8px;">
+          <button id="editPrtCancelFoot" style="padding:8px 20px;border-radius:8px;border:1.5px solid hsl(215 20% 82%);background:white;color:hsl(215 15% 40%);font-size:0.78rem;font-weight:700;cursor:pointer;">Batal</button>
+          <button id="editPrtSaveAllFoot" style="padding:8px 28px;border-radius:8px;border:none;background:linear-gradient(135deg,hsl(170 60% 42%),hsl(185 55% 38%));color:white;font-size:0.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,150,100,0.3);">💾 Simpan Semua Pertemuan</button>
+        </div>
       </div>
     </div>
 
@@ -3548,6 +3607,14 @@ function initJadwalManagePage() {
     });
   });
 
+  // ---- Edit 14 Pertemuan Modal (📋 button) ----
+  document.querySelectorAll('.jadwal-prt-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const jid = parseInt(btn.dataset.id);
+      openEditPertemuanModal(jid);
+    });
+  });
+
   // ---- Pertemuan Edit Popup ----
   // Create the popup once
   let prtPopup = document.getElementById('prt-edit-popup');
@@ -3566,8 +3633,13 @@ function initJadwalManagePage() {
   });
 
   window.__openPertemuanEdit = function(cardEl, jadwalId, pi) {
-    const entry = JADWAL_DUMMY.find(j => j.id === jadwalId);
-    if (!entry) return;
+    // Robust ID match: compare both as string and number to avoid type mismatch
+    const entry = JADWAL_DUMMY.find(j => j.id === jadwalId || String(j.id) === String(jadwalId));
+    if (!entry) { console.warn('Entry not found for jadwalId:', jadwalId, typeof jadwalId); return; }
+    // Ensure modePertemuan exists
+    if (!entry.modePertemuan || entry.modePertemuan.length < 14) {
+      entry.modePertemuan = Array(14).fill('offline');
+    }
 
     // Get card data
     const currentMode = cardEl.dataset.mode || 'offline';
@@ -4478,6 +4550,391 @@ function initJadwalManagePage() {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(() => toast.remove(), 300); }, 2500);
   }
 }
+// ============================================================
+// Edit 14 Pertemuan Modal — Full Management Interface
+// ============================================================
+function openEditPertemuanModal(jadwalId) {
+  const entry = JADWAL_DUMMY.find(j => j.id === jadwalId);
+  if (!entry) return;
+
+  const modal = document.getElementById('editPertemuanModal');
+  if (!modal) return;
+
+  // Populate header
+  const liveDosen = getDosenFromKurikulum(entry.kodeMK) || entry.dosen;
+  document.getElementById('editPrtModalTitle').textContent =
+    `${entry.kodeMK} — ${entry.namaMK}`;
+  document.getElementById('editPrtModalSub').textContent =
+    `${liveDosen} \u2022 ${entry.hari}, ${entry.jamMulai}-${entry.jamSelesai} \u2022 Ruang: ${entry.ruang} \u2022 ${entry.tipeKelas} \u2022 Smt ${entry.semester}`;
+
+  // Generate pertemuan dates
+  const origDates = generatePertemuanDates(entry.hari, 14);
+  const modes = entry.modePertemuan ? [...entry.modePertemuan] : Array(14).fill('offline');
+
+  // Build working copy of custom schedules (deep clone)
+  const workingCustom = {};
+  if (entry.customSchedule) {
+    Object.keys(entry.customSchedule).forEach(k => {
+      workingCustom[k] = { ...entry.customSchedule[k] };
+    });
+  }
+
+  function getOrigIso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function computeStats() {
+    let offCount = 0, onCount = 0, rsCount = 0, topicCount = 0;
+    for (let i = 0; i < 14; i++) {
+      const custom = workingCustom[i];
+      const mode = custom ? (custom.mode || modes[i]) : modes[i];
+      const origIso = getOrigIso(origDates[i]);
+      const dateVal = custom && custom.date ? custom.date : origIso;
+      if (mode === 'online') onCount++; else offCount++;
+      if (custom && custom.date && custom.date !== origIso) rsCount++;
+      if (custom && custom.topic && custom.topic.trim()) topicCount++;
+    }
+    document.getElementById('editPrtOffCount').textContent = offCount;
+    document.getElementById('editPrtOnCount').textContent = onCount;
+    document.getElementById('editPrtRsCount').textContent = rsCount;
+    document.getElementById('editPrtTopicCount').textContent = topicCount;
+    const pct = Math.round((topicCount / 14) * 100);
+    const bar = document.getElementById('editPrtProgressBar');
+    const txt = document.getElementById('editPrtProgressText');
+    if (bar) bar.style.width = pct + '%';
+    if (txt) txt.textContent = topicCount + '/14';
+  }
+
+  function buildPertemuanGrid() {
+    const body = document.getElementById('editPrtBody');
+    if (!body) return;
+
+    const statusColors = {
+      'Belum': { bg: 'hsl(215 20% 96%)', border: 'hsl(215 20% 85%)', text: 'hsl(215 15% 55%)' },
+      'Berlangsung': { bg: 'hsl(200 60% 96%)', border: 'hsl(200 60% 72%)', text: 'hsl(200 60% 38%)' },
+      'Selesai': { bg: 'hsl(150 50% 96%)', border: 'hsl(150 50% 70%)', text: 'hsl(150 55% 38%)' },
+      'Libur': { bg: 'hsl(40 80% 96%)', border: 'hsl(40 75% 72%)', text: 'hsl(40 70% 38%)' },
+    };
+
+    const cards = Array.from({ length: 14 }, (_, pi) => {
+      const custom = workingCustom[pi] || {};
+      const mode = custom.mode || modes[pi] || 'offline';
+      const origDate = origDates[pi];
+      const origIso = getOrigIso(origDate);
+      const dateVal = custom.date || origIso;
+      const startVal = custom.start || entry.jamMulai;
+      const endVal = custom.end || entry.jamSelesai;
+      const topic = custom.topic || '';
+      const note = custom.note || '';
+      const status = custom.status || 'Belum';
+      const isOnline = mode === 'online';
+      const isRescheduled = dateVal !== origIso;
+
+      const bgCard = isRescheduled
+        ? 'linear-gradient(145deg, hsl(40 80% 98%), hsl(40 70% 95%))'
+        : isOnline
+          ? 'linear-gradient(145deg, hsl(150 55% 97%), hsl(150 45% 94%))'
+          : 'linear-gradient(145deg, hsl(215 30% 98%), hsl(210 25% 96%))';
+
+      const borderCard = isRescheduled
+        ? 'hsl(40 70% 70%)'
+        : isOnline
+          ? 'hsl(150 55% 70%)'
+          : 'hsl(215 25% 82%)';
+
+      const headerGrad = isRescheduled
+        ? 'linear-gradient(135deg, hsl(40 75% 55%), hsl(35 70% 50%))'
+        : isOnline
+          ? 'linear-gradient(135deg, hsl(150 55% 45%), hsl(160 50% 40%))'
+          : 'linear-gradient(135deg, hsl(215 45% 48%), hsl(210 40% 42%))';
+
+      const statusCol = statusColors[status] || statusColors['Belum'];
+
+      return `
+      <div class="pmt-card" data-pi="${pi}" style="background:${bgCard};border:1.5px solid ${borderCard};border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07);transition:box-shadow 0.2s;" 
+        onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.13)'" 
+        onmouseleave="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.07)'">
+        <!-- Card Header -->
+        <div style="background:${headerGrad};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-size:0.65rem;font-weight:800;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:0.5px;">Pertemuan</span>
+            <span style="font-size:1.1rem;font-weight:900;color:white;margin-left:6px;">${pi + 1}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.2);color:white;">${isRescheduled ? '\ud83d\udd04 Reschedule' : isOnline ? '\ud83c\udf10 Online' : '\ud83c\udfeb Offline'}</span>
+          </div>
+        </div>
+        <!-- Card Body -->
+        <div style="padding:12px 14px;">
+          <!-- Status + Mode Row -->
+          <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:0.62rem;font-weight:700;color:hsl(215 20% 50%);">Status:</label>
+            <select class="pmt-status" data-pi="${pi}" style="flex:1;min-width:90px;padding:4px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.68rem;font-weight:600;color:${statusCol.text};background:${statusCol.bg};cursor:pointer;">
+              <option value="Belum" ${status==='Belum'?'selected':''}>⬜ Belum</option>
+              <option value="Berlangsung" ${status==='Berlangsung'?'selected':''}>🔵 Berlangsung</option>
+              <option value="Selesai" ${status==='Selesai'?'selected':''}>✅ Selesai</option>
+              <option value="Libur" ${status==='Libur'?'selected':''}>📵 Libur</option>
+            </select>
+            <div style="display:flex;gap:4px;border:1px solid hsl(215 20% 82%);border-radius:6px;overflow:hidden;">
+              <button class="pmt-mode-off" data-pi="${pi}" style="padding:4px 9px;border:none;cursor:pointer;font-size:0.62rem;font-weight:700;background:${!isOnline?'hsl(215 45% 48%)':'hsl(215 20% 93%)'};color:${!isOnline?'white':'hsl(215 15% 55%)'};transition:all 0.15s;">\ud83c\udfeb Off</button>
+              <button class="pmt-mode-on" data-pi="${pi}" style="padding:4px 9px;border:none;cursor:pointer;font-size:0.62rem;font-weight:700;background:${isOnline?'hsl(150 55% 45%)':'hsl(215 20% 93%)'};color:${isOnline?'white':'hsl(215 15% 55%)'};transition:all 0.15s;">\ud83c\udf10 On</button>
+            </div>
+          </div>
+          <!-- Date + Time Row -->
+          <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:8px;">
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">\ud83d\udcc5 Tanggal${isRescheduled?' <span style=\'color:hsl(40 70% 45%);\'>⬤ Diganti</span>':''}</label>
+              <input type="date" class="pmt-date" data-pi="${pi}" value="${dateVal}" 
+                style="width:100%;padding:4px 8px;border:1.5px solid ${isRescheduled?'hsl(40 70% 70%)':'hsl(215 20% 82%)'};border-radius:6px;font-size:0.72rem;box-sizing:border-box;font-weight:${isRescheduled?'700':'400'};color:${isRescheduled?'hsl(40 65% 35%)':'hsl(215 15% 35%)'};background:${isRescheduled?'hsl(40 80% 97%)':'white'};">
+            </div>
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">\ud83d\udd50 Mulai</label>
+              <input type="time" class="pmt-start" data-pi="${pi}" value="${startVal}" style="width:100%;padding:4px 6px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.7rem;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">\ud83d\udd51 Selesai</label>
+              <input type="time" class="pmt-end" data-pi="${pi}" value="${endVal}" style="width:100%;padding:4px 6px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.7rem;box-sizing:border-box;">
+            </div>
+          </div>
+          <!-- Topic -->
+          <div style="margin-bottom:6px;">
+            <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">\ud83d\udcda Topik / Materi Kuliah <span style="font-weight:400;color:hsl(215 15% 65%);">(opsional)</span></label>
+            <input type="text" class="pmt-topic" data-pi="${pi}" value="${topic.replace(/"/g,'&quot;')}" placeholder="cth: Pengantar Administrasi Publik..." 
+              style="width:100%;padding:5px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;color:hsl(215 15% 30%);"
+              oninput="this.style.borderColor=this.value.trim()?'hsl(150 55% 60%)':'hsl(215 20% 82%)'">
+          </div>
+          <!-- Note -->
+          <div>
+            <label style="font-size:0.58rem;font-weight:700;color:hsl(215 20% 50%);display:block;margin-bottom:2px;">\ud83d\udcdd Catatan <span style="font-weight:400;color:hsl(215 15% 65%);">(opsional)</span></label>
+            <input type="text" class="pmt-note" data-pi="${pi}" value="${note.replace(/"/g,'&quot;')}" placeholder="cth: Kelas Pengganti, Libur Nasional..." 
+              style="width:100%;padding:5px 8px;border:1px solid hsl(215 20% 82%);border-radius:6px;font-size:0.72rem;box-sizing:border-box;color:hsl(215 15% 30%);">
+          </div>
+          <!-- Original Date hint -->
+          <div style="margin-top:6px;font-size:0.56rem;color:hsl(215 15% 60%);">\ud83d\udd04 Tgl asli: ${formatTanggalShort(origDate)}${isRescheduled?' <span style=\'color:hsl(40 70% 45%);font-weight:700;\'>→ Diganti</span>':''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
+        ${cards}
+      </div>`;
+
+    // Attach event listeners
+    attachCardListeners();
+    computeStats();
+  }
+
+  function attachCardListeners() {
+    const body = document.getElementById('editPrtBody');
+    if (!body) return;
+
+    // Mode toggle buttons
+    body.querySelectorAll('.pmt-mode-off').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pi = parseInt(btn.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].mode = 'offline';
+        refreshCard(pi);
+      });
+    });
+    body.querySelectorAll('.pmt-mode-on').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pi = parseInt(btn.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].mode = 'online';
+        refreshCard(pi);
+      });
+    });
+
+    // Date change
+    body.querySelectorAll('.pmt-date').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].date = inp.value;
+        computeStats();
+        // Update visual cue
+        const origIso = getOrigIso(origDates[pi]);
+        const isRescheduled = inp.value !== origIso;
+        inp.style.borderColor = isRescheduled ? 'hsl(40 70% 70%)' : 'hsl(215 20% 82%)';
+        inp.style.fontWeight = isRescheduled ? '700' : '400';
+        inp.style.color = isRescheduled ? 'hsl(40 65% 35%)' : 'hsl(215 15% 35%)';
+        inp.style.background = isRescheduled ? 'hsl(40 80% 97%)' : 'white';
+      });
+    });
+
+    // Start time
+    body.querySelectorAll('.pmt-start').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].start = inp.value;
+      });
+    });
+
+    // End time
+    body.querySelectorAll('.pmt-end').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].end = inp.value;
+      });
+    });
+
+    // Topic
+    body.querySelectorAll('.pmt-topic').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].topic = inp.value;
+        computeStats();
+      });
+    });
+
+    // Note
+    body.querySelectorAll('.pmt-note').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const pi = parseInt(inp.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].note = inp.value;
+      });
+    });
+
+    // Status
+    body.querySelectorAll('.pmt-status').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const pi = parseInt(sel.dataset.pi);
+        if (!workingCustom[pi]) workingCustom[pi] = {};
+        workingCustom[pi].status = sel.value;
+        const statusColors = {
+          'Belum': { bg: 'hsl(215 20% 96%)', border: 'hsl(215 20% 85%)', text: 'hsl(215 15% 55%)' },
+          'Berlangsung': { bg: 'hsl(200 60% 96%)', border: 'hsl(200 60% 72%)', text: 'hsl(200 60% 38%)' },
+          'Selesai': { bg: 'hsl(150 50% 96%)', border: 'hsl(150 50% 70%)', text: 'hsl(150 55% 38%)' },
+          'Libur': { bg: 'hsl(40 80% 96%)', border: 'hsl(40 75% 72%)', text: 'hsl(40 70% 38%)' },
+        };
+        const col = statusColors[sel.value] || statusColors['Belum'];
+        sel.style.background = col.bg;
+        sel.style.color = col.text;
+        sel.style.borderColor = col.border;
+      });
+    });
+  }
+
+  function refreshCard(pi) {
+    buildPertemuanGrid();
+  }
+
+  // ---- Set All buttons ----
+  document.getElementById('editPrtAllOffline').onclick = () => {
+    for (let i = 0; i < 14; i++) {
+      if (!workingCustom[i]) workingCustom[i] = {};
+      workingCustom[i].mode = 'offline';
+    }
+    buildPertemuanGrid();
+  };
+  document.getElementById('editPrtAllOnline').onclick = () => {
+    for (let i = 0; i < 14; i++) {
+      if (!workingCustom[i]) workingCustom[i] = {};
+      workingCustom[i].mode = 'online';
+    }
+    buildPertemuanGrid();
+  };
+  document.getElementById('editPrtResetAll').onclick = () => {
+    if (!confirm('Reset semua pertemuan ke pengaturan default?')) return;
+    for (let i = 0; i < 14; i++) delete workingCustom[i];
+    buildPertemuanGrid();
+  };
+
+  // ---- Save ----
+  async function saveAllPertemuan() {
+    // Collect current values from DOM inputs
+    const body = document.getElementById('editPrtBody');
+    if (body) {
+      body.querySelectorAll('.pmt-date').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].date=inp.value; });
+      body.querySelectorAll('.pmt-start').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].start=inp.value; });
+      body.querySelectorAll('.pmt-end').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].end=inp.value; });
+      body.querySelectorAll('.pmt-topic').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].topic=inp.value; });
+      body.querySelectorAll('.pmt-note').forEach(inp => { const pi=parseInt(inp.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].note=inp.value; });
+      body.querySelectorAll('.pmt-status').forEach(sel => { const pi=parseInt(sel.dataset.pi); if(!workingCustom[pi])workingCustom[pi]={}; workingCustom[pi].status=sel.value; });
+    }
+
+    // Apply to entry
+    if (!entry.customSchedule) entry.customSchedule = {};
+    Object.keys(workingCustom).forEach(k => {
+      const pi = parseInt(k);
+      const c = workingCustom[k];
+      entry.customSchedule[pi] = { ...c };
+      if (c.mode) entry.modePertemuan[pi] = c.mode;
+    });
+
+    // Persist to backend
+    let apiSuccess = false;
+    const origDatesForSave = generatePertemuanDates(entry.hari, 14);
+    try {
+      const payloads = Array.from({ length: 14 }, (_, pi) => {
+        const c = entry.customSchedule[pi] || {};
+        const origIso = getOrigIso(origDatesForSave[pi]);
+        return {
+          kode_mk: entry.kodeMK,
+          kelas: entry.kelas || 'A',
+          pertemuan: pi + 1,
+          tanggal: c.date || origIso,
+          tanggal_asli: origIso,
+          jam_mulai: c.start || entry.jamMulai,
+          jam_selesai: c.end || entry.jamSelesai,
+          mode: c.mode || entry.modePertemuan[pi] || 'offline',
+          catatan: c.note || '',
+          topik: c.topic || '',
+          status: c.status || 'Belum',
+          updated_by: 'BAP'
+        };
+      });
+      const resp = await fetch('/api/jadwal-pertemuan/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: payloads })
+      });
+      if (resp.ok) { apiSuccess = true; console.log('\u2705 Batch jadwal pertemuan saved'); }
+    } catch (err) {
+      console.warn('\u26a0\ufe0f Backend not available, saved in-memory:', err.message);
+    }
+
+    // Close modal
+    modal.style.display = 'none';
+
+    // Toast
+    const toast = document.createElement('div');
+    const dbIcon = apiSuccess ? '\ud83d\uddc4\ufe0f DB' : '\ud83d\udcbe Lokal';
+    const topicCount = Object.values(workingCustom).filter(c => c.topic && c.topic.trim()).length;
+    const onCount = entry.modePertemuan.filter(m => m === 'online').length;
+    const offCount = 14 - onCount;
+    toast.innerHTML = `\u2705 <strong>${entry.kodeMK}</strong> — 14 pertemuan disimpan ke ${dbIcon}!<br><small>\ud83c\udfeb Offline: ${offCount} \u2022 \ud83c\udf10 Online: ${onCount} \u2022 \ud83d\udcda Topik: ${topicCount}/14</small>`;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,hsl(170 60% 38%),hsl(185 55% 35%));color:white;padding:14px 22px;border-radius:12px;font-size:0.78rem;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,0.22);z-index:99999;line-height:1.5;max-width:320px;';
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 3500);
+  }
+
+  // Bind save buttons
+  document.getElementById('editPrtSaveAll').onclick = saveAllPertemuan;
+  document.getElementById('editPrtSaveAllFoot').onclick = saveAllPertemuan;
+
+  // Bind close buttons
+  const closeModal = () => { modal.style.display = 'none'; };
+  document.getElementById('editPrtModalClose').onclick = closeModal;
+  document.getElementById('editPrtCancel').onclick = closeModal;
+  document.getElementById('editPrtCancelFoot').onclick = closeModal;
+
+  // Close on backdrop click
+  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  // Show modal & build grid
+  modal.style.display = 'flex';
+  buildPertemuanGrid();
+  modal.scrollTop = 0;
+}
+
+
 function statistikContent() {
   const prodiStats = [
     { prodi: 'Administrasi Negara', aktif: 420, cuti: 8, lulus: 285, avgIPK: 3.42 },
