@@ -3476,6 +3476,33 @@ function renderJadwalForm(editData) {
 
   const selProdi = editData?.gabunganId ? 'gabungan' : (editData?.prodi || 'niaga');
 
+  // ---- Build inline P1-P14 section (only for edit, no nested backtick) ----
+  let pertemuanSection = '';
+  if (isEdit && editData) {
+    const mkLabel = (editData.kodeMK || '') + ' \u2014 ' + (editData.namaMK || '');
+    pertemuanSection = '<div class="dash-card" style="margin-top:16px;overflow:hidden;border:2px solid hsl(170 55% 68%);" id="inlinePrtSection">'
+      + '<div style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:16px 22px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">'
+      + '<div>'
+      + '<div style="font-size:0.7rem;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:700;">&nbsp;\ud83d\udccb Detail Pertemuan</div>'
+      + '<div style="font-size:1rem;font-weight:800;color:white;margin-top:2px;">Edit 14 Pertemuan &mdash; ' + mkLabel + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83c\udfeb Offline: <span id="inlinePrtOffCount">-</span></div>'
+      + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83c\udf10 Online: <span id="inlinePrtOnCount">-</span></div>'
+      + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83d\udd04 Reschedule: <span id="inlinePrtRsCount">-</span></div>'
+      + '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">\ud83d\udcda Topik: <span id="inlinePrtTopicCount">-</span>/14</div>'
+      + '</div></div>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">'
+      + '<button id="inlinePrtAllOffline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\ud83c\udfeb Set Semua Offline</button>'
+      + '<button id="inlinePrtAllOnline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\ud83c\udf10 Set Semua Online</button>'
+      + '<button id="inlinePrtResetAll" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">\u21a9\ufe0f Reset Semua</button>'
+      + '<button id="inlinePrtSave" style="padding:5px 16px;border-radius:6px;border:none;background:white;color:hsl(170 60% 35%);font-size:0.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">\ud83d\udcbe Simpan Pertemuan</button>'
+      + '</div></div>'
+      + '<div id="inlinePrtBody" style="padding:20px;background:hsl(215 25% 98%);"></div>'
+      + '</div>';
+  }
+
   return `
     <div class="dash-card" style="overflow:hidden;border:2px solid hsl(210 55% 50%);">
       <div style="background:linear-gradient(135deg,hsl(210 55% 42%),hsl(200 50% 55%));padding:14px 20px;">
@@ -3543,32 +3570,7 @@ function renderJadwalForm(editData) {
         </div>
       </div>
     </div>
-    ${isEdit ? `
-    <!-- ===== INLINE EDIT 14 PERTEMUAN ===== -->
-    <div class="dash-card" style="margin-top:16px;overflow:hidden;border:2px solid hsl(170 55% 68%);" id="inlinePrtSection">
-      <div style="background:linear-gradient(135deg,hsl(170 60% 35%),hsl(185 55% 45%));padding:16px 22px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <div>
-            <div style="font-size:0.7rem;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;font-weight:700;">📋 Detail Pertemuan</div>
-            <div style="font-size:1rem;font-weight:800;color:white;margin-top:2px;">Edit 14 Pertemuan — ${editData.kodeMK} ${editData.namaMK}</div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🏫 Offline: <span id="inlinePrtOffCount">-</span></div>
-            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🌐 Online: <span id="inlinePrtOnCount">-</span></div>
-            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">🔄 Reschedule: <span id="inlinePrtRsCount">-</span></div>
-            <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:5px 12px;font-size:0.68rem;color:white;font-weight:700;">📚 Topik: <span id="inlinePrtTopicCount">-</span>/14</div>
-          </div>
-        </div>
-        <!-- Toolbar -->
-        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <button id="inlinePrtAllOffline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">🏫 Set Semua Offline</button>
-          <button id="inlinePrtAllOnline" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">🌐 Set Semua Online</button>
-          <button id="inlinePrtResetAll" style="padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:white;font-size:0.68rem;font-weight:700;cursor:pointer;">↩️ Reset Semua</button>
-          <button id="inlinePrtSave" style="padding:5px 16px;border-radius:6px;border:none;background:white;color:hsl(170 60% 35%);font-size:0.72rem;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">💾 Simpan Pertemuan</button>
-        </div>
-      </div>
-      <div id="inlinePrtBody" style="padding:20px;background:hsl(215 25% 98%);"></div>
-    </div>` : ''}`;
+    ${pertemuanSection}`;
 }
 
 function initJadwalManagePage() {
