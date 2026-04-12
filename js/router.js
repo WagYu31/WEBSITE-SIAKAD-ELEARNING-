@@ -23,14 +23,16 @@ export function getCurrentRoute() {
 
 export function initRouter(containerId) {
   appContainer = document.getElementById(containerId);
-  
+
+  // Only hashchange handles subsequent navigation
   window.addEventListener('hashchange', handleRoute);
-  window.addEventListener('load', handleRoute);
-  
-  // If no hash, navigate to landing
-  if (!window.location.hash) {
+
+  // Handle initial route ONCE — no 'load' listener to prevent double-call
+  if (!window.location.hash || window.location.hash === '#') {
+    // No hash yet: set to landing (triggers hashchange → handleRoute)
     window.location.hash = '#/';
   } else {
+    // Hash already present: route immediately (only once)
     handleRoute();
   }
 }
